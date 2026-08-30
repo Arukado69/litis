@@ -60,9 +60,9 @@ profesional de un abogado.
 
 ## 5. Lo construido hoy
 
-La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**;
-§5.5 es la plomería que la conectará. **131 pruebas.** La interfaz todavía no
-existe.
+La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
+**163 pruebas.** Ya hay acceso, registro y panel funcionando contra Supabase
+(§5.7); las pantallas de expedientes todavía no.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -115,21 +115,56 @@ Cruza las partes de un asunto nuevo contra el padrón. Devuelve `impedimento` o
 Clientes de servidor, navegador y servicio; validación de variables de entorno;
 proxy que refresca la sesión y bloquea `/panel` y `/portal`.
 
-⚠️ `src/types/db.ts` está **escrito a mano** porque todavía no hay proyecto de
-Supabase vivo. Toda migración que cambie una tabla lo actualiza **en el mismo
-commit**; en cuanto exista el proyecto se sustituye por
-`npx supabase gen types typescript`.
+⚠️ `src/types/db.ts` sigue **escrito a mano**. Ya hay proyecto de Supabase, así
+que en cuanto se apliquen las migraciones pendientes debe sustituirse por
+`npx supabase gen types typescript --project-id <id>`. Mientras dure lo hecho a
+mano: **toda migración que cambie una tabla lo actualiza en el mismo commit.**
 
-⚠️ El cliente de servicio salta toda la RLS y tiene **solo dos usos legítimos**:
-el alta de despacho (el usuario aún no tiene membresía y no puede pasar ninguna
-política) y el cron de alertas. Si aparece la tentación de usarlo "porque la RLS
-estorba", lo que hay que arreglar es la política.
+⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
+`crear_mi_despacho` (§5.7), **hoy no lo usa ningún camino**; queda para el cron
+de alertas, que corre sin sesión. Si aparece la tentación de usarlo "porque la
+RLS estorba", lo que hay que arreglar es la política.
 
-### 5.6 Esquema — `supabase/migrations/`
+### 5.6 Seguridad de acceso — `src/lib/seguridad/`
+
+- `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
+  (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
+  rota IPs; solo por IP, una oficina tras un NAT se bloquea sola. Únicamente
+  cuentan los fallos: `perdonarAcceso` limpia tras entrar bien.
+- `peticion.ts` — la IP del cliente. ⚠️ `x-forwarded-for` es fiable **solo**
+  detrás de un proxy de confianza.
+
+⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
+varias réplicas hay que mudarlo a Redis o a una tabla.
+
+### 5.7 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+
+`/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
+`src/lib/auth/sesion.ts`.
+
+- ⚠️ **El alta de despacho NO usa clave de servicio.** Va por
+  `crear_mi_despacho` (migración `0006`), una función transaccional
+  `security definer` que verifica `auth.uid()` y solo actúa sobre quien la
+  llama. Meter un camino que salta toda la RLS en una pantalla pública sin
+  sesión no vale la comodidad.
+- ⚠️ **El desempate del slug vive en SQL, no en TypeScript.** Resolverlo exige
+  leer los slugs de todos los despachos, y la RLS —con razón— no deja. Hay UNA
+  sola implementación de esa regla, a propósito.
+- ⚠️ **Dos caminos de registro.** Si el proyecto exige confirmar el correo,
+  `signUp` no devuelve sesión y `crear_mi_despacho` no puede correr todavía: el
+  despacho se crea en `/bienvenida` tras el primer acceso.
+- Los mensajes de error **no revelan si un correo existe**. Distinguir "no
+  existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
+
+### 5.8 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
-alertas.
+alertas · `0006` alta de despacho transaccional.
+
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0003`. **Pendientes
+`0004`, `0005` y `0006`** — se aplican pegando el archivo en el SQL Editor, en
+orden. Sin `0006` el registro falla.
 
 ## 6. Reglas que no se negocian
 
@@ -152,7 +187,16 @@ alertas.
 8. **El nombre de la marca no se escribe a mano.** Sale de `src/lib/brand`.
 9. **Los enlaces de correo salen de `NEXT_PUBLIC_SITE_URL`**, nunca del header
    `Host`.
-10. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+10. **En `src/types/db.ts` todo se declara con `type`, jamás con `interface`.**
+    No es estilo. En TypeScript una `interface` no recibe índice implícito, así
+    que no es asignable a `Record<string, unknown>` — lo que exige el
+    `GenericSchema` de supabase-js. Con interfaces el esquema deja de conformar
+    **en silencio**, el cliente cae al genérico y cada `.rpc()` y cada join se
+    tipan como `undefined` o `never`. Ya costó una depuración.
+11. **Un archivo `'use server'` solo exporta funciones async.** El estado
+    inicial y los tipos de un formulario van en un `estado.ts` aparte, o el
+    build se cae.
+12. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones

@@ -13,14 +13,22 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0005`.
+ * Espejo de `supabase/migrations/0001`–`0006`.
+ *
+ * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
+ * TypeScript una `interface` no recibe índice implícito, así que no es
+ * asignable a `Record<string, unknown>` — que es justo lo que exige el
+ * `GenericSchema` de supabase-js. Con interfaces, el esquema entero deja de
+ * conformar en silencio, el cliente cae al genérico y cada `.rpc()` y cada
+ * join se tipan como `undefined` o `never`. Por eso los tipos que genera
+ * Supabase usan `type`.
  */
 
 /**
  * `Insert` = obligatorios los que no tienen default en la base; el resto,
  * opcionales. `Update` = todo opcional. Evita repetir tres veces cada tabla.
  */
-interface Tabla<Fila, Requeridos extends keyof Fila> {
+type Tabla<Fila, Requeridos extends keyof Fila> = {
   Row: Fila
   Insert: Pick<Fila, Requeridos> & Partial<Omit<Fila, Requeridos>>
   Update: Partial<Fila>
@@ -96,7 +104,7 @@ export type NivelAlertaDb =
 
 // ── Filas ───────────────────────────────────────────────────────────────────
 
-export interface DespachoRow {
+export type DespachoRow = {
   id: string
   nombre: string
   slug: string
@@ -111,7 +119,7 @@ export interface DespachoRow {
   actualizado_el: string
 }
 
-export interface PerfilRow {
+export type PerfilRow = {
   id: string
   nombre: string
   correo: string | null
@@ -121,7 +129,7 @@ export interface PerfilRow {
   actualizado_el: string
 }
 
-export interface MembresiaRow {
+export type MembresiaRow = {
   id: string
   despacho_id: string
   perfil_id: string
@@ -132,7 +140,7 @@ export interface MembresiaRow {
   creado_el: string
 }
 
-export interface CalendarioRow {
+export type CalendarioRow = {
   id: string
   despacho_id: string | null
   nombre: string
@@ -143,7 +151,7 @@ export interface CalendarioRow {
   creado_el: string
 }
 
-export interface DiaInhabilRow {
+export type DiaInhabilRow = {
   id: string
   calendario_id: string
   desde: string
@@ -153,7 +161,7 @@ export interface DiaInhabilRow {
   fundamento: string | null
 }
 
-export interface OrganoRow {
+export type OrganoRow = {
   id: string
   despacho_id: string | null
   nombre: string
@@ -168,7 +176,7 @@ export interface OrganoRow {
   creado_el: string
 }
 
-export interface PlazoCatalogoRow {
+export type PlazoCatalogoRow = {
   id: string
   despacho_id: string | null
   clave: string | null
@@ -185,7 +193,7 @@ export interface PlazoCatalogoRow {
   actualizado_el: string
 }
 
-export interface RegimenVerificadoRow {
+export type RegimenVerificadoRow = {
   id: string
   despacho_id: string
   regimen: string
@@ -194,7 +202,7 @@ export interface RegimenVerificadoRow {
   notas: string | null
 }
 
-export interface PersonaRow {
+export type PersonaRow = {
   id: string
   despacho_id: string
   tipo: TipoPersonaDb
@@ -212,7 +220,7 @@ export interface PersonaRow {
   actualizado_el: string
 }
 
-export interface ExpedienteRow {
+export type ExpedienteRow = {
   id: string
   despacho_id: string
   numero_interno: string
@@ -240,14 +248,14 @@ export interface ExpedienteRow {
   actualizado_el: string
 }
 
-export interface ExpedienteAccesoRow {
+export type ExpedienteAccesoRow = {
   expediente_id: string
   perfil_id: string
   otorgado_por: string | null
   otorgado_el: string
 }
 
-export interface ExpedienteParteRow {
+export type ExpedienteParteRow = {
   id: string
   expediente_id: string
   persona_id: string
@@ -258,7 +266,7 @@ export interface ExpedienteParteRow {
   creado_el: string
 }
 
-export interface ExpedienteEtapaRow {
+export type ExpedienteEtapaRow = {
   id: string
   expediente_id: string
   clave: string
@@ -270,7 +278,7 @@ export interface ExpedienteEtapaRow {
   completada_por: string | null
 }
 
-export interface ActuacionRow {
+export type ActuacionRow = {
   id: string
   expediente_id: string
   tipo: TipoActuacion
@@ -283,7 +291,7 @@ export interface ActuacionRow {
   creado_el: string
 }
 
-export interface DocumentoRow {
+export type DocumentoRow = {
   id: string
   expediente_id: string
   tipo: TipoDocumento
@@ -299,7 +307,7 @@ export interface DocumentoRow {
   creado_el: string
 }
 
-export interface AudienciaRow {
+export type AudienciaRow = {
   id: string
   expediente_id: string
   tipo: string
@@ -316,7 +324,7 @@ export interface AudienciaRow {
   actualizado_el: string
 }
 
-export interface PlazoRow {
+export type PlazoRow = {
   id: string
   expediente_id: string
   etiqueta: string
@@ -351,7 +359,7 @@ export interface PlazoRow {
   actualizado_el: string
 }
 
-export interface PlazoAlertaEnviadaRow {
+export type PlazoAlertaEnviadaRow = {
   id: string
   plazo_id: string
   nivel: NivelAlertaDb
@@ -368,7 +376,7 @@ export interface PlazoAlertaEnviadaRow {
  */
 type PlazoEscribible = Omit<PlazoRow, 'fecha_vencimiento_efectiva'>
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       despachos: Tabla<DespachoRow, 'nombre' | 'slug'>
@@ -452,6 +460,16 @@ export interface Database {
       puede_editar_expediente: {
         Args: { p_expediente: string }
         Returns: boolean
+      }
+      crear_mi_despacho: {
+        Args: {
+          p_nombre_titular: string
+          p_correo: string
+          p_despacho_nombre: string
+          p_slug_base: string
+        }
+        /** El id del despacho recién creado. */
+        Returns: string
       }
     }
     Enums: {

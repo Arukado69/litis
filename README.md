@@ -43,7 +43,7 @@ clientes y contrapartes ya registrados — y no decide por ti.
 
 ## Estado
 
-**Núcleo de dominio construido y probado. Sin interfaz todavía.**
+**Núcleo de dominio probado. Acceso, registro y panel ya funcionan.**
 
 - Motor de cómputo de plazos con traza auditable
 - Calendarios de días inhábiles (PJF y laboral 2026)
@@ -54,8 +54,9 @@ clientes y contrapartes ya registrados — y no decide por ti.
 - Panel "qué vence" con detección de choques de agenda
 - Detección de conflicto de interés
 - Esquema completo con RLS multi-tenant
+- Registro, acceso y panel, con freno anti-fuerza-bruta
 
-**131 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**163 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

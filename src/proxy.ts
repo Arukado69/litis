@@ -61,7 +61,11 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const ruta = request.nextUrl.pathname
-  const esPrivada = ruta.startsWith('/panel') || ruta.startsWith('/portal')
+  const esPrivada =
+    ruta.startsWith('/panel') ||
+    ruta.startsWith('/portal') ||
+    // Hay sesión pero todavía no despacho: sigue siendo zona privada.
+    ruta.startsWith('/bienvenida')
 
   if (esPrivada && !user) {
     const destino = request.nextUrl.clone()
