@@ -142,3 +142,121 @@ export function Aviso({
     </div>
   )
 }
+
+export type Opcion = { valor: string; etiqueta: string }
+
+export function Selector({
+  etiqueta,
+  nombre,
+  opciones,
+  error,
+  ayuda,
+  vacio = 'Elige…',
+  ...props
+}: Omit<ComponentProps<'select'>, 'children'> & {
+  etiqueta: string
+  nombre: string
+  opciones: readonly Opcion[]
+  error?: string
+  ayuda?: string
+  /** Texto de la opción vacía. `null` la quita. */
+  vacio?: string | null
+}) {
+  const idError = `${nombre}-error`
+  const idAyuda = `${nombre}-ayuda`
+  const descrito = [error ? idError : null, ayuda ? idAyuda : null]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={nombre} className="text-sm font-medium">
+        {etiqueta}
+      </label>
+      <select
+        id={nombre}
+        name={nombre}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={descrito || undefined}
+        className={cn(
+          'rounded-md border bg-white px-3 py-2 text-sm',
+          'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-acento)]',
+          error ? 'border-[var(--color-urgente)]' : 'border-[var(--color-borde)]',
+        )}
+        {...props}
+      >
+        {vacio === null ? null : <option value="">{vacio}</option>}
+        {opciones.map((o) => (
+          <option key={o.valor} value={o.valor}>
+            {o.etiqueta}
+          </option>
+        ))}
+      </select>
+      {ayuda ? (
+        <p id={idAyuda} className="text-xs text-[var(--color-tinta-suave)]">
+          {ayuda}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={idError} className="text-xs text-[var(--color-urgente)]">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+export function Area({
+  etiqueta,
+  nombre,
+  ...props
+}: ComponentProps<'textarea'> & { etiqueta: string; nombre: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={nombre} className="text-sm font-medium">
+        {etiqueta}
+      </label>
+      <textarea
+        id={nombre}
+        name={nombre}
+        rows={3}
+        className={cn(
+          'rounded-md border border-[var(--color-borde)] bg-white px-3 py-2 text-sm',
+          'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--color-acento)]',
+        )}
+        {...props}
+      />
+    </div>
+  )
+}
+
+export function Casilla({
+  etiqueta,
+  nombre,
+  ayuda,
+  ...props
+}: ComponentProps<'input'> & {
+  etiqueta: string
+  nombre: string
+  ayuda?: string
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <input
+        id={nombre}
+        name={nombre}
+        type="checkbox"
+        className="mt-1 accent-[var(--color-tinta)]"
+        {...props}
+      />
+      <div>
+        <label htmlFor={nombre} className="text-sm font-medium">
+          {etiqueta}
+        </label>
+        {ayuda ? (
+          <p className="text-xs text-[var(--color-tinta-suave)]">{ayuda}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}

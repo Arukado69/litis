@@ -37,6 +37,15 @@ export default async function LayoutPanel({
             </span>
           </div>
 
+          <nav className="flex gap-4 text-sm">
+            <Link href="/panel" className="hover:underline">
+              Qué vence
+            </Link>
+            <Link href="/panel/expedientes" className="hover:underline">
+              Expedientes
+            </Link>
+          </nav>
+
           <div className="flex items-center gap-4">
             <span className="text-xs text-[var(--color-tinta-suave)]">
               {sesion.nombre || sesion.correo} ·{' '}

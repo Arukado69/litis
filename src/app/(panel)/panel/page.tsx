@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { Aviso, Tarjeta } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
@@ -39,9 +40,9 @@ export default async function PaginaPanel() {
       </Tarjeta>
 
       <Aviso tono="informativo">
-        Lo que sigue: abrir el primer expediente y registrar una notificación
-        para que el sistema compute su plazo. Esas pantallas son las siguientes
-        rebanadas del plan.
+        Lo que sigue: <Link href="/panel/expedientes/nuevo" className="underline">
+        abrir el primer expediente</Link> y registrar una notificación para que
+        el sistema compute su plazo.
       </Aviso>
     </div>
   )

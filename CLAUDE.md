@@ -61,8 +61,8 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**163 pruebas.** Ya hay acceso, registro y panel funcionando contra Supabase
-(§5.7); las pantallas de expedientes todavía no.
+**174 pruebas.** Ya hay acceso, registro, panel y alta de expedientes
+funcionando contra Supabase.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -93,10 +93,20 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
 - `partes.ts` — roles por materia y validación. Exactamente una parte propia por
   expediente.
 - `apertura.ts` — convierte la captura del alta en el grafo de filas a insertar:
-  número interno consecutivo por año, clonado de etapas y validación. ⚠️ Distingue
-  lo que **bloquea** (sin vía no hay régimen de cómputo; sin parte propia no se
-  sabe desde qué lado corren los plazos) de lo que solo **advierte** (el número
-  del órgano no existe hasta la admisión; exigirlo obliga a inventarlo).
+  clonado de etapas y validación. ⚠️ Distingue lo que **bloquea** (sin vía no hay
+  régimen de cómputo; sin parte propia no se sabe desde qué lado corren los
+  plazos) de lo que solo **advierte** (el número del órgano no existe hasta la
+  admisión; exigirlo obliga a inventarlo).
+- `captura.ts` — la frontera entre lo que teclea una persona y el dominio.
+  Parseo de cuantía y fecha, y validación de que el rol exista en esa materia
+  («quejoso» no significa nada en un juicio mercantil).
+- `datos.ts` — consultas. El padrón para conflictos se arma con dos consultas
+  unidas en memoria, no con un join anidado: así no depende de los metadatos de
+  relaciones, que hoy están escritos a mano.
+- ⚠️ **El número interno NO se calcula en TypeScript.** Lo asigna
+  `abrir_expediente` (migración `0007`) dentro de la transacción y con
+  reintento: calcularlo en el cliente le daría el mismo número a dos altas
+  simultáneas.
 
 ### 5.3 Panel — `src/lib/panel/pendientes.ts`
 
@@ -121,11 +131,28 @@ que en cuanto se apliquen las migraciones pendientes debe sustituirse por
 mano: **toda migración que cambie una tabla lo actualiza en el mismo commit.**
 
 ⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
-`crear_mi_despacho` (§5.7), **hoy no lo usa ningún camino**; queda para el cron
+`crear_mi_despacho` (§5.8), **hoy no lo usa ningún camino**; queda para el cron
 de alertas, que corre sin sesión. Si aparece la tentación de usarlo "porque la
 RLS estorba", lo que hay que arreglar es la política.
 
-### 5.6 Seguridad de acceso — `src/lib/seguridad/`
+### 5.6 Alta de expediente — `src/app/(panel)/panel/expedientes/`
+
+`/panel/expedientes` (lista) · `/nuevo` (alta) · `/[id]` (detalle).
+
+- ⚠️ **El cotejo de conflictos va ANTES de crear las personas.** Si se crearan
+  primero, cada persona nueva se encontraría a sí misma en el padrón y toda
+  alta reportaría un conflicto consigo misma.
+- ⚠️ **La constancia de la revisión se asienta en la bitácora** como actuación
+  `nota_interna`. Es inmutable, así que queda quién revisó, cuándo y qué se le
+  mostró — justo lo que hace falta el día que haya que sostener que el
+  conflicto se valoró.
+- ⚠️ **React 19 resetea el formulario tras una Server Action.** Por eso el
+  estado devuelve `valores` y cada campo los usa como `defaultValue`: sin eso,
+  al aparecer el aviso de conflicto la pantalla se vaciaría, con la tentación
+  obvia de ignorar el aviso la segunda vez.
+- Vía y roles dependen de la materia elegida, en el cliente.
+
+### 5.7 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -137,7 +164,7 @@ RLS estorba", lo que hay que arreglar es la política.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.7 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.8 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -156,7 +183,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.8 Esquema — `supabase/migrations/`
+### 5.9 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y

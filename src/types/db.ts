@@ -13,7 +13,7 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0006`.
+ * Espejo de `supabase/migrations/0001`–`0007`.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
@@ -460,6 +460,32 @@ export type Database = {
       puede_editar_expediente: {
         Args: { p_expediente: string }
         Returns: boolean
+      }
+      abrir_expediente: {
+        Args: {
+          p_despacho_id: string
+          p_caratula: string
+          p_materia: string
+          p_via: string
+          p_fuero: FueroDb
+          /** [{persona_id, rol, es_nuestra_parte, abogado_contrario, notas}] */
+          p_partes: unknown
+          /** [{clave, nombre, descripcion, orden, paralela}] */
+          p_etapas: unknown
+          p_etapa_actual?: string | null
+          p_cliente_persona_id?: string | null
+          p_entidad?: string | null
+          p_organo_id?: string | null
+          p_numero_organo?: string | null
+          p_instancia?: string | null
+          p_cuantia?: number | null
+          p_responsable_id?: string | null
+          p_restringido?: boolean
+          p_fecha_inicio?: string | null
+          p_notas?: string | null
+        }
+        /** El id del expediente recién abierto. */
+        Returns: string
       }
       crear_mi_despacho: {
         Args: {

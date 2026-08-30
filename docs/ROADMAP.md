@@ -27,10 +27,15 @@ Registro, acceso, cierre de sesión y panel, con freno anti-fuerza-bruta en dos
 dimensiones. El alta de despacho va por una función transaccional de la base
 (`0006`) en vez de clave de servicio.
 
-**163 pruebas.** Typecheck, lint y build limpios.
+### R2 — Abrir un expediente ✅
 
-⚠️ **Falta aplicar `0004`, `0005` y `0006`** en el proyecto de Supabase. Sin
-`0006` el registro no funciona.
+Lista, alta y detalle. Revisión de conflicto de interés en el alta, con
+constancia en la bitácora de quién la revisó. Etapas clonadas de la plantilla
+de la vía. El consecutivo interno lo asigna la base, con reintento.
+
+**174 pruebas.** Typecheck, lint y build limpios.
+
+⚠️ **Falta aplicar `0007`** en el proyecto de Supabase.
 
 ---
 
@@ -40,12 +45,9 @@ dimensiones. El alta de despacho va por una función transaccional de la base
 Invitación por correo con rol, aceptación y baja. El registro ya deja al
 titular dentro; falta que meta a los demás.
 
-### R2 — Abrir un expediente
-Alta con materia, vía, fuero, órgano y partes. Revisión de conflicto de interés
-en el alta, con constancia de quién la revisó.
-
-*El motor ya está* (`src/lib/expedientes/apertura.ts`): falta la Server Action
-que lea el consecutivo, escriba las filas y revalide, y la pantalla.
+### R2-bis — Editar el expediente
+Cambiar responsable, capturar el número del juzgado cuando se admita, mover la
+etapa, agregar partes. Hoy el alta escribe y el detalle solo lee.
 
 ### R3 — Registrar una notificación y que el plazo se calcule solo
 **La rebanada que vende el producto.** Se captura la notificación como

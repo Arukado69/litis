@@ -2,18 +2,17 @@
  * Apertura de expediente (motor puro, sin efectos).
  *
  * Convierte lo que se captura en la pantalla de alta en el grafo de filas que
- * hay que insertar: el expediente, sus partes y sus etapas clonadas. La Server
- * Action se queda con lo que sí necesita base de datos —leer el consecutivo,
- * escribir— y todo el criterio vive aquí, donde se puede probar.
+ * hay que insertar: el expediente, sus partes y sus etapas clonadas. Todo el
+ * criterio vive aquí, donde se puede probar; la escritura la hace
+ * `abrir_expediente` (migración 0007) en una sola transacción.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * POR QUÉ EL NÚMERO INTERNO SE CALCULA Y NO SE PIDE
+ * EL NÚMERO INTERNO NO SE CALCULA AQUÍ
  * ─────────────────────────────────────────────────────────────────────────────
- * Es el identificador con el que el despacho habla del asunto en voz alta
- * ("el 2026-014"), y existe desde antes de que el juzgado asigne el suyo.
- * Pedírselo al usuario garantiza dos cosas: que se repita, y que cada quien
- * invente su formato. Se calcula por año para que el consecutivo no crezca
- * indefinidamente y para que el número diga de entrada de qué año es el asunto.
+ * El consecutivo (`2026-014`) lo asigna la base dentro de la transacción, con
+ * reintento. Calcularlo en el cliente le daría el mismo número a dos altas
+ * simultáneas, y duplicar la regla en TypeScript y en SQL solo garantiza que
+ * las dos versiones se separen con el tiempo.
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * QUÉ SE BLOQUEA Y QUÉ SOLO SE ADVIERTE
@@ -78,7 +77,11 @@ export interface EtapaNueva {
 export interface PlanDeApertura {
   expediente: {
     despachoId: string
-    numeroInterno: string
+    /**
+     * El número interno NO viene aquí: lo asigna `abrir_expediente` (migración
+     * 0007) dentro de la transacción, con reintento ante carrera. Calcularlo en
+     * el cliente daría el mismo número a dos altas simultáneas.
+     */
     numeroOrgano: string | null
     caratula: string
     clientePersonaId: string | null
@@ -104,40 +107,6 @@ export interface PlanDeApertura {
 export type ResultadoApertura =
   | { ok: true; plan: PlanDeApertura }
   | { ok: false; problemas: readonly Problema[] }
-
-// ---------------------------------------------------------------------------
-// Número interno
-// ---------------------------------------------------------------------------
-
-const PATRON_NUMERO = /^(\d{4})-(\d{3,})$/
-
-/**
- * El siguiente consecutivo del año: `2026-001`, `2026-002`…
- *
- * Recibe los números que ya existen en el despacho. Ignora los que no siguen el
- * formato en vez de tronar: si alguien capturó "EXP-VIEJO-3" durante una
- * migración, eso no debe impedir abrir un expediente hoy.
- *
- * Toma el MÁXIMO y le suma uno; no busca huecos. Reutilizar el número de un
- * expediente borrado haría que dos asuntos distintos compartan identificador en
- * los archiveros de papel y en la memoria del equipo.
- */
-export function siguienteNumeroInterno(
-  existentes: readonly string[],
-  anio: number,
-): string {
-  let mayor = 0
-
-  for (const numero of existentes) {
-    const m = PATRON_NUMERO.exec(numero.trim())
-    if (!m) continue
-    if (Number(m[1]) !== anio) continue
-    const consecutivo = Number(m[2])
-    if (consecutivo > mayor) mayor = consecutivo
-  }
-
-  return `${anio}-${String(mayor + 1).padStart(3, '0')}`
-}
 
 // ---------------------------------------------------------------------------
 // Clonado de etapas
@@ -268,19 +237,8 @@ function reunirAdvertencias(
 // Composición
 // ---------------------------------------------------------------------------
 
-/**
- * Arma el plan completo de alta, o devuelve los problemas que lo impiden.
- *
- * @param numerosExistentes números internos ya usados en el despacho.
- * @param anio             año del consecutivo; se pasa para no leer el reloj.
- */
-export function prepararApertura(args: {
-  datos: DatosApertura
-  numerosExistentes: readonly string[]
-  anio: number
-}): ResultadoApertura {
-  const { datos, numerosExistentes, anio } = args
-
+/** Arma el plan completo de alta, o devuelve los problemas que lo impiden. */
+export function prepararApertura(datos: DatosApertura): ResultadoApertura {
   const problemas = validarApertura(datos)
   if (problemas.length > 0) return { ok: false, problemas }
 
@@ -293,7 +251,6 @@ export function prepararApertura(args: {
     plan: {
       expediente: {
         despachoId: datos.despachoId,
-        numeroInterno: siguienteNumeroInterno(numerosExistentes, anio),
         numeroOrgano: datos.numeroOrgano?.trim() || null,
         caratula,
         clientePersonaId: datos.clientePersonaId ?? null,

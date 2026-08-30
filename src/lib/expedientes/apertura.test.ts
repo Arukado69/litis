@@ -4,7 +4,6 @@ import {
   clonarEtapas,
   etapaInicial,
   prepararApertura,
-  siguienteNumeroInterno,
   validarApertura,
   type DatosApertura,
   type ParteCaptura,
@@ -38,46 +37,6 @@ function datos(over: Partial<DatosApertura> = {}): DatosApertura {
     ...over,
   }
 }
-
-describe('siguienteNumeroInterno', () => {
-  it('arranca en 001 cuando no hay nada', () => {
-    expect(siguienteNumeroInterno([], 2026)).toBe('2026-001')
-  })
-
-  it('toma el mayor del año y suma uno', () => {
-    expect(siguienteNumeroInterno(['2026-001', '2026-007', '2026-003'], 2026)).toBe(
-      '2026-008',
-    )
-  })
-
-  it('no reutiliza huecos', () => {
-    // Si el 002 se borró, reutilizarlo haría que dos asuntos distintos
-    // compartan identificador en los archiveros de papel y en la memoria del
-    // equipo.
-    expect(siguienteNumeroInterno(['2026-001', '2026-003'], 2026)).toBe('2026-004')
-  })
-
-  it('cuenta por año', () => {
-    expect(siguienteNumeroInterno(['2025-120', '2026-002'], 2026)).toBe('2026-003')
-    expect(siguienteNumeroInterno(['2025-120'], 2026)).toBe('2026-001')
-  })
-
-  it('ignora lo que no siga el formato en vez de tronar', () => {
-    // Un "EXP-VIEJO-3" traído de una migración no puede impedir abrir un
-    // expediente hoy.
-    expect(
-      siguienteNumeroInterno(['EXP-VIEJO-3', '', '2026-004', 'basura'], 2026),
-    ).toBe('2026-005')
-  })
-
-  it('crece más allá de tres dígitos sin romper el orden', () => {
-    expect(siguienteNumeroInterno(['2026-999'], 2026)).toBe('2026-1000')
-  })
-
-  it('tolera espacios alrededor', () => {
-    expect(siguienteNumeroInterno(['  2026-010  '], 2026)).toBe('2026-011')
-  })
-})
 
 describe('clonarEtapas y etapaInicial', () => {
   it('copia la plantilla de la vía en orden', () => {
@@ -159,49 +118,32 @@ describe('validarApertura — lo que se bloquea', () => {
 
 describe('prepararApertura', () => {
   it('arma el plan completo', () => {
-    const r = prepararApertura({
-      datos: datos(),
-      numerosExistentes: ['2026-001'],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos())
 
     expect(r.ok).toBe(true)
     if (!r.ok) return
 
-    expect(r.plan.expediente.numeroInterno).toBe('2026-002')
     expect(r.plan.expediente.etapaActual).toBe('preparacion')
     expect(r.plan.etapas.length).toBeGreaterThan(5)
     expect(r.plan.partes).toHaveLength(2)
   })
 
   it('arma la carátula con las partes si no se capturó', () => {
-    const r = prepararApertura({
-      datos: datos(),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos())
     if (!r.ok) throw new Error('debió pasar la validación')
 
     expect(r.plan.expediente.caratula).toBe('Juan Pérez vs. Constructora XYZ')
   })
 
   it('respeta la carátula capturada a mano', () => {
-    const r = prepararApertura({
-      datos: datos({ caratula: 'Asunto Torres — cobranza' }),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos({ caratula: 'Asunto Torres — cobranza' }))
     if (!r.ok) throw new Error('debió pasar la validación')
 
     expect(r.plan.expediente.caratula).toBe('Asunto Torres — cobranza')
   })
 
   it('devuelve los problemas y ningún plan si el alta es inválida', () => {
-    const r = prepararApertura({
-      datos: datos({ via: 'inventada' }),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos({ via: 'inventada' }))
 
     expect(r.ok).toBe(false)
     if (r.ok) return
@@ -213,11 +155,7 @@ describe('prepararApertura — advertencias que no bloquean', () => {
   it('deja pasar el alta sin número de órgano, pero lo dice', () => {
     // El número del juzgado no existe hasta que se admite la demanda.
     // Exigirlo obligaría a inventarlo.
-    const r = prepararApertura({
-      datos: datos(),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos())
     if (!r.ok) throw new Error('no debió bloquear')
 
     expect(r.plan.expediente.numeroOrgano).toBeNull()
@@ -227,38 +165,28 @@ describe('prepararApertura — advertencias que no bloquean', () => {
   })
 
   it('advierte que sin responsable nadie recibirá los avisos de plazos', () => {
-    const r = prepararApertura({
-      datos: datos(),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos())
     if (!r.ok) throw new Error('no debió bloquear')
 
     expect(r.plan.advertencias.some((a) => /responsable/i.test(a))).toBe(true)
   })
 
   it('advierte que sin órgano el calendario será el de por omisión', () => {
-    const r = prepararApertura({
-      datos: datos(),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    const r = prepararApertura(datos())
     if (!r.ok) throw new Error('no debió bloquear')
 
     expect(r.plan.advertencias.some((a) => /calendario/i.test(a))).toBe(true)
   })
 
   it('no advierte de lo que sí se capturó', () => {
-    const r = prepararApertura({
-      datos: datos({
+    const r = prepararApertura(
+      datos({
         organoId: 'org-1',
         numeroOrgano: '123/2026',
         responsableId: 'perf-1',
         clientePersonaId: 'per-1',
       }),
-      numerosExistentes: [],
-      anio: 2026,
-    })
+    )
     if (!r.ok) throw new Error('no debió bloquear')
 
     expect(r.plan.advertencias).toEqual([])
