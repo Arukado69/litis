@@ -13,7 +13,15 @@ y para poder enseñárselo a un abogado real lo antes posible.
 Motor de plazos con traza auditable · calendarios de inhábiles · catálogo
 semilla con verificación · alertas por ventanas en días hábiles · materias,
 vías y etapas · partes · conflicto de interés · migraciones `0001`–`0005` con
-RLS multi-tenant. **87 pruebas.**
+RLS multi-tenant.
+
+### R0-bis — Lógica de aplicación y plomería ✅
+
+Apertura de expediente (número interno, clonado de etapas, qué bloquea y qué
+solo advierte) · motor del panel "qué vence" con detección de choques de agenda
+· clientes de Supabase, tipos de la base y proxy de sesión.
+
+**131 pruebas.** Typecheck, lint y build limpios.
 
 ---
 
@@ -23,10 +31,15 @@ RLS multi-tenant. **87 pruebas.**
 Registro, acceso, alta de despacho, invitación de miembros por rol. Freno
 anti-fuerza-bruta desde el primer día. Sin esto no hay nada que probar.
 
+Es la única rebanada que no puede avanzar sin un proyecto de Supabase vivo:
+hace falta crearlo, aplicar `0001`–`0005` y generar los tipos.
+
 ### R2 — Abrir un expediente
-Alta con materia, vía, fuero, órgano y partes. Clonado de etapas de la
-plantilla. Revisión de conflicto de interés en el alta, con constancia de quién
-la revisó. Consecutivo interno automático.
+Alta con materia, vía, fuero, órgano y partes. Revisión de conflicto de interés
+en el alta, con constancia de quién la revisó.
+
+*El motor ya está* (`src/lib/expedientes/apertura.ts`): falta la Server Action
+que lea el consecutivo, escriba las filas y revalide, y la pantalla.
 
 ### R3 — Registrar una notificación y que el plazo se calcule solo
 **La rebanada que vende el producto.** Se captura la notificación como
@@ -36,9 +49,12 @@ actuación, se elige el plazo del catálogo y el sistema propone el vencimiento
 Al terminar R3 hay algo que enseñar.
 
 ### R4 — "Qué vence esta semana"
-El panel de arranque: plazos ordenados por urgencia en días hábiles, audiencias
-de la semana y expedientes sin movimiento. No un Kanban donde haya que adivinar
-por dónde empezar.
+El panel de arranque: plazos y audiencias en una sola lista ordenada por
+urgencia en días hábiles, lo que no tiene responsable resaltado y los choques de
+agenda a la vista. No un Kanban donde haya que adivinar por dónde empezar.
+
+*El motor ya está* (`src/lib/panel/pendientes.ts`): faltan las consultas y la
+pantalla.
 
 ### R5 — Alertas por correo
 Cron protegido con `CRON_SECRET`. Si no se puede leer el registro de envíos, la

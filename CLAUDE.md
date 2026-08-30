@@ -60,8 +60,9 @@ profesional de un abogado.
 
 ## 5. Lo construido hoy
 
-Todo lo que sigue es **lógica pura, sin base de datos y sin reloj**, con 87
-pruebas. La interfaz todavía no existe.
+La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**;
+§5.5 es la plomería que la conectará. **131 pruebas.** La interfaz todavía no
+existe.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -91,13 +92,40 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
   suspensión en amparo) no cuentan para el avance.
 - `partes.ts` — roles por materia y validación. Exactamente una parte propia por
   expediente.
+- `apertura.ts` — convierte la captura del alta en el grafo de filas a insertar:
+  número interno consecutivo por año, clonado de etapas y validación. ⚠️ Distingue
+  lo que **bloquea** (sin vía no hay régimen de cómputo; sin parte propia no se
+  sabe desde qué lado corren los plazos) de lo que solo **advierte** (el número
+  del órgano no existe hasta la admisión; exigirlo obliga a inventarlo).
 
-### 5.3 Conflicto de interés — `src/lib/conflictos/deteccion.ts`
+### 5.3 Panel — `src/lib/panel/pendientes.ts`
+
+"Qué vence": plazos y audiencias en **una sola lista**, porque para quien tiene
+que estar en un lugar a una hora compiten por el mismo día. Incluye detección de
+**choques de agenda** —misma persona, mismo día, dos compromisos— que es lo que
+arruina una semana cuando se descubre tarde.
+
+### 5.4 Conflicto de interés — `src/lib/conflictos/deteccion.ts`
 
 Cruza las partes de un asunto nuevo contra el padrón. Devuelve `impedimento` o
 `revisar` con su evidencia; **nunca "puedes aceptarlo"**.
 
-### 5.4 Esquema — `supabase/migrations/`
+### 5.5 Plomería — `src/lib/supabase/`, `src/types/db.ts`, `src/proxy.ts`
+
+Clientes de servidor, navegador y servicio; validación de variables de entorno;
+proxy que refresca la sesión y bloquea `/panel` y `/portal`.
+
+⚠️ `src/types/db.ts` está **escrito a mano** porque todavía no hay proyecto de
+Supabase vivo. Toda migración que cambie una tabla lo actualiza **en el mismo
+commit**; en cuanto exista el proyecto se sustituye por
+`npx supabase gen types typescript`.
+
+⚠️ El cliente de servicio salta toda la RLS y tiene **solo dos usos legítimos**:
+el alta de despacho (el usuario aún no tiene membresía y no puede pasar ninguna
+política) y el cron de alertas. Si aparece la tentación de usarlo "porque la RLS
+estorba", lo que hay que arreglar es la política.
+
+### 5.6 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y

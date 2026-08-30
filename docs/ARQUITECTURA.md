@@ -150,7 +150,7 @@ calendario de otro y hacerle perder un término.
 
 ## 7. Estado actual
 
-Construido y probado (87 pruebas):
+Construido y probado (**131 pruebas**; typecheck, lint y build limpios):
 
 - Motor de cómputo de plazos con traza auditable
 - Calendarios de días inhábiles (PJF y laboral 2026)
@@ -158,8 +158,17 @@ Construido y probado (87 pruebas):
 - Alertas por ventanas en días hábiles
 - Materias, vías y plantillas de etapas por vía
 - Partes y validación de integridad
+- Apertura de expediente: número interno, clonado de etapas, qué bloquea y qué
+  solo advierte
+- Panel "qué vence" con detección de choques de agenda
 - Detección de conflicto de interés
 - Esquema completo con RLS multi-tenant (migraciones `0001`–`0005`)
+- Clientes de Supabase, tipos de la base y proxy de sesión
 
 Sin construir: interfaz, autenticación, Server Actions, portal del cliente,
 cobro. Ver [`ROADMAP.md`](ROADMAP.md).
+
+**El siguiente paso depende de algo que no está en el código:** hace falta un
+proyecto de Supabase vivo para aplicar las migraciones, generar los tipos reales
+y poder escribir Server Actions contra algo. Hasta entonces, lo que se puede
+seguir construyendo es lógica pura.

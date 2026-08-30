@@ -50,10 +50,12 @@ clientes y contrapartes ya registrados — y no decide por ti.
 - Catálogo de plazos con rastro de verificación
 - Alertas escalonadas en días hábiles
 - Materias, vías y etapas procesales reales por vía
+- Apertura de expediente con número interno y clonado de etapas
+- Panel "qué vence" con detección de choques de agenda
 - Detección de conflicto de interés
 - Esquema completo con RLS multi-tenant
 
-**87 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**131 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
