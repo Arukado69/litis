@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/*
+  Paleta provisional. La identidad visual se define cuando el nombre esté
+  decidido; mientras tanto, tokens neutros y sobrios — un despacho no quiere
+  que su herramienta de trabajo parezca una app de consumo.
+*/
+@theme {
+  --color-tinta: #16202e;
+  --color-tinta-suave: #47566b;
+  --color-papel: #fbfaf7;
+  --color-borde: #e3e0d8;
+  --color-acento: #7a5c2e;
+
+  /* Semáforo de urgencia de plazos. */
+  --color-urgente: #a3231b;
+  --color-proximo: #9a6408;
+  --color-holgado: #2f6b4a;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-papel);
+  color: var(--color-tinta);
+}
