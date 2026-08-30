@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Aviso, Tarjeta } from '@/components/ui/primitivos'
+import { Aviso, Boton, Tarjeta } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
-import { obtenerExpediente } from '@/lib/expedientes/datos'
+import { obtenerExpediente, plazosDelExpediente } from '@/lib/expedientes/datos'
 import { avance } from '@/lib/expedientes/etapas'
 import {
   buscarVia,
@@ -14,7 +14,7 @@ import {
   type IdMateria,
 } from '@/lib/expedientes/materias'
 import { ROL_ETIQUETA, type RolParte } from '@/lib/expedientes/partes'
-import { fechaLarga } from '@/lib/plazos/fecha'
+import { fechaLarga, fechaLargaConDia } from '@/lib/plazos/fecha'
 
 export const metadata: Metadata = { title: 'Expediente' }
 
@@ -36,7 +36,10 @@ export default async function PaginaExpediente({
 }) {
   await exigirPanel()
   const { id } = await params
-  const expediente = await obtenerExpediente(id)
+  const [expediente, plazos] = await Promise.all([
+    obtenerExpediente(id),
+    plazosDelExpediente(id),
+  ])
 
   // `obtenerExpediente` no distingue "no existe" de "no tienes acceso", y aquí
   // tampoco: decirle a alguien que el expediente existe pero no puede verlo ya
@@ -58,16 +61,59 @@ export default async function PaginaExpediente({
         >
           ← Expedientes
         </Link>
-        <div className="mt-2 flex flex-wrap items-baseline gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {expediente.caratula}
-          </h1>
-          <span className="text-sm text-[var(--color-tinta-suave)]">
-            {expediente.numeroInterno}
-            {expediente.numeroOrgano ? ` · ${expediente.numeroOrgano}` : ''}
-          </span>
+        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {expediente.caratula}
+            </h1>
+            <span className="text-sm text-[var(--color-tinta-suave)]">
+              {expediente.numeroInterno}
+              {expediente.numeroOrgano ? ` · ${expediente.numeroOrgano}` : ''}
+            </span>
+          </div>
+          <Link href={`/panel/expedientes/${id}/notificacion`}>
+            <Boton>Registrar notificación</Boton>
+          </Link>
         </div>
       </div>
+
+      <Tarjeta>
+        <h2 className="mb-4 font-medium">Plazos</h2>
+        {plazos.length === 0 ? (
+          <p className="text-sm text-[var(--color-tinta-suave)]">
+            Ninguno todavía. Registra una notificación y el sistema computa su
+            plazo con la traza a la vista.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {plazos.map((p) => (
+              <li
+                key={p.id}
+                className="rounded-md border border-[var(--color-borde)] p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="font-medium">{p.etiqueta}</span>
+                  <span>Vence el {fechaLargaConDia(p.fechaVencimiento)}</span>
+                </div>
+                <p className="mt-1 text-xs text-[var(--color-tinta-suave)]">
+                  Notificado el {fechaLarga(p.fechaNotificacion)}
+                  {p.responsableNombre ? ` · ${p.responsableNombre}` : ''}
+                  {p.confiabilidad === 'semilla_no_verificada'
+                    ? ' · cómputo sin verificar'
+                    : ''}
+                </p>
+                {/* Un vencimiento corregido a mano tiene que decir que lo fue,
+                    y por qué: si no, la fecha aparenta salir del motor. */}
+                {p.ajustada ? (
+                  <p className="mt-1 text-xs text-[var(--color-proximo)]">
+                    Fecha ajustada a mano — {p.motivoAjuste}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Tarjeta>
 
       {expediente.restringido ? (
         <Aviso tono="informativo">
@@ -182,10 +228,6 @@ export default async function PaginaExpediente({
         </ol>
       </Tarjeta>
 
-      <Aviso tono="informativo">
-        Lo que sigue: registrar una notificación para que el sistema compute su
-        plazo con la traza a la vista.
-      </Aviso>
     </div>
   )
 }

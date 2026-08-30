@@ -61,8 +61,8 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**174 pruebas.** Ya hay acceso, registro, panel y alta de expedientes
-funcionando contra Supabase.
+**198 pruebas.** Acceso, registro, expedientes y cómputo de plazos ya
+funcionan contra Supabase.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -82,6 +82,15 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
 - `computo.ts` — el motor. Devuelve la fecha **y su traza auditable**.
 - `catalogo.ts` — catálogo semilla de plazos.
 - `alertas.ts` — ventanas de aviso, contadas en **días hábiles**.
+- `registro.ts` — captura de la notificación. Admite plazo del catálogo **o
+  capturado a mano**: el catálogo nunca cubrirá todas las vías de las 32
+  entidades, y un sistema que solo acepte lo de fábrica obliga a llevar el
+  resto en un papel aparte. Un plazo a mano sale marcado sin fundamento.
+- `carga.ts` — único puente entre la base y el motor: filas → `Calendario`.
+- ⚠️ **Los calendarios y el catálogo viven en la BASE, no en el código.** Las
+  constantes de `calendarios-semilla.ts` y `catalogo.ts` son la **semilla** con
+  la que se generó la migración `0008`; en tiempo de ejecución solo se lee la
+  tabla. `semilla.test.ts` falla si el SQL y el código se separan.
 
 ### 5.2 Expedientes — `src/lib/expedientes/`
 
@@ -131,7 +140,7 @@ que en cuanto se apliquen las migraciones pendientes debe sustituirse por
 mano: **toda migración que cambie una tabla lo actualiza en el mismo commit.**
 
 ⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
-`crear_mi_despacho` (§5.8), **hoy no lo usa ningún camino**; queda para el cron
+`crear_mi_despacho` (§5.9), **hoy no lo usa ningún camino**; queda para el cron
 de alertas, que corre sin sesión. Si aparece la tentación de usarlo "porque la
 RLS estorba", lo que hay que arreglar es la política.
 
@@ -152,7 +161,26 @@ RLS estorba", lo que hay que arreglar es la política.
   obvia de ignorar el aviso la segunda vez.
 - Vía y roles dependen de la materia elegida, en el cliente.
 
-### 5.7 Seguridad de acceso — `src/lib/seguridad/`
+### 5.7 Cómputo de plazos en pantalla — `.../expedientes/[id]/notificacion/`
+
+**La rebanada que vende el producto.**
+
+- ⚠️ **Dos pasos, siempre.** El primer envío calcula y muestra la traza sin
+  guardar nada; el segundo, con la casilla marcada, guarda. La herramienta
+  propone y el abogado confirma — esa secuencia es lo que deja la
+  responsabilidad donde debe estar.
+- Se enseña el razonamiento completo: cuándo surtió efectos, cuál fue el primer
+  día, **qué días se saltaron y por qué**, y con qué fundamento.
+- Se puede **ajustar la fecha a mano**, y ajustar exige motivo (lo fuerza un
+  `check` en la base). El motor no conoce el acuerdo que habilitó días ni la
+  suspensión de ayer; sin poder corregir, el abogado llevaría el plazo bueno en
+  un papel aparte y el sistema sobraría.
+- La traza completa se guarda en `plazos.computo` (jsonb) para poder auditarla
+  a seis meses vista.
+- ⚠️ Al listar plazos se lee `fecha_vencimiento_efectiva`, la columna generada.
+  Leer `fecha_vencimiento` mostraría la del motor aunque se haya corregido.
+
+### 5.8 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -164,7 +192,7 @@ RLS estorba", lo que hay que arreglar es la política.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.8 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.9 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -183,7 +211,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.9 Esquema — `supabase/migrations/`
+### 5.10 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y

@@ -3,7 +3,12 @@ import 'server-only'
 import { normalizarNombre } from '@/lib/conflictos/deteccion'
 import type { RegistroExistente } from '@/lib/conflictos/deteccion'
 import { clienteServidor } from '@/lib/supabase/server'
-import type { EstadoExpediente, RelacionPersona, TipoPersonaDb } from '@/types/db'
+import type {
+  EstadoExpediente,
+  EstadoPlazo,
+  RelacionPersona,
+  TipoPersonaDb,
+} from '@/types/db'
 
 /**
  * Acceso a datos de expedientes.
@@ -79,6 +84,7 @@ export interface EtapaDelExpediente {
 }
 
 export interface ExpedienteCompleto extends ExpedienteEnLista {
+  organoId: string | null
   fuero: string
   entidad: string | null
   instancia: string | null
@@ -98,7 +104,7 @@ export async function obtenerExpediente(
   const { data, error } = await supabase
     .from('expedientes')
     .select(
-      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, instancia, cuantia, notas, restringido, fecha_inicio, estado, etapa_actual, actualizado_el, responsable_id, perfiles:responsable_id(nombre)',
+      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, organo_id, instancia, cuantia, notas, restringido, fecha_inicio, estado, etapa_actual, actualizado_el, responsable_id, perfiles:responsable_id(nombre)',
     )
     .eq('id', id)
     .maybeSingle()
@@ -131,6 +137,7 @@ export async function obtenerExpediente(
     via: data.via,
     fuero: data.fuero,
     entidad: data.entidad,
+    organoId: data.organo_id,
     instancia: data.instancia,
     cuantia: data.cuantia,
     notas: data.notas,
@@ -326,5 +333,56 @@ export async function miembrosDelDespacho(
         rol: fila.rol,
       },
     ]
+  })
+}
+
+export interface PlazoDelExpediente {
+  id: string
+  etiqueta: string
+  fechaNotificacion: string
+  /** La que manda: la ajustada a mano si la hay. */
+  fechaVencimiento: string
+  /** Solo cuando se corrigió a mano. */
+  motivoAjuste: string | null
+  ajustada: boolean
+  estado: EstadoPlazo
+  confiabilidad: string
+  responsableNombre: string | null
+}
+
+/**
+ * Los plazos del expediente, del más próximo a vencer al más lejano.
+ *
+ * Se lee `fecha_vencimiento_efectiva` —la columna generada— y no
+ * `fecha_vencimiento`: la primera ya resuelve si hubo ajuste manual. Consultar
+ * la segunda mostraría la fecha del motor aunque el abogado la haya corregido,
+ * que es exactamente el error que la columna generada existe para evitar.
+ */
+export async function plazosDelExpediente(
+  expedienteId: string,
+): Promise<PlazoDelExpediente[]> {
+  const supabase = await clienteServidor()
+
+  const { data } = await supabase
+    .from('plazos')
+    .select(
+      'id, etiqueta, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento_ajustada, motivo_ajuste, estado, confiabilidad, responsable_id, perfiles:responsable_id(nombre)',
+    )
+    .eq('expediente_id', expedienteId)
+    .order('fecha_vencimiento_efectiva')
+
+  return (data ?? []).map((p) => {
+    const perfil = Array.isArray(p.perfiles) ? p.perfiles[0] : p.perfiles
+    return {
+      id: p.id,
+      etiqueta: p.etiqueta,
+      fechaNotificacion: p.fecha_notificacion,
+      fechaVencimiento: p.fecha_vencimiento_efectiva,
+      motivoAjuste: p.motivo_ajuste,
+      ajustada: p.fecha_vencimiento_ajustada !== null,
+      estado: p.estado,
+      confiabilidad: p.confiabilidad,
+      responsableNombre: perfil?.nombre ?? null,
+    }
   })
 }

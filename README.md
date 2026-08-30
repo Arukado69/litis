@@ -43,7 +43,7 @@ clientes y contrapartes ya registrados — y no decide por ti.
 
 ## Estado
 
-**Acceso, registro y expedientes ya funcionan.**
+**Acceso, registro, expedientes y cómputo de plazos ya funcionan.**
 
 - Motor de cómputo de plazos con traza auditable
 - Calendarios de días inhábiles (PJF y laboral 2026)
@@ -56,8 +56,9 @@ clientes y contrapartes ya registrados — y no decide por ti.
 - Esquema completo con RLS multi-tenant
 - Registro, acceso y panel, con freno anti-fuerza-bruta
 - Alta de expedientes con revisión de conflicto de interés
+- Registro de notificaciones con cómputo de plazo y traza auditable
 
-**174 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**198 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

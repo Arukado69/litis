@@ -33,9 +33,16 @@ Lista, alta y detalle. Revisión de conflicto de interés en el alta, con
 constancia en la bitácora de quién la revisó. Etapas clonadas de la plantilla
 de la vía. El consecutivo interno lo asigna la base, con reintento.
 
-**174 pruebas.** Typecheck, lint y build limpios.
+### R3 — Registrar una notificación y que el plazo se calcule solo ✅
 
-⚠️ **Falta aplicar `0007`** en el proyecto de Supabase.
+**La rebanada que vende el producto.** Se captura la notificación, se elige el
+plazo del catálogo (o se captura a mano), y el sistema propone el vencimiento
+**con su traza completa a la vista**. El abogado confirma o ajusta con motivo.
+La traza se guarda para poder auditarla después.
+
+**198 pruebas.** Typecheck, lint y build limpios.
+
+⚠️ **Falta aplicar `0008`** en el proyecto de Supabase.
 
 ---
 
@@ -48,13 +55,6 @@ titular dentro; falta que meta a los demás.
 ### R2-bis — Editar el expediente
 Cambiar responsable, capturar el número del juzgado cuando se admita, mover la
 etapa, agregar partes. Hoy el alta escribe y el detalle solo lee.
-
-### R3 — Registrar una notificación y que el plazo se calcule solo
-**La rebanada que vende el producto.** Se captura la notificación como
-actuación, se elige el plazo del catálogo y el sistema propone el vencimiento
-**con su traza a la vista**. El abogado confirma o ajusta con motivo.
-
-Al terminar R3 hay algo que enseñar.
 
 ### R4 — "Qué vence esta semana"
 El panel de arranque: plazos y audiencias en una sola lista ordenada por

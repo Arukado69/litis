@@ -13,7 +13,7 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0007`.
+ * Espejo de `supabase/migrations/0001`–`0008`.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
@@ -143,6 +143,8 @@ export type MembresiaRow = {
 export type CalendarioRow = {
   id: string
   despacho_id: string | null
+  /** Llave estable de los calendarios semilla compartidos (migración 0008). */
+  clave: string | null
   nombre: string
   vigencia_desde: string
   vigencia_hasta: string
