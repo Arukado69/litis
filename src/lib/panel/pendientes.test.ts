@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { CALENDARIO_PJF_2026 } from '@/lib/plazos/calendarios-semilla'
+import type { Calendario } from '@/lib/plazos/calendario'
+import {
+  CALENDARIO_LABORAL_2026,
+  CALENDARIO_PJF_2026,
+} from '@/lib/plazos/calendarios-semilla'
 
 import {
   armarPanel,
@@ -10,6 +14,7 @@ import {
 } from './pendientes'
 
 const PJF = CALENDARIO_PJF_2026
+const LABORAL = CALENDARIO_LABORAL_2026
 
 /** Viernes. Al lunes 16 le queda 1 día hábil; al martes 17, dos. */
 const HOY = '2026-03-13'
@@ -17,6 +22,7 @@ const HOY = '2026-03-13'
 function plazo(over: Partial<PlazoDelPanel> = {}): PlazoDelPanel {
   return {
     id: 'pl-1',
+    calendarioId: null,
     expedienteId: 'exp-1',
     numeroInterno: '2026-001',
     caratula: 'Pérez vs. Constructora XYZ',
@@ -32,6 +38,7 @@ function plazo(over: Partial<PlazoDelPanel> = {}): PlazoDelPanel {
 function audiencia(over: Partial<AudienciaDelPanel> = {}): AudienciaDelPanel {
   return {
     id: 'au-1',
+    calendarioId: null,
     expedienteId: 'exp-2',
     numeroInterno: '2026-002',
     caratula: 'Torres vs. Banco',
@@ -49,12 +56,14 @@ function panel(over: {
   plazos?: PlazoDelPanel[]
   audiencias?: AudienciaDelPanel[]
   horizonteDias?: number
+  calendarios?: ReadonlyMap<string, Calendario>
 }) {
   return armarPanel({
     plazos: over.plazos ?? [],
     audiencias: over.audiencias ?? [],
     hoy: HOY,
-    calendario: PJF,
+    calendarios: over.calendarios,
+    calendarioPorOmision: PJF,
     horizonteDias: over.horizonteDias,
   })
 }
@@ -122,6 +131,39 @@ describe('armarPanel — plazos y audiencias en una sola lista', () => {
   it('propaga que el cómputo no está verificado', () => {
     const p = panel({ plazos: [plazo()] })
     expect(p.pendientes[0]?.confiabilidad).toBe('semilla_no_verificada')
+  })
+})
+
+describe('armarPanel — cada pendiente con su calendario', () => {
+  it('un mismo vencimiento da días distintos según el calendario del plazo', () => {
+    // El 16 de marzo de 2026 es hábil para el PJF y inhábil en materia laboral
+    // (tercer lunes de marzo, art. 74 LFT). Un despacho con asuntos federales y
+    // locales tiene los dos, y contar todo con uno solo diría "faltan 1" donde
+    // el plazo ya se corrió.
+    const calendarios = new Map<string, Calendario>([['lab', LABORAL]])
+
+    const p = panel({
+      plazos: [
+        plazo({ id: 'federal', calendarioId: null }),
+        plazo({ id: 'laboral', calendarioId: 'lab', expedienteId: 'exp-9' }),
+      ],
+      calendarios,
+    })
+
+    const federal = p.pendientes.find((x) => x.id === 'federal')
+    const laboral = p.pendientes.find((x) => x.id === 'laboral')
+
+    expect(federal?.diasHabiles).toBe(1)
+    // Para el laboral, el 16 no cuenta: al lunes 16 no le queda ningún hábil.
+    expect(laboral?.diasHabiles).toBe(0)
+  })
+
+  it('un calendario que no está en el mapa cae al de por omisión', () => {
+    const p = panel({
+      plazos: [plazo({ calendarioId: 'no-existe' })],
+      calendarios: new Map(),
+    })
+    expect(p.pendientes[0]?.diasHabiles).toBe(1)
   })
 })
 

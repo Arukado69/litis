@@ -83,7 +83,7 @@ async function cargarPorId(id: string): Promise<Calendario | null> {
   return armarCalendario(data, dias ?? [])
 }
 
-async function cargarPorClave(clave: string): Promise<Calendario | null> {
+export async function cargarCalendarioPorClave(clave: string): Promise<Calendario | null> {
   const supabase = await clienteServidor()
 
   const { data } = await supabase
@@ -121,7 +121,9 @@ export async function calendarioDelExpediente(args: {
     }
   }
 
-  const porOmision = await cargarPorClave(claveCalendarioPorOmision(args.regimen))
+  const porOmision = await cargarCalendarioPorClave(
+    claveCalendarioPorOmision(args.regimen),
+  )
   return { calendario: porOmision, esPorOmision: true }
 }
 
@@ -152,4 +154,45 @@ export async function catalogoDeRegimen(
     fundamento: p.fundamento,
     verificado: p.verificado_el !== null,
   }))
+}
+
+/**
+ * Varios calendarios de un jalón, indexados por id.
+ *
+ * El panel cruza plazos de todo el despacho y cada uno se computó con el suyo.
+ * Cargarlos uno por uno serían N+1 consultas; aquí van dos, sin importar
+ * cuántos calendarios distintos haya.
+ */
+export async function cargarCalendariosPorId(
+  ids: readonly string[],
+): Promise<Map<string, Calendario>> {
+  const unicos = [...new Set(ids)]
+  if (unicos.length === 0) return new Map()
+
+  const supabase = await clienteServidor()
+
+  const [cabeceras, dias] = await Promise.all([
+    supabase
+      .from('calendarios')
+      .select('id, nombre, vigencia_desde, vigencia_hasta, fin_de_semana_inhabil')
+      .in('id', unicos),
+    supabase
+      .from('dias_inhabiles')
+      .select('calendario_id, desde, hasta, motivo, descripcion, fundamento')
+      .in('calendario_id', unicos)
+      .order('desde'),
+  ])
+
+  const porCalendario = new Map<string, FilaDia[]>()
+  for (const d of dias.data ?? []) {
+    const lista = porCalendario.get(d.calendario_id) ?? []
+    lista.push(d)
+    porCalendario.set(d.calendario_id, lista)
+  }
+
+  const mapa = new Map<string, Calendario>()
+  for (const fila of cabeceras.data ?? []) {
+    mapa.set(fila.id, armarCalendario(fila, porCalendario.get(fila.id) ?? []))
+  }
+  return mapa
 }

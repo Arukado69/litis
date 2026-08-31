@@ -43,7 +43,7 @@ clientes y contrapartes ya registrados — y no decide por ti.
 
 ## Estado
 
-**Acceso, registro, expedientes y cómputo de plazos ya funcionan.**
+**Acceso, registro, expedientes, cómputo de plazos y el panel ya funcionan.**
 
 - Motor de cómputo de plazos con traza auditable
 - Calendarios de días inhábiles (PJF y laboral 2026)
@@ -51,14 +51,14 @@ clientes y contrapartes ya registrados — y no decide por ti.
 - Alertas escalonadas en días hábiles
 - Materias, vías y etapas procesales reales por vía
 - Apertura de expediente con número interno y clonado de etapas
-- Panel "qué vence" con detección de choques de agenda
 - Detección de conflicto de interés
 - Esquema completo con RLS multi-tenant
 - Registro, acceso y panel, con freno anti-fuerza-bruta
 - Alta de expedientes con revisión de conflicto de interés
 - Registro de notificaciones con cómputo de plazo y traza auditable
+- Panel "qué vence" con datos reales y choques de agenda
 
-**198 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**200 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

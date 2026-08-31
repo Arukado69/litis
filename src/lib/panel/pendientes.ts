@@ -23,10 +23,16 @@
  * prórroga o mandar a alguien más.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * TODO SE CUENTA EN DÍAS HÁBILES
+ * TODO SE CUENTA EN DÍAS HÁBILES, Y CADA UNO CON SU CALENDARIO
  * ─────────────────────────────────────────────────────────────────────────────
- * Por la misma razón que las alertas: "faltan 3 días" no dice nada si dos son
- * sábado y domingo. Ver `src/lib/plazos/alertas.ts`.
+ * "Faltan 3 días" no dice nada si dos son sábado y domingo. Ver
+ * `src/lib/plazos/alertas.ts`.
+ *
+ * Y no basta un calendario para todo el panel: un despacho con asuntos
+ * federales y locales tiene por lo menos dos, con periodos vacacionales
+ * distintos. Contar el portafolio entero con uno solo diría "faltan 5" donde
+ * faltan 2 — justo en el dato que decide qué se trabaja hoy. Por eso cada
+ * pendiente trae el id del calendario con el que se computó, y aquí se busca.
  */
 
 import { diasHabilesRestantes } from '@/lib/plazos/alertas'
@@ -50,6 +56,8 @@ export const URGENCIA_META: Record<
 /** Un plazo corriendo, tal como lo entrega la consulta. */
 export interface PlazoDelPanel {
   id: string
+  /** Con cuál se computó. `null` cae al de por omisión. */
+  calendarioId: string | null
   expedienteId: string
   numeroInterno: string
   caratula: string
@@ -64,6 +72,12 @@ export interface PlazoDelPanel {
 
 export interface AudienciaDelPanel {
   id: string
+  /**
+   * El del órgano del expediente. Suele venir `null`: para una audiencia, la
+   * fecha es exacta y los días hábiles restantes son solo una referencia, así
+   * que caer al de por omisión no compromete nada.
+   */
+  calendarioId: string | null
   expedienteId: string
   numeroInterno: string
   caratula: string
@@ -140,10 +154,22 @@ export function armarPanel(args: {
   plazos: readonly PlazoDelPanel[]
   audiencias: readonly AudienciaDelPanel[]
   hoy: FechaISO
-  calendario: Calendario
+  /** Por id. Lo que no esté aquí cae a `calendarioPorOmision`. */
+  calendarios?: ReadonlyMap<string, Calendario>
+  calendarioPorOmision: Calendario
   horizonteDias?: number
 }): Panel {
-  const { plazos, audiencias, hoy, calendario, horizonteDias = 10 } = args
+  const {
+    plazos,
+    audiencias,
+    hoy,
+    calendarios,
+    calendarioPorOmision,
+    horizonteDias = 10,
+  } = args
+
+  const calendarioDe = (id: string | null): Calendario =>
+    (id ? calendarios?.get(id) : undefined) ?? calendarioPorOmision
 
   const pendientes: Pendiente[] = []
 
@@ -151,7 +177,7 @@ export function armarPanel(args: {
     const diasHabiles = diasHabilesRestantes(
       hoy,
       plazo.fechaVencimiento,
-      calendario,
+      calendarioDe(plazo.calendarioId),
     )
     if (diasHabiles > horizonteDias) continue
 
@@ -174,7 +200,11 @@ export function armarPanel(args: {
   }
 
   for (const audiencia of audiencias) {
-    const diasHabiles = diasHabilesRestantes(hoy, audiencia.fecha, calendario)
+    const diasHabiles = diasHabilesRestantes(
+      hoy,
+      audiencia.fecha,
+      calendarioDe(audiencia.calendarioId),
+    )
     if (diasHabiles > horizonteDias) continue
 
     pendientes.push({

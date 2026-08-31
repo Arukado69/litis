@@ -40,9 +40,14 @@ plazo del catálogo (o se captura a mano), y el sistema propone el vencimiento
 **con su traza completa a la vista**. El abogado confirma o ajusta con motivo.
 La traza se guarda para poder auditarla después.
 
-**198 pruebas.** Typecheck, lint y build limpios.
+### R4 — "Qué vence" ✅
 
-⚠️ **Falta aplicar `0008`** en el proyecto de Supabase.
+El panel de arranque con datos reales: plazos y audiencias en una lista
+ordenada por urgencia en días hábiles, choques de agenda arriba y lo que no
+tiene responsable resaltado. Cada pendiente se cuenta con su propio calendario.
+
+**200 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0008` aplicadas; el esquema está al corriente.
 
 ---
 
@@ -56,13 +61,9 @@ titular dentro; falta que meta a los demás.
 Cambiar responsable, capturar el número del juzgado cuando se admita, mover la
 etapa, agregar partes. Hoy el alta escribe y el detalle solo lee.
 
-### R4 — "Qué vence esta semana"
-El panel de arranque: plazos y audiencias en una sola lista ordenada por
-urgencia en días hábiles, lo que no tiene responsable resaltado y los choques de
-agenda a la vista. No un Kanban donde haya que adivinar por dónde empezar.
-
-*El motor ya está* (`src/lib/panel/pendientes.ts`): faltan las consultas y la
-pantalla.
+### R4-bis — Cerrar el plazo
+Marcar un plazo como atendido cuando se presenta la promoción, y ligarlo a la
+actuación que lo cumple. Hoy los plazos entran al panel pero no salen.
 
 ### R5 — Alertas por correo
 Cron protegido con `CRON_SECRET`. Si no se puede leer el registro de envíos, la

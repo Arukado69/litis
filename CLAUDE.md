@@ -61,8 +61,8 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**198 pruebas.** Acceso, registro, expedientes y cómputo de plazos ya
-funcionan contra Supabase.
+**200 pruebas.** Acceso, registro, expedientes, cómputo de plazos y el panel
+"qué vence" ya funcionan contra Supabase.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -117,12 +117,22 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
   reintento: calcularlo en el cliente le daría el mismo número a dos altas
   simultáneas.
 
-### 5.3 Panel — `src/lib/panel/pendientes.ts`
+### 5.3 Panel "qué vence" — `src/lib/panel/`, `/panel`
 
-"Qué vence": plazos y audiencias en **una sola lista**, porque para quien tiene
-que estar en un lugar a una hora compiten por el mismo día. Incluye detección de
-**choques de agenda** —misma persona, mismo día, dos compromisos— que es lo que
-arruina una semana cuando se descubre tarde.
+Plazos y audiencias en **una sola lista**, porque para quien tiene que estar en
+un lugar a una hora compiten por el mismo día.
+
+- **Choques de agenda** —misma persona, mismo día, dos compromisos— arriba de
+  todo. Lo que arruina una semana no es un plazo apretado, es descubrir tarde
+  que dos cosas caen el mismo día.
+- Lo que **no tiene responsable** se resalta: nadie lo está viendo, así que
+  nadie lo va a reclamar.
+- ⚠️ **Cada pendiente se cuenta con SU calendario.** Un despacho con asuntos
+  federales y locales tiene por lo menos dos, con vacaciones distintas; contar
+  el portafolio entero con uno solo diría "faltan 5" donde faltan 2, justo en
+  el dato que decide qué se trabaja hoy. Los calendarios se cargan en lote
+  (`cargarCalendariosPorId`) para no hacer N+1 consultas.
+- Solo entra lo `pendiente`: un plazo atendido en la lista enseña a ignorarla.
 
 ### 5.4 Conflicto de interés — `src/lib/conflictos/deteccion.ts`
 
@@ -134,10 +144,11 @@ Cruza las partes de un asunto nuevo contra el padrón. Devuelve `impedimento` o
 Clientes de servidor, navegador y servicio; validación de variables de entorno;
 proxy que refresca la sesión y bloquea `/panel` y `/portal`.
 
-⚠️ `src/types/db.ts` sigue **escrito a mano**. Ya hay proyecto de Supabase, así
-que en cuanto se apliquen las migraciones pendientes debe sustituirse por
-`npx supabase gen types typescript --project-id <id>`. Mientras dure lo hecho a
-mano: **toda migración que cambie una tabla lo actualiza en el mismo commit.**
+⚠️ `src/types/db.ts` sigue **escrito a mano** y ya son ocho migraciones. El
+esquema está aplicado, así que lo correcto es sustituirlo por
+`npx supabase gen types typescript --project-id <id>` a la primera oportunidad.
+Mientras tanto la regla es estricta: **toda migración que cambie una tabla lo
+actualiza en el mismo commit.**
 
 ⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
 `crear_mi_despacho` (§5.9), **hoy no lo usa ningún camino**; queda para el cron
