@@ -61,8 +61,8 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**200 pruebas.** Acceso, registro, expedientes, cómputo de plazos y el panel
-"qué vence" ya funcionan contra Supabase.
+**236 pruebas.** Acceso, registro, expedientes, cómputo de plazos, el panel
+"qué vence" y el cierre del plazo ya funcionan contra Supabase.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -191,7 +191,44 @@ RLS estorba", lo que hay que arreglar es la política.
 - ⚠️ Al listar plazos se lee `fecha_vencimiento_efectiva`, la columna generada.
   Leer `fecha_vencimiento` mostraría la del motor aunque se haya corregido.
 
-### 5.8 Seguridad de acceso — `src/lib/seguridad/`
+### 5.8 Cierre del plazo — `src/lib/plazos/cierre.ts`, `.../expedientes/[id]/`
+
+Un plazo sale de la vigilancia por dos caminos y solo dos: **presentada** (se
+presentó la promoción) o **cancelada** (dejó de aplicar: desistimiento,
+acumulación, quedó sin materia).
+
+- ⚠️ **La presentación extemporánea no se maquilla.** Si el plazo vencía el 16 y
+  la promoción se presentó el 18, marcarlo "atendido" y ya dejaría el panel en
+  verde y el expediente diciendo que todo salió bien. No salió bien: se perdió
+  el término. El sistema lo detecta, lo advierte **antes** de guardar, exige que
+  alguien lo reconozca de forma expresa y lo asienta en la bitácora —que es
+  inmutable— como `Presentación EXTEMPORÁNEA`, con las dos fechas escritas. Un
+  registro tranquilizador sobre un hecho grave es peor que no tener registro.
+- ⚠️ **El vencimiento se relee de la base, nunca del formulario.** Si viniera
+  del campo oculto, cambiarlo convertiría una presentación tardía en una en
+  tiempo y se cae toda la razón de ser de la pantalla.
+- **Cancelar exige motivo** (mínimo real, no "n/a"): sin él, cancelar sería la
+  forma cómoda de desaparecer del panel cualquier plazo incómodo.
+- **Cancelar es de `titular` o `abogado`.** ⚠️ Se hace cumplir en la acción
+  (capa 2), **no en la RLS**: la policy de `plazos` deja escribir a todo el
+  personal con acceso al expediente. No es un agujero de aislamiento —nadie sale
+  de su despacho— sino política interna sin respaldo en la base. Queda anotado
+  para convertirlo en policy cuando un despacho real lo pida.
+- **Primero la bitácora, después el estado.** Si el segundo paso falla queda un
+  plazo abierto con su actuación asentada: molesto pero honesto. Al revés
+  quedaría un plazo cerrado sin constancia de por qué.
+- Se rechaza la fecha futura (sacaría de la vigilancia un plazo que sigue
+  corriendo) y la anterior a la notificación (el error de captura más común es
+  el año, y un 2025 volvería "anticipada" una presentación tardía).
+- La extemporánea igual queda `atendido`: el plazo dejó de correr. Que se haya
+  presentado tarde **lo dice la bitácora**, no el estado — ahí no se puede
+  borrar.
+- ⚠️ **`estado = 'vencido'` no lo escribe nadie todavía.** El panel deriva el
+  atraso de la fecha, que es más simple y no se puede desincronizar. El valor
+  existe en el enum por si algún día un cron lo marca; hasta entonces, un plazo
+  vencido sigue siendo `pendiente` y así aparece en rojo.
+
+### 5.9 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -203,7 +240,7 @@ RLS estorba", lo que hay que arreglar es la política.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.9 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.10 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -222,15 +259,20 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.10 Esquema — `supabase/migrations/`
+### 5.11 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
-alertas · `0006` alta de despacho transaccional.
+alertas · `0006` alta de despacho transaccional · `0007` apertura de expediente
+transaccional · `0008` semilla de calendarios y catálogo de plazos.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0003`. **Pendientes
-`0004`, `0005` y `0006`** — se aplican pegando el archivo en el SQL Editor, en
-orden. Sin `0006` el registro falla.
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0008`; el esquema está
+al corriente. Las nuevas se aplican pegando el archivo en el SQL Editor, en
+orden.
+
+⚠️ `src/types/db.ts` está **escrito a mano** y lleva ocho migraciones de
+posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
+`npx supabase gen types typescript --project-id <id>`.
 
 ## 6. Reglas que no se negocian
 
@@ -262,7 +304,10 @@ orden. Sin `0006` el registro falla.
 11. **Un archivo `'use server'` solo exporta funciones async.** El estado
     inicial y los tipos de un formulario van en un `estado.ts` aparte, o el
     build se cae.
-12. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+12. **Un plazo perdido se escribe con todas sus letras.** Ninguna pantalla, ni
+    ninguna redacción, puede dejar una presentación extemporánea con el mismo
+    aspecto que una en tiempo. Hay pruebas que fijan el título de la actuación.
+13. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones

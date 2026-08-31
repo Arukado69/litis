@@ -39,6 +39,11 @@ catálogo estático miente.
 **Detecta conflicto de interés** cruzando las partes del asunto nuevo contra
 clientes y contrapartes ya registrados — y no decide por ti.
 
+**No ayuda a maquillar un término perdido.** Si la promoción se presentó
+después del vencimiento, lo advierte antes de guardar y lo asienta así en la
+bitácora, que no se puede editar. Un registro tranquilizador sobre un hecho
+grave es peor que no tener registro.
+
 ---
 
 ## Estado
@@ -57,8 +62,9 @@ clientes y contrapartes ya registrados — y no decide por ti.
 - Alta de expedientes con revisión de conflicto de interés
 - Registro de notificaciones con cómputo de plazo y traza auditable
 - Panel "qué vence" con datos reales y choques de agenda
+- Cierre del plazo, con la presentación extemporánea asentada como tal
 
-**200 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**236 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

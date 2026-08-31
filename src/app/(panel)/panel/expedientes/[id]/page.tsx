@@ -4,7 +4,11 @@ import { notFound } from 'next/navigation'
 
 import { Aviso, Boton, Tarjeta } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
-import { obtenerExpediente, plazosDelExpediente } from '@/lib/expedientes/datos'
+import {
+  obtenerExpediente,
+  plazosDelExpediente,
+  type PlazoDelExpediente,
+} from '@/lib/expedientes/datos'
 import { avance } from '@/lib/expedientes/etapas'
 import {
   buscarVia,
@@ -15,8 +19,21 @@ import {
 } from '@/lib/expedientes/materias'
 import { ROL_ETIQUETA, type RolParte } from '@/lib/expedientes/partes'
 import { fechaLarga, fechaLargaConDia } from '@/lib/plazos/fecha'
+import type { EstadoPlazo, RolMembresia } from '@/types/db'
+
+import { CerrarPlazo } from './cerrar-plazo'
 
 export const metadata: Metadata = { title: 'Expediente' }
+
+/** Quién puede sacar un plazo de la vigilancia. Lo hace cumplir la acción. */
+const PUEDE_CANCELAR: readonly RolMembresia[] = ['titular', 'abogado']
+
+const ESTADO_PLAZO_ETIQUETA: Record<EstadoPlazo, string> = {
+  pendiente: 'Corriendo',
+  atendido: 'Atendido',
+  vencido: 'Vencido sin atender',
+  cancelado: 'Cancelado',
+}
 
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | null }) {
   return (
@@ -29,12 +46,49 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | null }) {
   )
 }
 
+function FilaPlazo({ p }: { p: PlazoDelExpediente }) {
+  const cerrado = p.estado !== 'pendiente'
+  return (
+    <div
+      className={`rounded-md border border-[var(--color-borde)] p-3 text-sm ${
+        cerrado ? 'bg-[var(--color-papel)]' : ''
+      }`}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-medium">{p.etiqueta}</span>
+        <span>
+          {cerrado ? 'Vencía' : 'Vence'} el {fechaLargaConDia(p.fechaVencimiento)}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-[var(--color-tinta-suave)]">
+        {ESTADO_PLAZO_ETIQUETA[p.estado]}
+        {p.atendidoEl
+          ? ` el ${fechaLarga(p.atendidoEl.slice(0, 10))}`
+          : ''}
+        {' · '}
+        Notificado el {fechaLarga(p.fechaNotificacion)}
+        {p.responsableNombre ? ` · ${p.responsableNombre}` : ''}
+        {p.confiabilidad === 'semilla_no_verificada'
+          ? ' · cómputo sin verificar'
+          : ''}
+      </p>
+      {/* Un vencimiento corregido a mano tiene que decir que lo fue, y por
+          qué: si no, la fecha aparenta salir del motor. */}
+      {p.ajustada ? (
+        <p className="mt-1 text-xs text-[var(--color-proximo)]">
+          Fecha ajustada a mano — {p.motivoAjuste}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
 export default async function PaginaExpediente({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  await exigirPanel()
+  const sesion = await exigirPanel()
   const { id } = await params
   const [expediente, plazos] = await Promise.all([
     obtenerExpediente(id),
@@ -45,6 +99,10 @@ export default async function PaginaExpediente({
   // tampoco: decirle a alguien que el expediente existe pero no puede verlo ya
   // es filtrar la existencia de un asunto ajeno.
   if (!expediente) notFound()
+
+  const puedeCancelar = PUEDE_CANCELAR.includes(sesion.activa.rol)
+  const corriendo = plazos.filter((p) => p.estado === 'pendiente')
+  const cerrados = plazos.filter((p) => p.estado !== 'pendiente')
 
   const via = buscarVia(expediente.via)
   const progreso = Math.round(avance(expediente.via, expediente.etapaActual ?? '') * 100)
@@ -85,33 +143,40 @@ export default async function PaginaExpediente({
             plazo con la traza a la vista.
           </p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {plazos.map((p) => (
-              <li
-                key={p.id}
-                className="rounded-md border border-[var(--color-borde)] p-3 text-sm"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium">{p.etiqueta}</span>
-                  <span>Vence el {fechaLargaConDia(p.fechaVencimiento)}</span>
-                </div>
-                <p className="mt-1 text-xs text-[var(--color-tinta-suave)]">
-                  Notificado el {fechaLarga(p.fechaNotificacion)}
-                  {p.responsableNombre ? ` · ${p.responsableNombre}` : ''}
-                  {p.confiabilidad === 'semilla_no_verificada'
-                    ? ' · cómputo sin verificar'
-                    : ''}
-                </p>
-                {/* Un vencimiento corregido a mano tiene que decir que lo fue,
-                    y por qué: si no, la fecha aparenta salir del motor. */}
-                {p.ajustada ? (
-                  <p className="mt-1 text-xs text-[var(--color-proximo)]">
-                    Fecha ajustada a mano — {p.motivoAjuste}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-4">
+            {corriendo.length === 0 ? (
+              <p className="text-sm text-[var(--color-tinta-suave)]">
+                Ningún plazo corriendo ahora mismo.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {corriendo.map((p) => (
+                  <li key={p.id}>
+                    <FilaPlazo p={p} />
+                    <CerrarPlazo plazoId={p.id} puedeCancelar={puedeCancelar} />
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Los cerrados no se borran ni se esconden: se apartan. Son el
+                historial del asunto, y ahí está escrito lo que se presentó
+                tarde. */}
+            {cerrados.length > 0 ? (
+              <details className="text-sm">
+                <summary className="cursor-pointer text-[var(--color-tinta-suave)]">
+                  {cerrados.length} plazo(s) cerrado(s)
+                </summary>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {cerrados.map((p) => (
+                    <li key={p.id}>
+                      <FilaPlazo p={p} />
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+          </div>
         )}
       </Tarjeta>
 

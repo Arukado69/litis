@@ -46,7 +46,16 @@ El panel de arranque con datos reales: plazos y audiencias en una lista
 ordenada por urgencia en días hábiles, choques de agenda arriba y lo que no
 tiene responsable resaltado. Cada pendiente se cuenta con su propio calendario.
 
-**200 pruebas.** Typecheck, lint y build limpios.
+### R4-bis — Cerrar el plazo ✅
+
+Los plazos ya salen del panel: se presentó la promoción, o dejó de aplicar. La
+presentación **extemporánea** se detecta contra el vencimiento releído de la
+base, se advierte antes de guardar, exige reconocimiento expreso y queda
+asentada como tal en la bitácora inmutable. Cancelar exige motivo y es de
+`titular` o `abogado`. No hizo falta migración: las columnas de cierre ya
+estaban en la `0005`.
+
+**236 pruebas.** Typecheck, lint y build limpios.
 Migraciones `0001`–`0008` aplicadas; el esquema está al corriente.
 
 ---
@@ -60,10 +69,6 @@ titular dentro; falta que meta a los demás.
 ### R2-bis — Editar el expediente
 Cambiar responsable, capturar el número del juzgado cuando se admita, mover la
 etapa, agregar partes. Hoy el alta escribe y el detalle solo lee.
-
-### R4-bis — Cerrar el plazo
-Marcar un plazo como atendido cuando se presenta la promoción, y ligarlo a la
-actuación que lo cumple. Hoy los plazos entran al panel pero no salen.
 
 ### R5 — Alertas por correo
 Cron protegido con `CRON_SECRET`. Si no se puede leer el registro de envíos, la

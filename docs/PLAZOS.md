@@ -164,7 +164,83 @@ parámetro y el índice único `(plazo_id, nivel)` es la red final.
 Un plazo `atendido` no genera alertas. Llenar de avisos lo que ya está hecho
 enseña a ignorar los avisos.
 
-## 8. Fuera de alcance, dicho en voz alta
+## 8. Cómo se cierra un plazo
+
+Un plazo sale de la vigilancia por dos caminos y solo dos:
+
+| Camino | Qué significa | Estado |
+|---|---|---|
+| **Presentada** | Se presentó la promoción | `atendido` |
+| **Cancelada** | Dejó de aplicar: desistimiento, acumulación, quedó sin materia | `cancelado` |
+
+### La presentación extemporánea no se maquilla
+
+Si el plazo vencía el 16 y la promoción se presentó el 18, marcarlo "atendido" y
+ya dejaría el panel en verde y el expediente diciendo que todo salió bien. **No
+salió bien: se perdió el término**, con todo lo que eso implica frente al
+cliente y, según el caso, frente al colegio.
+
+Un sistema que ayuda a tapar eso es peor que no tener sistema, porque fabrica un
+registro tranquilizador sobre un hecho grave — y ese registro es justo el que se
+va a leer el día que alguien reclame. Así que:
+
+1. Se compara la fecha capturada contra `fecha_vencimiento_efectiva` **releída
+   de la base**, no contra un campo del formulario. Si viniera del formulario,
+   cambiar un valor oculto convertiría una presentación tardía en una en tiempo.
+2. Se muestra el aviso con las dos fechas **antes** de guardar nada. Quien
+   captura suele estar viendo el acuse, no el plazo: si la fecha está mal, este
+   es el momento de corregirla.
+3. Se exige una casilla que lo reconozca. No aparece de entrada — solo cuando el
+   servidor ya dijo que fue tardía; ofrecerla siempre la volvería una casilla
+   más que se marca sin leer.
+4. Queda en la bitácora, que es inmutable, como
+   `Presentación EXTEMPORÁNEA — <plazo>`, con las dos fechas escritas en el
+   detalle. Dentro de dos años, "presentada el 18" a secas no le dice nada a
+   nadie.
+
+El plazo igual queda `atendido`: dejó de correr y no tiene caso seguir
+vigilándolo. Que se haya presentado tarde **lo dice la bitácora, no el estado**.
+
+### Cancelar exige motivo
+
+Sin motivo, cancelar sería la forma cómoda de hacer desaparecer del panel
+cualquier plazo incómodo, sin dejar rastro de por qué. Con motivo, es una
+decisión que alguien firmó. Lo puede hacer el `titular` o un `abogado`: un
+pasante o un asistente registran hechos —"esto se presentó, aquí está el
+acuse"—, pero decidir que un término **deja de vigilarse** cambia lo que el
+despacho va a mirar mañana.
+
+⚠️ Esa restricción de rol vive en la Server Action, **no en la RLS**. La policy
+de `plazos` deja escribir a todo el personal con acceso al expediente. No es un
+agujero de aislamiento —nadie sale de su despacho—, pero está dicho aquí en vez
+de fingir que la base lo respalda.
+
+### Qué se rechaza al capturar
+
+- **Fecha futura**: marcar como presentado algo que todavía no se presenta saca
+  el plazo de la vigilancia justo mientras sigue corriendo.
+- **Fecha anterior a la notificación**: el error de captura más común es el año,
+  y un 2025 en lugar de 2026 volvería "anticipada" una presentación tardía.
+- **Cerrar dos veces**: si el plazo ya no está `pendiente`, se rechaza. Sin ese
+  freno, dos pestañas abiertas dejan dos actuaciones de cierre sobre el mismo
+  plazo — y la bitácora no se puede corregir después.
+
+### Un detalle de orden
+
+La actuación se inserta **antes** de tocar el plazo. Si el segundo paso falla,
+queda un plazo abierto con su actuación ya asentada: molesto, pero honesto — se
+ve, se vuelve a intentar, y a lo sumo hay una actuación repetida. Al revés
+quedaría un plazo cerrado sin constancia de por qué, que es el registro que no
+sirve para nada.
+
+### Sobre `estado = 'vencido'`
+
+Nadie lo escribe todavía. El panel deriva el atraso de la fecha, que es más
+simple y no se puede desincronizar con la realidad. El valor existe en el enum
+por si algún día un cron lo marca; hasta entonces, un plazo vencido sigue siendo
+`pendiente` y así aparece en rojo.
+
+## 9. Fuera de alcance, dicho en voz alta
 
 - **Plazos en horas.** El sistema penal acusatorio tiene plazos que corren en
   horas (control de detención, plazo constitucional). No se calculan aquí y no
@@ -175,7 +251,7 @@ enseña a ignorar los avisos.
 - **Determinar qué plazo aplica.** El motor computa el plazo que se le dé. Cuál
   corresponde a este asunto es criterio profesional.
 
-## 9. Dónde está el código
+## 10. Dónde está el código
 
 | Archivo | Qué hace |
 |---|---|
@@ -186,8 +262,10 @@ enseña a ignorar los avisos.
 | `src/lib/plazos/computo.ts` | El motor |
 | `src/lib/plazos/catalogo.ts` | Catálogo semilla de plazos |
 | `src/lib/plazos/alertas.ts` | Ventanas de aviso en días hábiles |
+| `src/lib/plazos/registro.ts` | Captura de la notificación |
+| `src/lib/plazos/cierre.ts` | Cierre del plazo y detección de extemporaneidad |
 
-Todo es puro y sin efectos. 45 pruebas cubren el módulo.
+Todo es puro y sin efectos. 105 pruebas cubren el módulo.
 
 ### Una nota sobre `fecha.ts`
 

@@ -348,6 +348,8 @@ export interface PlazoDelExpediente {
   estado: EstadoPlazo
   confiabilidad: string
   responsableNombre: string | null
+  /** Cuándo se cerró. `null` mientras siga corriendo. */
+  atendidoEl: string | null
 }
 
 /**
@@ -366,7 +368,7 @@ export async function plazosDelExpediente(
   const { data } = await supabase
     .from('plazos')
     .select(
-      'id, etiqueta, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento_ajustada, motivo_ajuste, estado, confiabilidad, responsable_id, perfiles:responsable_id(nombre)',
+      'id, etiqueta, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento_ajustada, motivo_ajuste, estado, confiabilidad, atendido_el, responsable_id, perfiles:responsable_id(nombre)',
     )
     .eq('expediente_id', expedienteId)
     .order('fecha_vencimiento_efectiva')
@@ -383,6 +385,7 @@ export async function plazosDelExpediente(
       estado: p.estado,
       confiabilidad: p.confiabilidad,
       responsableNombre: perfil?.nombre ?? null,
+      atendidoEl: p.atendido_el,
     }
   })
 }
