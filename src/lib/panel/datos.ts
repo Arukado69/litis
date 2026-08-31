@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { perfilesInactivos } from '@/lib/despachos/equipo'
 import { clienteServidor } from '@/lib/supabase/server'
 
 import type { AudienciaDelPanel, PlazoDelPanel } from './pendientes'
@@ -14,6 +15,12 @@ import type { AudienciaDelPanel, PlazoDelPanel } from './pendientes'
  * ⚠️ `plazos` y `audiencias` no tienen `despacho_id` propio: cuelgan del
  * expediente. La RLS ya limita a lo visible, y aquí se filtra además por
  * despacho en memoria para no depender solo de la política.
+ *
+ * ⚠️ **Un pendiente a nombre de alguien dado de baja cuenta como SIN
+ * responsable.** Su nombre sigue en la fila —la historia no se reescribe—, pero
+ * el panel lo tiene que tratar como huérfano: nadie que ya no entra al sistema
+ * está viendo ese término, y esta lista existe justamente para que nada quede
+ * sin quien lo vea.
  */
 
 /** Tope de filas por consulta. Un despacho chico no se acerca; evita traer de más. */
@@ -23,6 +30,7 @@ export async function plazosPendientes(
   despachoId: string,
 ): Promise<PlazoDelPanel[]> {
   const supabase = await clienteServidor()
+  const inactivos = await perfilesInactivos(despachoId)
 
   const { data } = await supabase
     .from('plazos')
@@ -40,6 +48,7 @@ export async function plazosPendientes(
     if (!exp || exp.despacho_id !== despachoId) return []
 
     const perfil = Array.isArray(p.perfiles) ? p.perfiles[0] : p.perfiles
+    const huerfano = p.responsable_id !== null && inactivos.has(p.responsable_id)
 
     return [
       {
@@ -50,8 +59,8 @@ export async function plazosPendientes(
         caratula: exp.caratula,
         etiqueta: p.etiqueta,
         fechaVencimiento: p.fecha_vencimiento_efectiva,
-        responsableId: p.responsable_id,
-        responsableNombre: perfil?.nombre ?? null,
+        responsableId: huerfano ? null : p.responsable_id,
+        responsableNombre: huerfano ? null : (perfil?.nombre ?? null),
         confiabilidad:
           p.confiabilidad === 'verificado_por_despacho'
             ? ('verificado_por_despacho' as const)
@@ -65,6 +74,7 @@ export async function audienciasProgramadas(
   despachoId: string,
 ): Promise<AudienciaDelPanel[]> {
   const supabase = await clienteServidor()
+  const inactivos = await perfilesInactivos(despachoId)
 
   const { data } = await supabase
     .from('audiencias')
@@ -80,6 +90,7 @@ export async function audienciasProgramadas(
     if (!exp || exp.despacho_id !== despachoId) return []
 
     const perfil = Array.isArray(a.perfiles) ? a.perfiles[0] : a.perfiles
+    const huerfana = a.responsable_id !== null && inactivos.has(a.responsable_id)
 
     return [
       {
@@ -94,8 +105,8 @@ export async function audienciasProgramadas(
         fecha: a.fecha,
         hora: a.hora,
         lugar: a.lugar,
-        responsableId: a.responsable_id,
-        responsableNombre: perfil?.nombre ?? null,
+        responsableId: huerfana ? null : a.responsable_id,
+        responsableNombre: huerfana ? null : (perfil?.nombre ?? null),
       },
     ]
   })

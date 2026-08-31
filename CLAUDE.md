@@ -61,9 +61,9 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**275 pruebas.** Acceso, registro, expedientes, cómputo y cierre de plazos, el
-panel "qué vence" y la edición del expediente ya funcionan contra Supabase, con
-identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
+**321 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+plazos, el panel "qué vence" y la edición del expediente ya funcionan contra
+Supabase, con identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -264,7 +264,57 @@ la etapa, se agregan partes y se concluye.
   cliente del despacho en otro asunto — y ese es justo el impedimento que llega
   por sorpresa. Revisar solo al abrir el expediente deja ciego ese caso.
 
-### 5.10 Seguridad de acceso — `src/lib/seguridad/`
+### 5.10 Equipo e invitaciones — `src/lib/despachos/invitaciones.ts`, `/panel/equipo`, `/invitacion/[token]`
+
+El registro deja dentro al titular; esto mete a los demás. Migración `0009`.
+
+- ⚠️ **El token se guarda HASHEADO (sha-256), nunca en claro.** Es la llave de
+  un despacho entero: todos los expedientes, los datos de los clientes, los
+  términos. En claro, cualquiera que llegue a leer la tabla —un respaldo viejo,
+  una consulta mal hecha, una fuga— entra a cualquier despacho con invitación
+  abierta. El claro existe UNA vez: en la respuesta de la acción que lo generó,
+  de donde va al correo y a la pantalla. Perderlo obliga a revocar y reinvitar,
+  que es el comportamiento correcto.
+- ⚠️ **El enlace NO basta: el correo de la sesión tiene que coincidir.** Lo
+  verifica `aceptar_invitacion` en la base, y el formulario ni siquiera deja
+  editar el correo. Un enlace reenviado —a propósito o por descuido— le daría a
+  un tercero los expedientes y los datos fiscales de los clientes del despacho.
+- **Caduca en siete días.** Un enlace eterno en un correo viejo es una puerta
+  abierta que nadie está viendo.
+- **Solo el titular invita y da de baja**, en la RLS (`0009`) y en la acción. Un
+  abogado que pudiera invitar podría meter a cualquiera a ver el despacho
+  completo sin que el dueño se entere.
+- **No se invita como `titular`** (habría dos y "quién manda" se quedaría sin
+  respuesta) ni como `cliente` (ese entra por el portal).
+- ⚠️ **La baja NO borra: suspende.** Las actuaciones de la bitácora y los plazos
+  cerrados apuntan a ese perfil; borrarlo dejaría la historia del despacho
+  firmada por nadie. Con `suspendida` deja de pasar `es_miembro()` y no ve un
+  solo expediente, pero su nombre sigue ligado a lo que hizo.
+- ⚠️ **Un pendiente a nombre de alguien dado de baja cuenta como SIN
+  responsable** en el panel (`perfilesInactivos` en `lib/despachos/equipo.ts`).
+  Si no, se vería con nombre y apellido y pasaría desapercibido — en la lista
+  que existe justamente para que nada pase desapercibido. La pantalla de equipo
+  muestra la carga viva de cada quien antes de darlo de baja.
+- Una sola invitación pendiente por correo y despacho (índice único parcial):
+  reinvitar sin cerrar la anterior deja dos enlaces vivos y revocar uno no
+  cierra el otro.
+- Freno anti-fuerza-bruta en la aceptación: es una ruta pública que escribe y
+  cuya llave es un token.
+
+### 5.11 Correo — `src/lib/email/`
+
+- `plantilla.ts` — puro, sin red. ⚠️ **Tablas, no flex**: Outlook de escritorio
+  compone con el motor de Word. Y **siempre** versión de texto plano: un correo
+  solo-HTML puntúa peor en spam, y este es el que abre la puerta del despacho.
+  Escapa todo lo que teclea una persona.
+- `envio.ts` — Resend con **degradación a simulación**: sin `RESEND_API_KEY` el
+  correo se escribe en consola y el flujo entero se puede probar sin contratar
+  nada. ⚠️ **Nunca lanza**: quien lo llama ya escribió en la base, y tirar la
+  acción ahí dejaría la invitación creada y una pantalla de error.
+- ⚠️ **El origen de los enlaces sale de `NEXT_PUBLIC_SITE_URL`**, nunca del
+  header `Host` (regla 9).
+
+### 5.12 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -276,7 +326,7 @@ la etapa, se agregan partes y se concluye.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.11 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.13 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -295,22 +345,24 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.12 Esquema — `supabase/migrations/`
+### 5.14 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
 alertas · `0006` alta de despacho transaccional · `0007` apertura de expediente
-transaccional · `0008` semilla de calendarios y catálogo de plazos.
+transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
+invitaciones al despacho.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0008`; el esquema está
-al corriente. Las nuevas se aplican pegando el archivo en el SQL Editor, en
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0008`. **Pendiente la
+`0009`** — se aplica pegando el archivo en el SQL Editor. Sin ella,
+`/panel/equipo` no puede invitar. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva ocho migraciones de
+⚠️ `src/types/db.ts` está **escrito a mano** y lleva nueve migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.13 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.15 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
@@ -365,7 +417,10 @@ margen rojo de la hoja de máquina.
 13. **Un gráfico nunca es adorno.** Si algo se pinta, lleva un dato real detrás
     y una descripción para lector de pantalla. La cinta de días sale del motor,
     no de constantes escritas a mano.
-14. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+14. **Ningún secreto se guarda en claro.** Un token de invitación, y cualquier
+    credencial que venga después, va a la base como hash y se compara en tiempo
+    constante. El claro vive una vez, en la respuesta que lo generó.
+15. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones

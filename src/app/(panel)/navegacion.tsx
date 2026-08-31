@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 const RUTAS = [
   { href: '/panel', etiqueta: 'Qué vence', exacta: true },
   { href: '/panel/expedientes', etiqueta: 'Expedientes', exacta: false },
+  { href: '/panel/equipo', etiqueta: 'Equipo', exacta: false },
 ] as const
 
 /**

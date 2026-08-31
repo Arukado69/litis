@@ -13,7 +13,7 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0008`.
+ * Espejo de `supabase/migrations/0001`–`0009`.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
@@ -44,6 +44,7 @@ export type RolMembresia =
   | 'asistente'
   | 'cliente'
 export type EstadoMembresia = 'invitada' | 'activa' | 'suspendida'
+export type EstadoInvitacion = 'pendiente' | 'aceptada' | 'revocada'
 export type PlanSuscripcion = 'gratuito' | 'profesional' | 'despacho'
 export type FueroDb = 'federal' | 'comun'
 export type MotivoInhabilDb = 'feriado' | 'vacaciones' | 'suspension'
@@ -137,6 +138,21 @@ export type MembresiaRow = {
   estado: EstadoMembresia
   persona_id: string | null
   invitada_por: string | null
+  creado_el: string
+}
+
+export type InvitacionRow = {
+  id: string
+  despacho_id: string
+  correo: string
+  rol: RolMembresia
+  /** sha-256 en hexadecimal. NUNCA el token en claro. */
+  token_hash: string
+  estado: EstadoInvitacion
+  expira_el: string
+  invitada_por: string | null
+  aceptada_el: string | null
+  aceptada_por: string | null
   creado_el: string
 }
 
@@ -384,6 +400,10 @@ export type Database = {
       despachos: Tabla<DespachoRow, 'nombre' | 'slug'>
       perfiles: Tabla<PerfilRow, 'id'>
       membresias: Tabla<MembresiaRow, 'despacho_id' | 'perfil_id'>
+      invitaciones: Tabla<
+        InvitacionRow,
+        'despacho_id' | 'correo' | 'token_hash' | 'expira_el'
+      >
       calendarios: Tabla<
         CalendarioRow,
         'nombre' | 'vigencia_desde' | 'vigencia_hasta'
@@ -489,6 +509,20 @@ export type Database = {
         /** El id del expediente recién abierto. */
         Returns: string
       }
+      aceptar_invitacion: {
+        Args: { p_token_hash: string; p_nombre: string }
+        /** El id del despacho al que se acaba de entrar. */
+        Returns: string
+      }
+      mirar_invitacion: {
+        Args: { p_token_hash: string }
+        Returns: {
+          despacho_nombre: string
+          correo: string
+          rol: RolMembresia
+          vigente: boolean
+        }[]
+      }
       crear_mi_despacho: {
         Args: {
           p_nombre_titular: string
@@ -503,6 +537,7 @@ export type Database = {
     Enums: {
       rol_membresia: RolMembresia
       estado_membresia: EstadoMembresia
+      estado_invitacion: EstadoInvitacion
       plan_suscripcion: PlanSuscripcion
       fuero: FueroDb
       motivo_inhabil: MotivoInhabilDb

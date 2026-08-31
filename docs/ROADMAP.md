@@ -70,19 +70,27 @@ la **cinta de días hábiles** como elemento de firma — el gráfico que hace
 visible que "faltan veinte días" pueden ser dos de trabajo. Detalle en
 [`docs/DISENO.md`](DISENO.md).
 
-**275 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0008` aplicadas; el esquema está al corriente.
+### R1-bis — Invitar al equipo ✅
+
+Invitación por correo con papel, aceptación, cambio de papel y baja. El token
+se guarda hasheado y caduca en siete días; el enlace por sí solo no basta, el
+correo de la sesión tiene que coincidir. La baja suspende, no borra — la
+bitácora tiene que seguir firmada. Un pendiente a nombre de alguien dado de
+baja pasa a contar como huérfano en el panel. Migración `0009`.
+
+Trae también el módulo de correo (`src/lib/email/`), que R5 va a reusar:
+plantilla en tablas con versión de texto plano, y envío por Resend que degrada
+a simulación sin API key.
+
+**321 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0008` aplicadas; **falta aplicar la `0009`**.
 
 ---
 
 ## Siguiente
 
-### R1-bis — Invitar al equipo
-Invitación por correo con rol, aceptación y baja. El registro ya deja al
-titular dentro; falta que meta a los demás.
-
 ### R5 — Alertas por correo
-Cron protegido con `CRON_SECRET`. Si no se puede leer el registro de envíos, la
+Cron protegido con `CRON_SECRET`. El módulo de correo ya está construido. Si no se puede leer el registro de envíos, la
 corrida **se detiene y alerta** en vez de reenviarle el mismo aviso a todos —
 la lección de la migración `0037` del proyecto anterior.
 

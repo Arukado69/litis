@@ -69,8 +69,9 @@ grave es peor que no tener registro.
 - Cierre del plazo, con la presentación extemporánea asentada como tal
 - Edición del expediente y alta de partes, con el cotejo de conflictos otra vez
 - Identidad visual propia, con la cinta de días hábiles
+- Equipo del despacho: invitación con token hasheado, papeles y baja
 
-**275 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**321 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
