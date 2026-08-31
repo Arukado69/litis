@@ -39,6 +39,10 @@ catálogo estático miente.
 **Detecta conflicto de interés** cruzando las partes del asunto nuevo contra
 clientes y contrapartes ya registrados — y no decide por ti.
 
+**Enseña los días hábiles, no los cuenta en silencio.** Entre el 15 de julio y
+el 3 de agosto de 2026 hay veinte casillas en la cinta y dos llenas: el resto
+son vacaciones del órgano. Se ve antes de leer nada.
+
 **No ayuda a maquillar un término perdido.** Si la promoción se presentó
 después del vencimiento, lo advierte antes de guardar y lo asienta así en la
 bitácora, que no se puede editar. Un registro tranquilizador sobre un hecho
@@ -63,8 +67,10 @@ grave es peor que no tener registro.
 - Registro de notificaciones con cómputo de plazo y traza auditable
 - Panel "qué vence" con datos reales y choques de agenda
 - Cierre del plazo, con la presentación extemporánea asentada como tal
+- Edición del expediente y alta de partes, con el cotejo de conflictos otra vez
+- Identidad visual propia, con la cinta de días hábiles
 
-**236 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**275 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -90,6 +96,7 @@ Editor de Supabase.
 | [`docs/DOMINIO-LEGAL.md`](docs/DOMINIO-LEGAL.md) | Cómo trabaja un litigante mexicano. **Léelo antes de diseñar cualquier pantalla** |
 | [`docs/PLAZOS.md`](docs/PLAZOS.md) | El cómputo, sus trampas y la política de verificación |
 | [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Stack, seguridad y qué se rescató de NS Hub |
+| [`docs/DISENO.md`](docs/DISENO.md) | La identidad visual y por qué no se parece a un panel cualquiera |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Las rebanadas, en orden |
 
 ---

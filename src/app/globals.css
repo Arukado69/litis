@@ -1,21 +1,64 @@
 @import 'tailwindcss';
 
 /*
-  Paleta provisional. La identidad visual se define cuando el nombre esté
-  decidido; mientras tanto, tokens neutros y sobrios — un despacho no quiere
-  que su herramienta de trabajo parezca una app de consumo.
-*/
-@theme {
-  --color-tinta: #16202e;
-  --color-tinta-suave: #47566b;
-  --color-papel: #fbfaf7;
-  --color-borde: #e3e0d8;
-  --color-acento: #7a5c2e;
+  ═══════════════════════════════════════════════════════════════════════════
+  IDENTIDAD VISUAL — "el expediente cosido"
+  ═══════════════════════════════════════════════════════════════════════════
+  El vocabulario visual sale del material con el que trabaja un litigante
+  mexicano, no de una plantilla de panel:
 
-  /* Semáforo de urgencia de plazos. */
-  --color-urgente: #a3231b;
-  --color-proximo: #9a6408;
-  --color-holgado: #2f6b4a;
+    · el archivero verde-gris de un juzgado      → el fondo
+    · la foja del expediente                     → las superficies
+    · la tinta azul-negra de una pluma de oficio → el texto
+    · el sello de recibido, violeta de metilo    → el acento
+    · el margen rojo de la hoja de máquina       → la urgencia
+
+  Decisiones que NO se toman aquí, a propósito: nada de crema cálido con serif
+  de alto contraste y acento terracota; nada de tarjetas idénticas con sombra
+  suave y degradados de adorno; nada de versalitas rastreadas encima de cada
+  título. Son los defaults de cualquier panel, y este producto tiene materia
+  propia de donde sacar su forma.
+
+  Dónde se gasta la audacia: en la CINTA DE DÍAS. Todo lo demás es tipografía,
+  reglas de un pixel y densidad.
+*/
+
+@theme {
+  /* ── Papel y tinta ──────────────────────────────────────────────────── */
+  /* Fondo: el verde-gris del archivero. Frío a propósito. */
+  --color-archivo: #e2e6de;
+  /* La foja: la superficie sobre la que se lee y se escribe. */
+  --color-foja: #fbfbf9;
+  /* Relleno tenue para lo secundario, sin recurrir a otra tarjeta. */
+  --color-tenue: #eef0ea;
+  /* Tinta azul-negra. Azul de verdad, no un negro entintado. */
+  --color-tinta: #16202a;
+  --color-tinta-suave: #5b6874;
+  /* La regla de un pixel: todo el sistema de separación es esta. */
+  --color-regla: #cdd3c9;
+  --color-regla-fuerte: #a9b2a4;
+  /* Violeta de metilo, la tinta del sello de recibido. El único acento. */
+  --color-sello: #5b3b8c;
+  --color-sello-tenue: #ece7f4;
+
+  /* ── Estado de un término ───────────────────────────────────────────── */
+  /* Rojo de margen de hoja de máquina, no rojo de alerta de aplicación. */
+  --color-urgente: #a32017;
+  --color-proximo: #8a5a06;
+  --color-holgado: #2c6b4f;
+
+  /* ── Tipografía ─────────────────────────────────────────────────────── */
+  --font-obra: var(--fuente-obra), ui-sans-serif, system-ui, sans-serif;
+  --font-titulo: var(--fuente-titulo), ui-serif, Georgia, serif;
+
+  /* Escala modular de tercera mayor (1.25) sobre 15px, recortada: un litigante
+     escanea cuarenta asuntos, no contempla tres tarjetas. */
+  --text-nota: 0.75rem;
+  --text-menor: 0.8125rem;
+  --text-obra: 0.9375rem;
+  --text-guia: 1.125rem;
+  --text-rotulo: 1.5rem;
+  --text-portada: 2.25rem;
 }
 
 :root {
@@ -23,6 +66,109 @@
 }
 
 body {
-  background: var(--color-papel);
+  background: var(--color-archivo);
   color: var(--color-tinta);
+  font-family: var(--font-obra);
+  font-size: var(--text-obra);
+  line-height: 1.55;
+  /*
+    Cifras tabulares en TODO. Este producto son columnas de fechas ("3 de
+    septiembre"), de números de expediente ("431/2026") y de días restantes.
+    Con cifras proporcionales el «1» mide menos que el «8», las columnas bailan
+    y comparar dos renglones de un vistazo —que es exactamente lo que hace
+    alguien revisando qué vence— deja de funcionar solo.
+  */
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titulo);
+  font-weight: 600;
+  /* La serif variable se lee mejor un punto más apretada que la de obra. */
+  letter-spacing: -0.012em;
+  line-height: 1.2;
+}
+
+/* El foco tiene que verse: se navega esto con teclado todo el día. */
+:focus-visible {
+  outline: 2px solid var(--color-sello);
+  outline-offset: 2px;
+}
+
+/*
+  ── LA CINTA DE DÍAS ────────────────────────────────────────────────────────
+  El único gráfico del sistema, y donde se gasta la audacia.
+
+  Muestra celda por celda los días naturales que faltan para un vencimiento:
+  los HÁBILES en sólido, los INHÁBILES vacíos. Existe porque el error que hace
+  perder términos es exactamente ese — "faltan nueve días" suena holgado hasta
+  que se ve que siete están vacíos y solo quedan dos de trabajo.
+
+  Es información, no adorno: cada celda es un día real del calendario del
+  órgano de ESE plazo.
+*/
+.cinta {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.cinta-dia {
+  width: 6px;
+  height: 13px;
+  border: 1px solid var(--color-regla-fuerte);
+  border-radius: 1px;
+  background: transparent;
+}
+
+/* En la portada la cinta ES el encabezado, así que se compone en grande. */
+.cinta[data-tamano='grande'] {
+  gap: 3px;
+}
+.cinta[data-tamano='grande'] .cinta-dia {
+  width: 13px;
+  height: 34px;
+  border-radius: 2px;
+}
+.cinta[data-tamano='grande'] .cinta-dia[data-vence='si'] {
+  height: 48px;
+}
+
+.cinta-dia[data-habil='si'] {
+  background: var(--color-tinta);
+  border-color: var(--color-tinta);
+}
+
+/* El día del vencimiento se marca más alto: es el borde del acantilado. */
+.cinta-dia[data-vence='si'] {
+  height: 19px;
+  background: var(--color-urgente);
+  border-color: var(--color-urgente);
+}
+
+/*
+  El margen del expediente: la regla vertical que corre por el costado de un
+  renglón y lleva su estado. Sustituye a la tarjeta con sombra — el papel no
+  tiene sombra.
+*/
+.margen {
+  border-left: 3px solid var(--color-regla-fuerte);
+}
+.margen[data-urgencia='vencido'],
+.margen[data-urgencia='hoy'] {
+  border-left-color: var(--color-urgente);
+}
+.margen[data-urgencia='inminente'] {
+  border-left-color: var(--color-proximo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

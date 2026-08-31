@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { Tarjeta } from '@/components/ui/primitivos'
+import { Foja } from '@/components/ui/primitivos'
 
 import { FormularioAcceso } from './formulario'
 
@@ -20,22 +20,22 @@ export default async function PaginaAcceso({
   const { destino } = await searchParams
 
   return (
-    <Tarjeta className="flex flex-col gap-5">
+    <Foja className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Entrar</h1>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <h1 className="text-rotulo">Entrar</h1>
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           Accede a los expedientes de tu despacho.
         </p>
       </div>
 
       <FormularioAcceso destino={destino ?? '/panel'} />
 
-      <p className="text-center text-sm text-[var(--color-tinta-suave)]">
+      <p className="text-center text-menor text-[var(--color-tinta-suave)]">
         ¿Todavía no tienes cuenta?{' '}
         <Link href="/registro" className="font-medium underline">
           Crear despacho
         </Link>
       </p>
-    </Tarjeta>
+    </Foja>
   )
 }

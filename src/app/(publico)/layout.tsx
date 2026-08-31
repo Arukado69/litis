@@ -14,7 +14,7 @@ export default function LayoutPublico({
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 block text-center text-lg font-semibold tracking-tight"
+          className="mb-8 block text-center text-guia font-semibold"
         >
           {MARCA.nombre}
         </Link>

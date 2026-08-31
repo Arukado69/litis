@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import { Tarjeta } from '@/components/ui/primitivos'
+import { Foja } from '@/components/ui/primitivos'
 import { clienteServidor } from '@/lib/supabase/server'
 
 import { FormularioBienvenida } from './formulario'
@@ -41,12 +41,12 @@ export default async function PaginaBienvenida() {
       : ''
 
   return (
-    <Tarjeta className="flex flex-col gap-5">
+    <Foja className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">
+        <h1 className="text-rotulo">
           Falta un paso
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           Confirma el nombre del despacho y entras.
         </p>
       </div>
@@ -55,6 +55,6 @@ export default async function PaginaBienvenida() {
         nombreSugerido={nombreSugerido}
         despachoSugerido={despachoSugerido}
       />
-    </Tarjeta>
+    </Foja>
   )
 }

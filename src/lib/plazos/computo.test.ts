@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { contarDiasHabiles, esHabil, evaluarDia } from './calendario'
+import {
+  contarDiasHabiles,
+  esHabil,
+  evaluarDia,
+  tramoDeDias,
+} from './calendario'
 import {
   CALENDARIO_LABORAL_2026,
   CALENDARIO_PJF_2026,
@@ -363,5 +368,46 @@ describe('computarPlazo — validación de entrada', () => {
       // Se fuerza el tipo a propósito: simula un valor sucio de la base.
       computarPlazo({ ...base, regimen: 'inventado' as never }),
     ).toThrow(RangeError)
+  })
+})
+
+describe('tramoDeDias — la cinta de días', () => {
+  it('marca cada día natural como hábil o inhábil', () => {
+    // Del jueves 12 al lunes 16 de marzo de 2026: J V S D L.
+    const tramo = tramoDeDias('2026-03-12', '2026-03-16', CALENDARIO_PJF_2026)
+    expect(tramo.map((d) => d.habil)).toEqual([true, true, false, false, true])
+  })
+
+  it('incluye los dos extremos', () => {
+    const tramo = tramoDeDias('2026-03-12', '2026-03-16', CALENDARIO_PJF_2026)
+    expect(tramo[0]?.fecha).toBe('2026-03-12')
+    expect(tramo.at(-1)?.fecha).toBe('2026-03-16')
+  })
+
+  it('un solo día es una cinta de una celda', () => {
+    expect(tramoDeDias('2026-03-12', '2026-03-12', CALENDARIO_PJF_2026)).toHaveLength(1)
+  })
+
+  it('un plazo ya vencido no tiene cuenta regresiva', () => {
+    // No es un caso raro: es la mitad del panel un lunes por la mañana.
+    expect(tramoDeDias('2026-03-16', '2026-03-12', CALENDARIO_PJF_2026)).toEqual([])
+  })
+
+  it('enseña el hueco de las vacaciones judiciales', () => {
+    // Esto es para lo que existe la cinta: veinte celdas y solo dos sólidas
+    // —hoy y el día del vencimiento—, porque en medio el órgano está de
+    // vacaciones. "Faltan veinte días" y "queda un día de trabajo" son la
+    // misma situación, y solo una de las dos frases es útil.
+    const tramo = tramoDeDias('2026-07-15', '2026-08-03', CALENDARIO_PJF_2026)
+    expect(tramo).toHaveLength(20)
+    expect(tramo.filter((d) => d.habil).map((d) => d.fecha)).toEqual([
+      '2026-07-15',
+      '2026-08-03',
+    ])
+  })
+
+  it('se corta en el tope en vez de pintar doscientas celdas', () => {
+    const tramo = tramoDeDias('2026-01-01', '2026-12-31', CALENDARIO_PJF_2026, 30)
+    expect(tramo).toHaveLength(30)
   })
 })

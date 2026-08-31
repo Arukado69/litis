@@ -10,7 +10,7 @@ import {
   Campo,
   Casilla,
   Selector,
-  Tarjeta,
+  Foja,
   type Opcion,
 } from '@/components/ui/primitivos'
 import {
@@ -47,14 +47,14 @@ function BloqueConflictos({ hallazgos }: { hallazgos: HallazgoVisible[] }) {
   const hayImpedimento = hallazgos.some((h) => h.nivel === 'impedimento')
 
   return (
-    <Tarjeta className="flex flex-col gap-3 border-[var(--color-urgente)]/40">
+    <Foja className="flex flex-col gap-3 border-[var(--color-urgente)]/40">
       <div>
         <h2 className="font-medium text-[var(--color-urgente)]">
           {hayImpedimento
             ? 'Posible impedimento'
             : 'Coincidencias por revisar'}
         </h2>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           Antes de abrir el expediente, revisa estas coincidencias con tu
           padrón. Nada se ha guardado todavía.
         </p>
@@ -64,13 +64,13 @@ function BloqueConflictos({ hallazgos }: { hallazgos: HallazgoVisible[] }) {
         {hallazgos.map((h, i) => (
           <li
             key={`${h.nombreRegistro}-${i}`}
-            className="rounded-md border border-[var(--color-borde)] bg-[var(--color-papel)] p-3 text-sm"
+            className="rounded-md border border-[var(--color-regla)] bg-[var(--color-tenue)] p-3 text-menor"
           >
             <p className="font-medium">
               {h.nombreParte} ↔ {h.nombreRegistro}
             </p>
             <p className="mt-1 text-[var(--color-tinta-suave)]">{h.motivo}</p>
-            <p className="mt-1 text-xs text-[var(--color-tinta-suave)]">
+            <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">
               Coincidió por: {h.coincidencia.replace('_', ' ')} · En:{' '}
               {h.caratula}
             </p>
@@ -84,7 +84,7 @@ function BloqueConflictos({ hallazgos }: { hallazgos: HallazgoVisible[] }) {
         required
         ayuda="Queda asentado en la bitácora quién lo revisó y qué se mostró."
       />
-    </Tarjeta>
+    </Foja>
   )
 }
 
@@ -125,7 +125,7 @@ export function FormularioAlta({
         <BloqueConflictos hallazgos={estado.conflictos} />
       ) : null}
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <h2 className="font-medium">El asunto</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -184,9 +184,9 @@ export function FormularioAlta({
           <Campo etiqueta="Fecha de inicio" nombre="fechaInicio"
             defaultValue={v('fechaInicio')} type="date" />
         </div>
-      </Tarjeta>
+      </Foja>
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <h2 className="font-medium">A quién representas</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo
@@ -219,12 +219,12 @@ export function FormularioAlta({
           <Campo etiqueta="RFC" nombre="clienteRfc"
             defaultValue={v('clienteRfc')} />
         </div>
-      </Tarjeta>
+      </Foja>
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <div>
           <h2 className="font-medium">La contraparte</h2>
-          <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+          <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
             Opcional, pero captúrala en cuanto la sepas: sin ella no se puede
             detectar un conflicto de interés más adelante.
           </p>
@@ -260,9 +260,9 @@ export function FormularioAlta({
             ayuda="Con quién se negocia."
           />
         </div>
-      </Tarjeta>
+      </Foja>
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <h2 className="font-medium">Interno</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Selector
@@ -286,7 +286,7 @@ export function FormularioAlta({
           nombre="restringido"
           ayuda="Solo tú, el titular y quien autorices podrán abrirlo."
         />
-      </Tarjeta>
+      </Foja>
 
       <div className="flex justify-end">
         <BotonEnviar hayConflictos={estado.conflictos !== null} />

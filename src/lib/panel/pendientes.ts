@@ -36,7 +36,11 @@
  */
 
 import { diasHabilesRestantes } from '@/lib/plazos/alertas'
-import type { Calendario } from '@/lib/plazos/calendario'
+import {
+  tramoDeDias,
+  type Calendario,
+  type DiaDelTramo,
+} from '@/lib/plazos/calendario'
 import { comparar, type FechaISO } from '@/lib/plazos/fecha'
 
 export type TipoPendiente = 'plazo' | 'audiencia'
@@ -105,6 +109,15 @@ export interface Pendiente {
   diasHabiles: number
   urgencia: Urgencia
   confiabilidad: 'semilla_no_verificada' | 'verificado_por_despacho' | null
+  /**
+   * Los días naturales de aquí al vencimiento, cada uno marcado hábil o
+   * inhábil, para la cinta de la interfaz. Vacía cuando ya venció.
+   *
+   * Se calcula con el calendario de ESTE pendiente, no con uno del panel: un
+   * asunto federal y uno local no comparten periodo vacacional, y la cinta
+   * miente si se pintan con el mismo.
+   */
+  cinta: readonly DiaDelTramo[]
 }
 
 export interface ChoqueDeAgenda {
@@ -196,6 +209,7 @@ export function armarPanel(args: {
       diasHabiles,
       urgencia: urgenciaPara(diasHabiles),
       confiabilidad: plazo.confiabilidad,
+      cinta: tramoDeDias(hoy, plazo.fechaVencimiento, calendarioDe(plazo.calendarioId)),
     })
   }
 
@@ -222,6 +236,7 @@ export function armarPanel(args: {
       diasHabiles,
       urgencia: urgenciaPara(diasHabiles),
       confiabilidad: null,
+      cinta: tramoDeDias(hoy, audiencia.fecha, calendarioDe(audiencia.calendarioId)),
     })
   }
 

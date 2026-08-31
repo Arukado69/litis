@@ -6,6 +6,8 @@ import { exigirPanel } from '@/lib/auth/sesion'
 import { MARCA } from '@/lib/brand'
 import type { RolMembresia } from '@/types/db'
 
+import { Navegacion } from './navegacion'
+
 const ROL_ETIQUETA: Record<RolMembresia, string> = {
   titular: 'Titular',
   abogado: 'Abogado',
@@ -18,6 +20,9 @@ const ROL_ETIQUETA: Record<RolMembresia, string> = {
  * Marco del panel interno. Segunda capa de seguridad: `exigirPanel` decide si
  * esta persona ve estas pantallas. La tercera —qué filas puede leer— la sigue
  * decidiendo la RLS.
+ *
+ * La barra es de una sola línea a propósito: en una laptop de trece pulgadas
+ * cada franja de cromo fija es un renglón menos de expediente.
  */
 export default async function LayoutPanel({
   children,
@@ -26,33 +31,24 @@ export default async function LayoutPanel({
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-[var(--color-borde)] bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3">
-          <div className="flex items-baseline gap-3">
-            <Link href="/panel" className="font-semibold tracking-tight">
-              {MARCA.nombre}
-            </Link>
-            <span className="text-sm text-[var(--color-tinta-suave)]">
-              {sesion.activa.despachoNombre}
-            </span>
-          </div>
+      <header className="border-b border-[var(--color-regla)] bg-[var(--color-foja)]">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-2.5">
+          <Link
+            href="/panel"
+            className="font-titulo text-guia font-semibold tracking-tight"
+          >
+            {MARCA.nombre}
+          </Link>
 
-          <nav className="flex gap-4 text-sm">
-            <Link href="/panel" className="hover:underline">
-              Qué vence
-            </Link>
-            <Link href="/panel/expedientes" className="hover:underline">
-              Expedientes
-            </Link>
-          </nav>
+          <Navegacion />
 
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-[var(--color-tinta-suave)]">
-              {sesion.nombre || sesion.correo} ·{' '}
-              {ROL_ETIQUETA[sesion.activa.rol]}
+          <div className="ml-auto flex items-center gap-3 text-nota text-[var(--color-tinta-suave)]">
+            <span>
+              {sesion.activa.despachoNombre} · {sesion.nombre || sesion.correo} (
+              {ROL_ETIQUETA[sesion.activa.rol]})
             </span>
             <form action={cerrarSesion}>
-              <Boton variante="fantasma" type="submit" className="px-2 py-1">
+              <Boton variante="fantasma" type="submit" className="px-0 py-0">
                 Salir
               </Boton>
             </form>

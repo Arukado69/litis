@@ -261,3 +261,44 @@ export function cobertura(
   }
   return { completa: true, faltante: null }
 }
+
+export interface DiaDelTramo {
+  fecha: FechaISO
+  habil: boolean
+}
+
+/**
+ * Los días naturales entre dos fechas, cada uno marcado hábil o inhábil.
+ *
+ * Es lo que come la **cinta de días** de la interfaz. Existe porque el error
+ * que hace perder términos no es no saber la fecha: es creer que "faltan nueve
+ * días" significa nueve días de trabajo. Pintados uno por uno —siete vacíos y
+ * dos sólidos— la trampa se ve sin leer nada.
+ *
+ * Devuelve vacío cuando `hasta` ya pasó: un plazo vencido no tiene cuenta
+ * regresiva que enseñar, tiene otro mensaje.
+ *
+ * @param tope corte de seguridad. Con vacaciones judiciales de por medio un
+ *   tramo puede pasar del mes, y una cinta de doscientas celdas no informa: se
+ *   corta y la interfaz deja de marcar el vencimiento.
+ */
+export function tramoDeDias(
+  desde: FechaISO,
+  hasta: FechaISO,
+  calendario: Calendario,
+  tope = 45,
+): DiaDelTramo[] {
+  exigirFechaISO(desde, 'desde')
+  exigirFechaISO(hasta, 'hasta')
+  if (hasta < desde) return []
+
+  const dias: DiaDelTramo[] = []
+  let cursor = desde
+
+  while (cursor <= hasta && dias.length < tope) {
+    dias.push({ fecha: cursor, habil: !evaluarDia(cursor, calendario).inhabil })
+    cursor = sumarDias(cursor, 1)
+  }
+
+  return dias
+}

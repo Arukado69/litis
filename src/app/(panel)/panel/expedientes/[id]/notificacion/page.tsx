@@ -37,14 +37,14 @@ export default async function PaginaNotificacion({
       <div>
         <Link
           href={`/panel/expedientes/${id}`}
-          className="text-sm text-[var(--color-tinta-suave)] underline"
+          className="text-menor text-[var(--color-tinta-suave)] underline"
         >
           ← {expediente.caratula}
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+        <h1 className="mt-2 text-rotulo">
           Registrar notificación
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           {regimen
             ? `Régimen: ${REGIMENES[regimen].nombre} · ${REGIMENES[regimen].ordenamiento}`
             : 'La vía de este expediente no está reconocida.'}

@@ -10,7 +10,7 @@ import {
   Campo,
   Casilla,
   Selector,
-  Tarjeta,
+  Foja,
   type Opcion,
 } from '@/components/ui/primitivos'
 import { AVISO_COMPUTO } from '@/lib/brand'
@@ -48,15 +48,15 @@ function BotonEnviar({ hayVista }: { hayVista: boolean }) {
  */
 function Computo({ vista }: { vista: VistaPrevia }) {
   return (
-    <Tarjeta className="flex flex-col gap-5 border-[var(--color-acento)]/40">
+    <Foja className="flex flex-col gap-5 border-[var(--color-sello)]/40">
       <div>
-        <p className="text-xs uppercase tracking-wide text-[var(--color-tinta-suave)]">
-          Cómputo sugerido — {vista.etiqueta}
+        <p className="text-menor text-[var(--color-tinta-suave)]">
+          Cómputo sugerido de {vista.etiqueta}
         </p>
-        <p className="mt-1 text-2xl font-semibold tracking-tight">
+        <p className="mt-1 text-rotulo">
           Vence el {fechaLargaConDia(vista.fechaVencimiento)}
         </p>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           {vista.diasDelPlazo} {vista.unidad} · Calendario:{' '}
           {vista.calendarioNombre}
         </p>
@@ -71,26 +71,26 @@ function Computo({ vista }: { vista: VistaPrevia }) {
       ) : null}
 
       <div>
-        <h3 className="mb-2 text-sm font-medium">Cómo se llegó a esa fecha</h3>
+        <h3 className="mb-2 text-menor font-medium">Cómo se llegó a esa fecha</h3>
         <ol className="flex flex-col gap-2">
           {vista.pasos.map((p) => (
             <li
               key={p.orden}
-              className="rounded-md border border-[var(--color-borde)] bg-[var(--color-papel)] p-3 text-sm"
+              className="rounded-md border border-[var(--color-regla)] bg-[var(--color-tenue)] p-3 text-menor"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-medium">
                   {p.orden}. {p.titulo}
                 </span>
                 {p.fecha ? (
-                  <span className="text-xs text-[var(--color-tinta-suave)]">
+                  <span className="text-nota text-[var(--color-tinta-suave)]">
                     {fechaLargaConDia(p.fecha)}
                   </span>
                 ) : null}
               </div>
               <p className="mt-1 text-[var(--color-tinta-suave)]">{p.detalle}</p>
               {p.fundamento ? (
-                <p className="mt-1 text-xs italic text-[var(--color-tinta-suave)]">
+                <p className="mt-1 text-nota italic text-[var(--color-tinta-suave)]">
                   {p.fundamento}
                 </p>
               ) : null}
@@ -101,14 +101,14 @@ function Computo({ vista }: { vista: VistaPrevia }) {
 
       {vista.diasOmitidos.length > 0 ? (
         <div>
-          <h3 className="mb-2 text-sm font-medium">
+          <h3 className="mb-2 text-menor font-medium">
             Días que no se contaron ({vista.diasOmitidos.length})
           </h3>
-          <ul className="flex flex-wrap gap-1.5 text-xs">
+          <ul className="flex flex-wrap gap-1.5 text-nota">
             {vista.diasOmitidos.map((d) => (
               <li
                 key={d.fecha}
-                className="rounded border border-[var(--color-borde)] px-2 py-1 text-[var(--color-tinta-suave)]"
+                className="rounded border border-[var(--color-regla)] px-2 py-1 text-[var(--color-tinta-suave)]"
                 title={d.descripcion}
               >
                 {d.fecha} · {d.descripcion}
@@ -120,8 +120,8 @@ function Computo({ vista }: { vista: VistaPrevia }) {
 
       {vista.advertencias.length > 0 ? (
         <div>
-          <h3 className="mb-2 text-sm font-medium">Advertencias</h3>
-          <ul className="flex flex-col gap-1.5 text-sm text-[var(--color-tinta-suave)]">
+          <h3 className="mb-2 text-menor font-medium">Advertencias</h3>
+          <ul className="flex flex-col gap-1.5 text-menor text-[var(--color-tinta-suave)]">
             {vista.advertencias.map((a) => (
               <li key={a}>· {a}</li>
             ))}
@@ -131,8 +131,8 @@ function Computo({ vista }: { vista: VistaPrevia }) {
 
       {vista.fundamentos.length > 0 ? (
         <div>
-          <h3 className="mb-2 text-sm font-medium">Fundamento</h3>
-          <ul className="flex flex-col gap-1 text-xs text-[var(--color-tinta-suave)]">
+          <h3 className="mb-2 text-menor font-medium">Fundamento</h3>
+          <ul className="flex flex-col gap-1 text-nota text-[var(--color-tinta-suave)]">
             {vista.fundamentos.map((f) => (
               <li key={f}>· {f}</li>
             ))}
@@ -140,10 +140,10 @@ function Computo({ vista }: { vista: VistaPrevia }) {
         </div>
       ) : null}
 
-      <p className="border-t border-[var(--color-borde)] pt-3 text-xs text-[var(--color-tinta-suave)]">
+      <p className="border-t border-[var(--color-regla)] pt-3 text-nota text-[var(--color-tinta-suave)]">
         {AVISO_COMPUTO}
       </p>
-    </Tarjeta>
+    </Foja>
   )
 }
 
@@ -171,7 +171,7 @@ export function FormularioNotificacion({
 
       {estado.error ? <Aviso tono="error">{estado.error}</Aviso> : null}
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <h2 className="font-medium">La notificación</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Selector
@@ -198,12 +198,12 @@ export function FormularioNotificacion({
           nombre="detalle"
           defaultValue={v('detalle')}
         />
-      </Tarjeta>
+      </Foja>
 
-      <Tarjeta className="flex flex-col gap-4">
+      <Foja className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="font-medium">El plazo</h2>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-menor">
             <input
               type="checkbox"
               checked={aMano}
@@ -278,15 +278,15 @@ export function FormularioNotificacion({
             ayuda="A quién se le avisa cuando se acerque."
           />
         </div>
-      </Tarjeta>
+      </Foja>
 
       {vista ? <Computo vista={vista} /> : null}
 
       {vista ? (
-        <Tarjeta className="flex flex-col gap-4">
+        <Foja className="flex flex-col gap-4">
           <div>
             <h2 className="font-medium">Confirmar</h2>
-            <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+            <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
               Si el motor no conoce algo —un acuerdo que habilitó días, una
               suspensión— corrige la fecha aquí. El cambio queda registrado con
               tu nombre.
@@ -313,7 +313,7 @@ export function FormularioNotificacion({
             nombre="confirmado"
             required
           />
-        </Tarjeta>
+        </Foja>
       ) : null}
 
       <div className="flex justify-end">

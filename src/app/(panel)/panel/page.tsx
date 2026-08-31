@@ -1,14 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { Aviso, Boton, Tarjeta } from '@/components/ui/primitivos'
+import { Aviso, Boton, CintaDias, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { audienciasProgramadas, plazosPendientes } from '@/lib/panel/datos'
-import {
-  armarPanel,
-  type Pendiente,
-  type Urgencia,
-} from '@/lib/panel/pendientes'
+import { armarPanel, type Pendiente } from '@/lib/panel/pendientes'
 import {
   cargarCalendarioPorClave,
   cargarCalendariosPorId,
@@ -16,13 +12,6 @@ import {
 import { fechaLargaConDia, hoyEnMexico } from '@/lib/plazos/fecha'
 
 export const metadata: Metadata = { title: 'Qué vence' }
-
-const ESTILO_URGENCIA: Record<Urgencia, string> = {
-  vencido: 'border-l-4 border-l-[var(--color-urgente)]',
-  hoy: 'border-l-4 border-l-[var(--color-urgente)]',
-  inminente: 'border-l-4 border-l-[var(--color-proximo)]',
-  proximo: 'border-l-4 border-l-[var(--color-borde)]',
-}
 
 /** "faltan 3 días hábiles", "vence hoy", "venció hace 2 días hábiles". */
 function cuantoFalta(dias: number): string {
@@ -34,40 +23,68 @@ function cuantoFalta(dias: number): string {
   return `Faltan ${dias} ${dias === 1 ? 'día hábil' : 'días hábiles'}`
 }
 
-function Fila({ p }: { p: Pendiente }) {
+/** Lo que dice la cinta, para quien no la ve. */
+function leyendaDeCinta(p: Pendiente): string {
+  const habiles = p.cinta.filter((d) => d.habil).length
+  return `${p.cinta.length} días naturales de aquí al vencimiento, ${habiles} de ellos hábiles.`
+}
+
+function Renglon({ p }: { p: Pendiente }) {
+  const apremia = p.urgencia === 'vencido' || p.urgencia === 'hoy'
+
   return (
     <li
-      className={`rounded-md border border-[var(--color-borde)] bg-white p-3 ${ESTILO_URGENCIA[p.urgencia]}`}
+      className="margen bg-[var(--color-foja)] py-3 pl-4 pr-3"
+      data-urgencia={p.urgencia}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <span className="text-xs uppercase tracking-wide text-[var(--color-tinta-suave)]">
-            {p.tipo === 'audiencia' ? 'Audiencia' : 'Plazo'}
-          </span>
-          <p className="font-medium">{p.titulo}</p>
-          <Link
-            href={`/panel/expedientes/${p.expedienteId}`}
-            className="text-sm text-[var(--color-tinta-suave)] underline"
-          >
-            {p.numeroInterno} · {p.caratula}
-          </Link>
-        </div>
-        <div className="text-right text-sm">
-          <p className="font-medium">{cuantoFalta(p.diasHabiles)}</p>
-          <p className="text-xs text-[var(--color-tinta-suave)]">
-            {fechaLargaConDia(p.fecha)}
-            {p.hora ? ` · ${p.hora}` : ''}
-          </p>
-        </div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="font-medium">
+          {p.titulo}
+          {p.tipo === 'audiencia' ? (
+            <span className="ml-2 align-middle">
+              <Sello tono="neutro">audiencia</Sello>
+            </span>
+          ) : null}
+        </p>
+        <p
+          className={
+            apremia ? 'font-medium text-[var(--color-urgente)]' : 'font-medium'
+          }
+        >
+          {cuantoFalta(p.diasHabiles)}
+        </p>
       </div>
 
-      <p className="mt-2 text-xs text-[var(--color-tinta-suave)]">
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <Link
+          href={`/panel/expedientes/${p.expedienteId}`}
+          className="text-menor text-[var(--color-tinta-suave)] underline decoration-[var(--color-regla-fuerte)] underline-offset-4 hover:text-[var(--color-sello)]"
+        >
+          {p.numeroInterno} · {p.caratula}
+        </Link>
+        <p className="text-menor text-[var(--color-tinta-suave)]">
+          {fechaLargaConDia(p.fecha)}
+          {p.hora ? `, ${p.hora}` : ''}
+        </p>
+      </div>
+
+      {/* La cinta: cada celda un día natural, sólida si es hábil. Es lo que
+          hace que "faltan nueve días" deje de sonar holgado. */}
+      {p.cinta.length > 0 ? (
+        <div className="mt-2">
+          <CintaDias dias={p.cinta} descripcion={leyendaDeCinta(p)} />
+        </div>
+      ) : null}
+
+      <p className="mt-2 text-nota text-[var(--color-tinta-suave)]">
         {p.responsableNombre ?? (
-          <span className="text-[var(--color-urgente)]">Sin responsable</span>
+          <span className="font-medium text-[var(--color-urgente)]">
+            Sin responsable
+          </span>
         )}
-        {p.lugar ? ` · ${p.lugar}` : ''}
+        {p.lugar ? `, ${p.lugar}` : ''}
         {p.confiabilidad === 'semilla_no_verificada'
-          ? ' · cómputo sin verificar'
+          ? ' — cómputo sin verificar'
           : ''}
       </p>
     </li>
@@ -84,12 +101,17 @@ function Grupo({
   if (pendientes.length === 0) return null
   return (
     <section>
-      <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-[var(--color-tinta-suave)]">
-        {titulo} ({pendientes.length})
+      <h2 className="mb-2 text-guia">
+        {titulo}{' '}
+        <span className="font-obra text-menor font-normal text-[var(--color-tinta-suave)]">
+          {pendientes.length}
+        </span>
       </h2>
-      <ul className="flex flex-col gap-2">
+      {/* El fondo de la lista es la regla y los renglones son las fojas encima:
+          así la separación es una línea de un pixel y no otra tarjeta. */}
+      <ul className="flex flex-col gap-px border-y border-[var(--color-regla)] bg-[var(--color-regla)]">
         {pendientes.map((p) => (
-          <Fila key={`${p.tipo}-${p.id}`} p={p} />
+          <Renglon key={`${p.tipo}-${p.id}`} p={p} />
         ))}
       </ul>
     </section>
@@ -118,7 +140,7 @@ export default async function PaginaPanel() {
   if (!porOmision) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Qué vence</h1>
+        <h1 className="text-rotulo">Qué vence</h1>
         <Aviso tono="error">
           No hay calendarios de días inhábiles cargados, así que no se pueden
           contar días hábiles. Aplica la migración de semilla.
@@ -138,13 +160,13 @@ export default async function PaginaPanel() {
   const vacio = panel.pendientes.length === 0
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex flex-col gap-7">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-regla-fuerte)] pb-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Qué vence</h1>
-          <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+          <p className="text-menor text-[var(--color-tinta-suave)]">
             {fechaLargaConDia(hoy)}
           </p>
+          <h1 className="mt-0.5 text-portada">Qué vence</h1>
         </div>
         <Link href="/panel/expedientes/nuevo">
           <Boton variante="secundario">Abrir expediente</Boton>
@@ -155,51 +177,54 @@ export default async function PaginaPanel() {
           plazo apretado, es descubrir tarde que dos compromisos caen el mismo
           día en la misma persona. */}
       {panel.choques.length > 0 ? (
-        <Tarjeta className="border-[var(--color-urgente)]/40">
-          <h2 className="font-medium text-[var(--color-urgente)]">
-            Choques de agenda
+        <Foja className="border-[var(--color-urgente)]/40">
+          <h2 className="text-guia text-[var(--color-urgente)]">
+            Dos cosas el mismo día
           </h2>
-          <ul className="mt-3 flex flex-col gap-3 text-sm">
+          <ul className="mt-3 flex flex-col gap-3 text-menor">
             {panel.choques.map((c) => (
               <li key={`${c.responsableId}-${c.fecha}`}>
                 <p className="font-medium">
-                  {c.responsableNombre} · {fechaLargaConDia(c.fecha)}
-                  {c.conAudiencia ? ' · con audiencia' : ''}
+                  {c.responsableNombre}, {fechaLargaConDia(c.fecha)}
+                  {c.conAudiencia ? ', con audiencia de por medio' : ''}
                 </p>
                 <ul className="mt-1 text-[var(--color-tinta-suave)]">
                   {c.compromisos.map((x) => (
                     <li key={`${x.tipo}-${x.id}`}>
-                      · {x.titulo} ({x.numeroInterno})
+                      {x.titulo} ({x.numeroInterno})
                     </li>
                   ))}
                 </ul>
               </li>
             ))}
           </ul>
-        </Tarjeta>
+        </Foja>
       ) : null}
 
       {panel.sinResponsable.length > 0 ? (
         <Aviso tono="error">
-          {panel.sinResponsable.length} pendiente(s) sin responsable asignado.
-          Nadie los está viendo, así que nadie los va a reclamar.
+          {panel.sinResponsable.length} pendiente
+          {panel.sinResponsable.length === 1 ? '' : 's'} sin responsable
+          asignado. Nadie los está viendo, así que nadie los va a reclamar.
         </Aviso>
       ) : null}
 
       {vacio ? (
-        <Tarjeta className="flex flex-col gap-2">
-          <p className="font-medium">Nada por vencer en las próximas dos semanas.</p>
-          <p className="text-sm text-[var(--color-tinta-suave)]">
+        <Foja className="flex flex-col gap-2">
+          <p className="font-medium">
+            Nada por vencer en las próximas dos semanas.
+          </p>
+          <p className="text-menor text-[var(--color-tinta-suave)]">
             Los plazos aparecen aquí en cuanto registras una notificación en
             algún expediente.
           </p>
-        </Tarjeta>
+        </Foja>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-7">
           <Grupo titulo="Vencidos" pendientes={panel.vencidos} />
           <Grupo titulo="Hoy" pendientes={panel.hoy} />
-          <Grupo titulo="Inminentes" pendientes={panel.inminentes} />
-          <Grupo titulo="Próximos" pendientes={panel.proximos} />
+          <Grupo titulo="Esta semana" pendientes={panel.inminentes} />
+          <Grupo titulo="Después" pendientes={panel.proximos} />
         </div>
       )}
     </div>

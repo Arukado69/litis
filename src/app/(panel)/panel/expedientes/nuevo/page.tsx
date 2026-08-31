@@ -17,14 +17,14 @@ export default async function PaginaNuevoExpediente() {
       <div>
         <Link
           href="/panel/expedientes"
-          className="text-sm text-[var(--color-tinta-suave)] underline"
+          className="text-menor text-[var(--color-tinta-suave)] underline"
         >
           ← Expedientes
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+        <h1 className="mt-2 text-rotulo">
           Abrir expediente
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
           El número interno se asigna solo. Lo que falte —el número del juzgado,
           el órgano— se completa después.
         </p>

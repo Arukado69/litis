@@ -64,13 +64,13 @@ export function CerrarPlazo({
   return (
     <form
       action={enviar}
-      className="mt-3 flex flex-col gap-4 rounded-md border border-[var(--color-borde)] bg-[var(--color-papel)] p-4"
+      className="mt-3 flex flex-col gap-4 rounded-md border border-[var(--color-regla)] bg-[var(--color-tenue)] p-4"
     >
       <input type="hidden" name="plazoId" value={plazoId} />
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-medium">¿Qué pasó con este plazo?</legend>
-        <label className="flex items-center gap-2 text-sm">
+        <legend className="text-menor font-medium">¿Qué pasó con este plazo?</legend>
+        <label className="flex items-center gap-2 text-menor">
           <input
             type="radio"
             name="accion"
@@ -82,7 +82,7 @@ export function CerrarPlazo({
           Se presentó la promoción
         </label>
         {puedeCancelar ? (
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-menor">
             <input
               type="radio"
               name="accion"
@@ -124,7 +124,7 @@ export function CerrarPlazo({
       )}
 
       {estado.problemas.motivo ? (
-        <p className="text-xs text-[var(--color-urgente)]">
+        <p className="text-nota text-[var(--color-urgente)]">
           {estado.problemas.motivo}
         </p>
       ) : null}
@@ -138,7 +138,7 @@ export function CerrarPlazo({
             defaultChecked={estado.valores.reconoceExtemporanea === 'on'}
           />
           {estado.problemas.reconoceExtemporanea ? (
-            <p className="text-xs text-[var(--color-urgente)]">
+            <p className="text-nota text-[var(--color-urgente)]">
               {estado.problemas.reconoceExtemporanea}
             </p>
           ) : null}

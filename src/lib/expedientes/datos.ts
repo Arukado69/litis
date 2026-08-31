@@ -7,6 +7,7 @@ import type {
   EstadoExpediente,
   EstadoPlazo,
   RelacionPersona,
+  ResultadoExpediente,
   TipoPersonaDb,
 } from '@/types/db'
 
@@ -84,6 +85,9 @@ export interface EtapaDelExpediente {
 }
 
 export interface ExpedienteCompleto extends ExpedienteEnLista {
+  responsableId: string | null
+  resultado: ResultadoExpediente | null
+  fechaConclusion: string | null
   organoId: string | null
   fuero: string
   entidad: string | null
@@ -104,7 +108,7 @@ export async function obtenerExpediente(
   const { data, error } = await supabase
     .from('expedientes')
     .select(
-      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, organo_id, instancia, cuantia, notas, restringido, fecha_inicio, estado, etapa_actual, actualizado_el, responsable_id, perfiles:responsable_id(nombre)',
+      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, organo_id, instancia, cuantia, notas, restringido, fecha_inicio, fecha_conclusion, estado, resultado, etapa_actual, actualizado_el, responsable_id, perfiles:responsable_id(nombre)',
     )
     .eq('id', id)
     .maybeSingle()
@@ -130,6 +134,9 @@ export async function obtenerExpediente(
 
   return {
     id: data.id,
+    responsableId: data.responsable_id,
+    resultado: data.resultado,
+    fechaConclusion: data.fecha_conclusion,
     numeroInterno: data.numero_interno,
     numeroOrgano: data.numero_organo,
     caratula: data.caratula,
@@ -388,4 +395,25 @@ export async function plazosDelExpediente(
       atendidoEl: p.atendido_el,
     }
   })
+}
+
+/**
+ * Cuántos plazos siguen corriendo en el expediente.
+ *
+ * Lo necesita la edición para no dejar concluir un asunto con términos vivos:
+ * si se cierra, sus plazos siguen pidiendo atención en el panel de un
+ * expediente que ya no existe para nadie.
+ */
+export async function contarPlazosPendientes(
+  expedienteId: string,
+): Promise<number> {
+  const supabase = await clienteServidor()
+
+  const { count } = await supabase
+    .from('plazos')
+    .select('id', { count: 'exact', head: true })
+    .eq('expediente_id', expedienteId)
+    .eq('estado', 'pendiente')
+
+  return count ?? 0
 }

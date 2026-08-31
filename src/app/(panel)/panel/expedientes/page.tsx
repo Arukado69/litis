@@ -1,21 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { Aviso, Boton, Tarjeta } from '@/components/ui/primitivos'
+import { Aviso, Boton, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { listarExpedientes } from '@/lib/expedientes/datos'
+import { ESTADO_EXPEDIENTE_ETIQUETA } from '@/lib/expedientes/edicion'
 import { buscarVia, MATERIAS, type IdMateria } from '@/lib/expedientes/materias'
-import type { EstadoExpediente } from '@/types/db'
 
 export const metadata: Metadata = { title: 'Expedientes' }
-
-const ESTADO_ETIQUETA: Record<EstadoExpediente, string> = {
-  prospecto: 'Prospecto',
-  activo: 'Activo',
-  suspendido: 'Suspendido',
-  concluido: 'Concluido',
-  archivado: 'Archivado',
-}
 
 export default async function PaginaExpedientes() {
   const sesion = await exigirPanel()
@@ -23,10 +15,10 @@ export default async function PaginaExpedientes() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-regla-fuerte)] pb-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Expedientes</h1>
-          <p className="mt-1 text-sm text-[var(--color-tinta-suave)]">
+          <h1 className="text-portada">Expedientes</h1>
+          <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
             {expedientes.length === 0
               ? 'Todavía no hay ninguno.'
               : `${expedientes.length} en el despacho.`}
@@ -43,12 +35,14 @@ export default async function PaginaExpedientes() {
           tu padrón y se clonan las etapas de la vía que elijas.
         </Aviso>
       ) : (
-        <Tarjeta className="p-0">
+        <Foja className="p-0">
           {/* La tabla se desborda a scroll propio: en un teléfono, una carátula
               larga no debe empujar la página entera de lado. */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-[var(--color-borde)] text-left text-xs uppercase tracking-wide text-[var(--color-tinta-suave)]">
+            <table className="w-full text-menor">
+              {/* Sin versalitas rastreadas en los encabezados: gritar
+                  «CARÁTULA» encima de una carátula no aclara nada. */}
+              <thead className="border-b border-[var(--color-regla-fuerte)] text-left text-nota text-[var(--color-tinta-suave)]">
                 <tr>
                   <th className="px-4 py-3 font-medium">Número</th>
                   <th className="px-4 py-3 font-medium">Carátula</th>
@@ -61,17 +55,17 @@ export default async function PaginaExpedientes() {
                 {expedientes.map((e) => (
                   <tr
                     key={e.id}
-                    className="border-b border-[var(--color-borde)] last:border-0"
+                    className="border-b border-[var(--color-regla)] last:border-0"
                   >
                     <td className="px-4 py-3 align-top whitespace-nowrap">
                       <Link
                         href={`/panel/expedientes/${e.id}`}
-                        className="font-medium underline"
+                        className="font-medium underline decoration-[var(--color-regla-fuerte)] underline-offset-4 hover:text-[var(--color-sello)]"
                       >
                         {e.numeroInterno}
                       </Link>
                       {e.numeroOrgano ? (
-                        <div className="text-xs text-[var(--color-tinta-suave)]">
+                        <div className="text-nota text-[var(--color-tinta-suave)]">
                           {e.numeroOrgano}
                         </div>
                       ) : null}
@@ -79,7 +73,7 @@ export default async function PaginaExpedientes() {
                     <td className="px-4 py-3 align-top">{e.caratula}</td>
                     <td className="px-4 py-3 align-top text-[var(--color-tinta-suave)]">
                       {MATERIAS[e.materia as IdMateria]?.nombre ?? e.materia}
-                      <div className="text-xs">
+                      <div className="text-nota">
                         {buscarVia(e.via)?.nombre ?? e.via}
                       </div>
                     </td>
@@ -90,15 +84,23 @@ export default async function PaginaExpedientes() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 align-top text-[var(--color-tinta-suave)]">
-                      {ESTADO_ETIQUETA[e.estado]}
+                    <td className="px-4 py-3 align-top">
+                      {e.estado === 'activo' ? (
+                        <span className="text-[var(--color-tinta-suave)]">
+                          Activo
+                        </span>
+                      ) : (
+                        <Sello tono="neutro">
+                          {ESTADO_EXPEDIENTE_ETIQUETA[e.estado]}
+                        </Sello>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Tarjeta>
+        </Foja>
       )}
     </div>
   )

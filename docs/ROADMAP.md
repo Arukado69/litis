@@ -55,7 +55,22 @@ asentada como tal en la bitácora inmutable. Cancelar exige motivo y es de
 `titular` o `abogado`. No hizo falta migración: las columnas de cierre ya
 estaban en la `0005`.
 
-**236 pruebas.** Typecheck, lint y build limpios.
+### R2-bis — Editar el expediente ✅
+
+Número del juzgado, instancia, entidad, cuantía, responsable, etapa, situación
+y resultado; y alta de partes sobre un expediente ya abierto, con el cotejo de
+conflicto de interés corriendo otra vez. La materia, la vía y el fuero quedan
+fuera a propósito. Cerrar un asunto con plazos corriendo se bloquea. Los
+cambios que importan van a la bitácora en una sola anotación.
+
+### Identidad visual ✅
+
+Sistema de diseño propio a partir del material de un litigante mexicano, con
+la **cinta de días hábiles** como elemento de firma — el gráfico que hace
+visible que "faltan veinte días" pueden ser dos de trabajo. Detalle en
+[`docs/DISENO.md`](DISENO.md).
+
+**275 pruebas.** Typecheck, lint y build limpios.
 Migraciones `0001`–`0008` aplicadas; el esquema está al corriente.
 
 ---
@@ -65,10 +80,6 @@ Migraciones `0001`–`0008` aplicadas; el esquema está al corriente.
 ### R1-bis — Invitar al equipo
 Invitación por correo con rol, aceptación y baja. El registro ya deja al
 titular dentro; falta que meta a los demás.
-
-### R2-bis — Editar el expediente
-Cambiar responsable, capturar el número del juzgado cuando se admita, mover la
-etapa, agregar partes. Hoy el alta escribe y el detalle solo lee.
 
 ### R5 — Alertas por correo
 Cron protegido con `CRON_SECRET`. Si no se puede leer el registro de envíos, la

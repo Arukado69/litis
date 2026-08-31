@@ -61,8 +61,9 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**236 pruebas.** Acceso, registro, expedientes, cómputo de plazos, el panel
-"qué vence" y el cierre del plazo ya funcionan contra Supabase.
+**275 pruebas.** Acceso, registro, expedientes, cómputo y cierre de plazos, el
+panel "qué vence" y la edición del expediente ya funcionan contra Supabase, con
+identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -228,7 +229,42 @@ acumulación, quedó sin materia).
   existe en el enum por si algún día un cron lo marca; hasta entonces, un plazo
   vencido sigue siendo `pendiente` y así aparece en rojo.
 
-### 5.9 Seguridad de acceso — `src/lib/seguridad/`
+### 5.9 Edición del expediente — `src/lib/expedientes/edicion.ts`, `.../[id]/editar/`
+
+El alta escribe una vez; un asunto cambia todo el tiempo. Aquí se captura el
+número que asigna el juzgado al admitir, se reasigna al responsable, se mueve
+la etapa, se agregan partes y se concluye.
+
+- ⚠️ **La materia, la vía y el fuero NO se editan.** De la vía sale el régimen
+  con el que ya se computaron los plazos de ese expediente; cambiarla en
+  caliente dejaría fechas calculadas con una regla y un expediente que declara
+  otra, sin que nada avise. Si se capturó mal, se cierra ese asunto y se abre
+  el correcto.
+- ⚠️ **Una etapa paralela no puede ser la etapa actual.** El asunto no "está
+  en" la suspensión ni en el incidente: los TIENE mientras sigue en su etapa.
+  Ponerla como actual rompe el avance y hace creer que el juicio se detuvo
+  donde no se detuvo. Ni siquiera se ofrece en el selector.
+- ⚠️ **No se concluye ni se archiva con plazos corriendo.** Si no, los términos
+  de un asunto cerrado siguen pidiendo atención en el panel para siempre. Cada
+  plazo tiene que decir antes si se presentó o si dejó de aplicar.
+- **Concluir exige resultado**, y reabrir **borra** resultado y fecha de
+  conclusión: un expediente activo con "desfavorable" pegado es un dato que
+  contradice al otro.
+- **Solo los cambios que importan van a la bitácora**, y en UNA anotación por
+  edición: número del órgano, responsable, etapa, estado, resultado, acceso
+  restringido. Una nota o la cuantía se guardan sin anotar nada — una bitácora
+  que registra cada tecleo es una bitácora que nadie lee.
+- ⚠️ **El "antes" del comparativo se relee de la base, no viene del
+  formulario.** Con un campo oculto, dos personas editando el mismo asunto
+  dejarían anotaciones que afirman cambios que ya había hecho otro, y la
+  bitácora no se corrige después. Por lo mismo, la anotación se inserta
+  DESPUÉS de guardar.
+- ⚠️ **Agregar una parte vuelve a correr el cotejo de conflictos.** Un tercero
+  llamado a juicio o un codemandado que apareció en la contestación puede ser
+  cliente del despacho en otro asunto — y ese es justo el impedimento que llega
+  por sorpresa. Revisar solo al abrir el expediente deja ciego ese caso.
+
+### 5.10 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -240,7 +276,7 @@ acumulación, quedó sin materia).
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.10 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.11 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -259,7 +295,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.11 Esquema — `supabase/migrations/`
+### 5.12 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
@@ -273,6 +309,25 @@ orden.
 ⚠️ `src/types/db.ts` está **escrito a mano** y lleva ocho migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
+
+### 5.13 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+
+Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
+vocabulario sale del material de un litigante mexicano: el archivero
+verde-gris, la foja, la tinta azul-negra, el sello violeta de recibido, el
+margen rojo de la hoja de máquina.
+
+- **La cinta de días es el único gráfico y el elemento de firma.** Una casilla
+  por día natural entre hoy y el vencimiento, llena si es hábil. Sale del motor
+  real (`tramoDeDias`), no de un dibujo, y la portada la usa en grande: si el
+  calendario se corrige, la portada se corrige sola.
+- Tipografía: **Archivo** (obra) y **Petrona** (títulos), auto-hospedadas,
+  las dos de talleres latinoamericanos y dibujadas para el español.
+- ⚠️ **Cifras tabulares en todo el `body`.** Esto son columnas de fechas y de
+  números de expediente; con cifras proporcionales las columnas bailan.
+- Sin sombras, sin tarjetas idénticas, sin versalitas rastreadas de rótulo, sin
+  cadenas de puntos medios. Están descartados por escrito en `docs/DISENO.md`
+  para que no vuelvan de contrabando.
 
 ## 6. Reglas que no se negocian
 
@@ -307,7 +362,10 @@ posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 12. **Un plazo perdido se escribe con todas sus letras.** Ninguna pantalla, ni
     ninguna redacción, puede dejar una presentación extemporánea con el mismo
     aspecto que una en tiempo. Hay pruebas que fijan el título de la actuación.
-13. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+13. **Un gráfico nunca es adorno.** Si algo se pinta, lleva un dato real detrás
+    y una descripción para lector de pantalla. La cinta de días sale del motor,
+    no de constantes escritas a mano.
+14. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones
