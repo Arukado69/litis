@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Aviso, Boton, Dato, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
+import type { AudienciaEnAgenda } from '@/lib/audiencias/agenda'
+import { ESTADO_AUDIENCIA_ETIQUETA } from '@/lib/audiencias/audiencias'
+import { audienciasDelExpediente } from '@/lib/audiencias/datos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { TIPO_ACTUACION_ETIQUETA } from '@/lib/bitacora/captura'
 import {
@@ -16,6 +19,7 @@ import {
   tamanoLegible,
 } from '@/lib/documentos/archivos'
 import {
+  miembrosDelDespacho,
   obtenerExpediente,
   plazosDelExpediente,
   type PlazoDelExpediente,
@@ -36,6 +40,7 @@ import { ROL_ETIQUETA, type RolParte } from '@/lib/expedientes/partes'
 import { fechaLarga, fechaLargaConDia } from '@/lib/plazos/fecha'
 import type { EstadoPlazo, RolMembresia } from '@/types/db'
 
+import { CerrarAudiencia, SenalarAudiencia } from './audiencias'
 import { AsentarActuacion, SubirDocumento } from './bitacora'
 import { CerrarPlazo } from './cerrar-plazo'
 
@@ -84,6 +89,50 @@ function FilaPlazo({ p }: { p: PlazoDelExpediente }) {
         </p>
       ) : null}
     </div>
+  )
+}
+
+function RenglonAudiencia({
+  a,
+  cerrable,
+}: {
+  a: AudienciaEnAgenda
+  cerrable: boolean
+}) {
+  return (
+    <li
+      className={
+        cerrable
+          ? 'margen bg-[var(--color-foja)] py-3 pl-4 pr-3'
+          : 'border-l-2 border-[var(--color-regla)] py-2 pl-4 text-[var(--color-tinta-suave)]'
+      }
+      data-urgencia={cerrable ? 'inminente' : undefined}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className={cerrable ? 'font-medium' : ''}>
+          {a.tipo}
+          {!cerrable ? (
+            <span className="ml-2 align-middle">
+              <Sello tono="neutro">{ESTADO_AUDIENCIA_ETIQUETA[a.estado]}</Sello>
+            </span>
+          ) : null}
+        </p>
+        <p className="text-menor">
+          {fechaLargaConDia(a.fecha)}
+          {a.hora ? `, ${a.hora}` : ''}
+        </p>
+      </div>
+      <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+        {a.lugar ?? 'Sin lugar capturado'}
+        {' · '}
+        {a.responsableNombre ?? (
+          <span className="font-medium text-[var(--color-urgente)]">
+            Nadie asignado
+          </span>
+        )}
+      </p>
+      {cerrable ? <CerrarAudiencia audienciaId={a.id} fecha={a.fecha} /> : null}
+    </li>
   )
 }
 
@@ -168,12 +217,15 @@ export default async function PaginaExpediente({
 }) {
   const sesion = await exigirPanel()
   const { id } = await params
-  const [expediente, plazos, bitacora, documentos] = await Promise.all([
-    obtenerExpediente(id),
-    plazosDelExpediente(id),
-    bitacoraDelExpediente(id),
-    documentosDelExpediente(id),
-  ])
+  const [expediente, plazos, bitacora, documentos, audiencias, miembros] =
+    await Promise.all([
+      obtenerExpediente(id),
+      plazosDelExpediente(id),
+      bitacoraDelExpediente(id),
+      documentosDelExpediente(id),
+      audienciasDelExpediente(id),
+      miembrosDelDespacho(sesion.activa.despachoId),
+    ])
 
   // `obtenerExpediente` no distingue "no existe" de "no tienes acceso", y aquí
   // tampoco: decirle a alguien que el expediente existe pero no puede verlo ya
@@ -193,6 +245,8 @@ export default async function PaginaExpediente({
   )
   const paralelas = expediente.etapas.filter((e) => e.paralela)
   const nombresDeDocumentos = new Map(documentos.map((d) => [d.id, d.nombre]))
+  const programadas = audiencias.filter((a) => a.estado === 'programada')
+  const audienciasPasadas = audiencias.filter((a) => a.estado !== 'programada')
 
   return (
     <div className="flex flex-col gap-7">
@@ -420,6 +474,49 @@ export default async function PaginaExpediente({
             </ul>
           </div>
         ) : null}
+      </Foja>
+
+      <Foja className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <Rotulo>Audiencias</Rotulo>
+          <span className="text-menor text-[var(--color-tinta-suave)]">
+            {programadas.length === 0
+              ? 'Ninguna señalada'
+              : `${programadas.length} ${programadas.length === 1 ? 'señalada' : 'señaladas'}`}
+          </span>
+        </div>
+
+        {programadas.length === 0 ? (
+          <p className="text-menor text-[var(--color-tinta-suave)]">
+            No hay ninguna señalada. Al capturarla aparece en la agenda junto
+            con los vencimientos, que es donde se ve si chocan.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {programadas.map((a) => (
+              <RenglonAudiencia key={a.id} a={a} cerrable />
+            ))}
+          </ul>
+        )}
+
+        {audienciasPasadas.length > 0 ? (
+          <details className="text-menor">
+            <summary className="cursor-pointer text-[var(--color-tinta-suave)]">
+              {audienciasPasadas.length} anterior
+              {audienciasPasadas.length === 1 ? '' : 'es'}
+            </summary>
+            <ul className="mt-2 flex flex-col gap-2">
+              {audienciasPasadas.map((a) => (
+                <RenglonAudiencia key={a.id} a={a} cerrable={false} />
+              ))}
+            </ul>
+          </details>
+        ) : null}
+
+        <SenalarAudiencia
+          expedienteId={id}
+          miembros={miembros.map((m) => ({ valor: m.perfilId, etiqueta: m.nombre }))}
+        />
       </Foja>
 
       <Foja className="flex flex-col gap-4">
