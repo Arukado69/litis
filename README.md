@@ -32,7 +32,8 @@ más se confía uno.
 
 **No finge certeza.** Todo el catálogo se entrega marcado como no verificado, y
 así se muestra hasta que un abogado del despacho lo confirme y quede la
-constancia. Los ordenamientos se reforman; el Código Nacional de Procedimientos
+constancia — que vale para ese despacho y no para los demás, porque una firma
+profesional no se hereda. Los ordenamientos se reforman; el Código Nacional de Procedimientos
 Civiles y Familiares está desplazando a los códigos locales hasta 2027. Un
 catálogo estático miente.
 
@@ -79,8 +80,9 @@ grave es peor que no tener registro.
 - Bitácora inmutable y documentos en almacén privado, con versiones
 - Agenda: audiencias y vencimientos en el mismo calendario
 - Portada pública con precios, que enseña el cómputo del motor de verdad
+- Verificación del catálogo, firmada por abogado y por despacho
 
-**413 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**443 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

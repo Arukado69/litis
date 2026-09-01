@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { resolverCatalogo } from '@/lib/catalogo/verificacion'
 import { clienteServidor } from '@/lib/supabase/server'
 
 import type { Calendario, PeriodoInhabil } from './calendario'
@@ -147,6 +148,18 @@ export async function calendarioDelExpediente(args: {
  * Ofrecer plazos de otro régimen invita a elegir uno que no aplica, y el
  * resultado sería una fecha con apariencia de correcta.
  */
+/**
+ * El catálogo de un régimen, ya resuelto.
+ *
+ * ⚠️ La consulta trae DOS conjuntos: las entradas compartidas de fábrica
+ * (`despacho_id is null`) y las que el despacho adoptó al verificarlas. Si se
+ * devolvieran las dos, el selector enseñaría el mismo término dos veces —una
+ * verificada y otra no— y quien capture elegiría cualquiera, que es peor que no
+ * haber verificado nunca.
+ *
+ * `resolverCatalogo` deja que la propia del despacho gane. Ver
+ * `lib/catalogo/verificacion.ts`.
+ */
 export async function catalogoDeRegimen(
   regimen: IdRegimen,
 ): Promise<EntradaCatalogo[]> {
@@ -154,18 +167,38 @@ export async function catalogoDeRegimen(
 
   const { data } = await supabase
     .from('plazos_catalogo')
-    .select('id, clave, etiqueta, dias, unidad, fundamento, verificado_el')
+    .select(
+      'id, despacho_id, clave, regimen, etiqueta, dias, unidad, fundamento, nota, verificado_por, verificado_el, verificacion_notas',
+    )
     .eq('regimen', regimen)
     .order('etiqueta')
 
-  return (data ?? []).map((p) => ({
-    id: p.id,
-    clave: p.clave,
-    etiqueta: p.etiqueta,
-    dias: p.dias,
-    unidad: p.unidad,
-    fundamento: p.fundamento,
-    verificado: p.verificado_el !== null,
+  const resueltas = resolverCatalogo(
+    (data ?? []).map((p) => ({
+      id: p.id,
+      despachoId: p.despacho_id,
+      clave: p.clave,
+      regimen: p.regimen,
+      etiqueta: p.etiqueta,
+      dias: p.dias,
+      unidad: p.unidad,
+      fundamento: p.fundamento,
+      nota: p.nota,
+      verificadoPor: p.verificado_por,
+      verificadoEl: p.verificado_el,
+      verificacionNotas: p.verificacion_notas,
+    })),
+  )
+
+  return resueltas.map(({ entrada }) => ({
+    id: entrada.id,
+    clave: entrada.clave,
+    etiqueta: entrada.etiqueta,
+    dias: entrada.dias,
+    unidad: entrada.unidad,
+    fundamento: entrada.fundamento,
+    // Solo una entrada PROPIA del despacho con firma cuenta como verificada.
+    verificado: entrada.despachoId !== null && entrada.verificadoEl !== null,
   }))
 }
 

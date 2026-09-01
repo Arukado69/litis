@@ -112,7 +112,15 @@ motor real**, qué hace, qué NO hace, y precios por usuario al mes con nivel
 gratuito. Los precios viven en `src/lib/marketing/planes.ts` y la página dice
 que son una hipótesis, no una medición.
 
-**413 pruebas.** Typecheck, lint y build limpios.
+### R10 — Verificación del catálogo ✅
+
+La pantalla donde un abogado revisa cada plazo y lo firma. Verificar **adopta**
+la entrada al despacho: la semilla compartida queda intacta y sin verificar para
+los demás, porque la firma vale para quien la pone. Se distingue verificada de
+corregida, y una corrección que cambia los números avisa cuántos plazos vivos
+quedaron mal computados —sin recalcularlos solos—. Sin migración.
+
+**443 pruebas.** Typecheck, lint y build limpios.
 Migraciones `0001`–`0010` aplicadas; el esquema está al corriente.
 
 ---
@@ -126,11 +134,6 @@ avance.
 ### R9 — Portal del cliente
 Solo lectura: en qué va su asunto en lenguaje llano, próxima audiencia,
 documentos compartidos. Ataca el "¿cómo va lo mío?" semanal.
-
-### R10 — Verificación del catálogo
-La pantalla donde un abogado revisa cada plazo y lo marca verificado con notas.
-Sin esto, todo el sistema opera marcado como no verificado — que es correcto,
-pero no puede ser el estado permanente.
 
 ### R11 — Suscripción
 Stripe por usuario/mes con nivel gratuito. Tope de asientos y de expedientes

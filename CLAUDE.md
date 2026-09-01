@@ -61,11 +61,11 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**413 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+**443 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
 plazos, el panel "qué vence", la agenda, la edición del expediente, las alertas
-por correo y la bitácora con sus documentos ya funcionan contra Supabase, con
-identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)) y **portada
-pública con precios**.
+por correo, la bitácora con sus documentos y **la verificación del catálogo** ya
+funcionan contra Supabase, con identidad visual propia (ver
+[`docs/DISENO.md`](docs/DISENO.md)) y portada pública con precios.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -427,7 +427,45 @@ mano. Migración `0010` para el almacén.
 - Hay una sección de **lo que NO hace**. Quien lo descubre en la semana tres se
   siente engañado, y con razón; decirlo antes cuesta registros y ahorra bajas.
 
-### 5.16 Seguridad de acceso — `src/lib/seguridad/`
+### 5.16 Verificación del catálogo — `src/lib/catalogo/`, `/panel/catalogo`
+
+Es la pieza que quita el "cómputo sin verificar" de las pantallas — pero sin
+regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
+
+- ⚠️ **Verificar es ADOPTAR, no bendecir lo compartido.** Las entradas semilla
+  viven con `despacho_id IS NULL` y ningún despacho puede escribirlas (política
+  de la `0002`), y eso es la semántica correcta: verificar es un acto
+  profesional, y que el titular de un despacho revise el ordinario mercantil no
+  puede volver esa entrada "verificada" para otro que nunca la vio. Menos con el
+  CNPCyF desplazando códigos locales a ritmos distintos por entidad. Verificar
+  **copia** la entrada al despacho con su firma.
+- ⚠️ **La copia propia GANA sobre la compartida** (`resolverCatalogo`). Sin esa
+  regla el selector de plazos enseñaría el mismo término dos veces —uno
+  verificado y otro no— y quien capture elegiría cualquiera, que es peor que no
+  haber verificado. `catalogoDeRegimen` ya lo aplica.
+- **Se distingue "verificada" de "corregida".** "La revisé y estaba bien" no es
+  lo mismo que "la revisé y decía 15 donde son 9", y la pantalla enseña el antes.
+- ⚠️ **Una corrección NO recalcula los plazos ya computados.** Cambiarle la fecha
+  de vencimiento a un plazo sin que nadie lo vea es lo que este producto no
+  hace: el abogado ya agendó, ya avisó al cliente y quizá ya redactó contra esa
+  fecha. Se le enseñan cuáles son —con enlace a cada expediente— y decide uno
+  por uno.
+- ⚠️ **La búsqueda de plazos afectados usa el id propio Y el de la semilla.** Al
+  adoptar se crea una copia con id nuevo, pero los plazos computados antes
+  siguen apuntando al id compartido — y esos son justo los que llevan más
+  tiempo con la fecha equivocada.
+- **La nota de verificación es obligatoria** (contra qué texto y de qué fecha).
+  Sin ella "verificado" no significa nada dentro de seis meses.
+- **Solo `titular` o `abogado`.** Un asistente captura y agenda; declarar que un
+  plazo legal es correcto es acto de quien puede firmar. En la RLS y en la
+  acción.
+- **Retirar la verificación borra solo copias con clave de semilla**: sin ese
+  filtro, retirarla de una entrada capturada a mano la borraría del catálogo con
+  todo y su contenido.
+- Verificar **no toca los plazos ya computados**: cada uno guardó su
+  confiabilidad el día del cálculo y esa constancia no se reescribe hacia atrás.
+
+### 5.17 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -439,7 +477,7 @@ mano. Migración `0010` para el almacén.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.17 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.18 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -458,7 +496,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.18 Esquema — `supabase/migrations/`
+### 5.19 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
@@ -475,7 +513,7 @@ orden.
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.19 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.20 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
