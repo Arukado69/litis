@@ -120,16 +120,19 @@ los demás, porque la firma vale para quien la pone. Se distingue verificada de
 corregida, y una corrección que cambia los números avisa cuántos plazos vivos
 quedaron mal computados —sin recalcularlos solos—. Sin migración.
 
-**443 pruebas.** Typecheck, lint y build limpios.
+### R8 — Tablero de etapas ✅
+
+Seis columnas universales que le quedan a cualquier vía, con la etapa real en
+cada tarjeta. Los estancados —sin plazo y sin movimiento en 60 días— van
+arriba, y los sin etapa aparte. Sin arrastrar y soltar: mover escribe en la
+bitácora inmutable. Sin migración.
+
+**467 pruebas.** Typecheck, lint y build limpios.
 Migraciones `0001`–`0010` aplicadas; el esquema está al corriente.
 
 ---
 
 ## Siguiente
-
-### R8 — Tablero de etapas
-Ahora sí el Kanban, con las etapas reales de cada vía y las paralelas fuera del
-avance.
 
 ### R9 — Portal del cliente
 Solo lectura: en qué va su asunto en lenguaje llano, próxima audiencia,

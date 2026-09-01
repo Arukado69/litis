@@ -81,8 +81,9 @@ grave es peor que no tener registro.
 - Agenda: audiencias y vencimientos en el mismo calendario
 - Portada pública con precios, que enseña el cómputo del motor de verdad
 - Verificación del catálogo, firmada por abogado y por despacho
+- Tablero de etapas, con los asuntos que llevan meses sin moverse arriba
 
-**443 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**467 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

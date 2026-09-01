@@ -61,10 +61,10 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**443 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
-plazos, el panel "qué vence", la agenda, la edición del expediente, las alertas
-por correo, la bitácora con sus documentos y **la verificación del catálogo** ya
-funcionan contra Supabase, con identidad visual propia (ver
+**467 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+plazos, el panel "qué vence", la agenda, **el tablero de etapas**, la edición
+del expediente, las alertas por correo, la bitácora con sus documentos y la
+verificación del catálogo ya funcionan contra Supabase, con identidad visual propia (ver
 [`docs/DISENO.md`](docs/DISENO.md)) y portada pública con precios.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
@@ -465,7 +465,40 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 - Verificar **no toca los plazos ya computados**: cada uno guardó su
   confiabilidad el día del cálculo y esa constancia no se reescribe hacia atrás.
 
-### 5.17 Seguridad de acceso — `src/lib/seguridad/`
+### 5.17 Tablero de etapas — `src/lib/tablero/`, `/panel/tablero`
+
+- ⚠️ **Columnas universales, etiqueta real en la tarjeta.** Cada vía tiene sus
+  propias etapas —un ordinario mercantil y un amparo indirecto no comparten
+  ninguna—, así que no hay un juego de columnas que le quede a las dos. Un
+  tablero por vía sería correcto e inútil: un litigante lleva mercantil,
+  laboral y amparo a la vez y quiere ver su cartera completa. Las seis fases
+  (`preparacion`, `presentacion`, `instruccion`, `resolucion`, `impugnacion`,
+  `ejecucion`) son la forma de cualquier proceso mexicano; debajo del asunto va
+  SIEMPRE su etapa real.
+- ⚠️ **La misma clave no siempre significa lo mismo.** `revision` en amparo es
+  el recurso; en un asunto corporativo es revisar el documento antes de
+  entregarlo. Por eso el mapa admite excepciones por vía — sin ellas un dictamen
+  a punto de entregarse aparecería entre las impugnaciones.
+- ⚠️ **Hay una prueba que exige que TODAS las etapas del catálogo estén
+  mapeadas.** Sin ella, agregar una etapa a una plantilla y olvidar mapearla
+  tira esos expedientes fuera del tablero en silencio. Ya cazó dos
+  (`requerimiento_embargo` y `conciliacion_prejudicial`) al escribirse.
+- ⚠️ **NO hay arrastrar y soltar, a propósito.** Mover la etapa escribe en la
+  bitácora, que es inmutable: un arrastre accidental deja asentado para siempre
+  que el asunto pasó a pruebas el día que no pasó. Selector y botón. El rastro
+  se arma con el MISMO motor que `/editar` (`cambiosDeEdicion` +
+  `anotacionDeCambios`), o la bitácora tendría dos formas de decir lo mismo.
+- **Los sin etapa van aparte y arriba**, no repartidos en "Preparación": "no sé
+  en qué va" es un estado real y esconderlo en una columna legítima lo vuelve
+  invisible.
+- **Los estancados van hasta arriba**: sin plazo corriendo y sin moverse en 60
+  días. Los dos filtros juntos importan — uno con un término encima está
+  esperando, no dormido. El que se cae por caducidad es el que no tiene nada
+  que lo delate.
+- Solo entran los asuntos vivos (activo, suspendido, prospecto). Uno concluido
+  volvería el tablero un inventario.
+
+### 5.18 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -477,7 +510,7 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.18 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.19 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -496,7 +529,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.19 Esquema — `supabase/migrations/`
+### 5.20 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
@@ -513,7 +546,7 @@ orden.
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.20 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.21 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
