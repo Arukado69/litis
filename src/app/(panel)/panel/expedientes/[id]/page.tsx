@@ -4,6 +4,17 @@ import { notFound } from 'next/navigation'
 
 import { Aviso, Boton, Dato, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
+import { TIPO_ACTUACION_ETIQUETA } from '@/lib/bitacora/captura'
+import {
+  bitacoraDelExpediente,
+  documentosDelExpediente,
+  type ActuacionEnBitacora,
+  type DocumentoDelExpediente,
+} from '@/lib/bitacora/datos'
+import {
+  TIPO_DOCUMENTO_ETIQUETA,
+  tamanoLegible,
+} from '@/lib/documentos/archivos'
 import {
   obtenerExpediente,
   plazosDelExpediente,
@@ -25,6 +36,7 @@ import { ROL_ETIQUETA, type RolParte } from '@/lib/expedientes/partes'
 import { fechaLarga, fechaLargaConDia } from '@/lib/plazos/fecha'
 import type { EstadoPlazo, RolMembresia } from '@/types/db'
 
+import { AsentarActuacion, SubirDocumento } from './bitacora'
 import { CerrarPlazo } from './cerrar-plazo'
 
 export const metadata: Metadata = { title: 'Expediente' }
@@ -75,6 +87,80 @@ function FilaPlazo({ p }: { p: PlazoDelExpediente }) {
   )
 }
 
+function RenglonActuacion({ a }: { a: ActuacionEnBitacora }) {
+  return (
+    <li className="border-l-2 border-[var(--color-regla)] py-2.5 pl-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="font-medium">{a.titulo}</p>
+        <p className="text-menor text-[var(--color-tinta-suave)]">
+          {fechaLarga(a.fecha)}
+        </p>
+      </div>
+      {a.detalle ? (
+        <p className="mt-1 whitespace-pre-line text-menor text-[var(--color-tinta-suave)]">
+          {a.detalle}
+        </p>
+      ) : null}
+      <p className="mt-1 flex flex-wrap items-center gap-2 text-nota text-[var(--color-tinta-suave)]">
+        <span>{TIPO_ACTUACION_ETIQUETA[a.tipo]}</span>
+        {a.autorNombre ? <span>· {a.autorNombre}</span> : null}
+        {/* Que el cliente lo vea es un hecho del expediente, no un ajuste: se
+            marca a la vista para que nadie se pregunte qué está compartido. */}
+        {a.visibleCliente ? <Sello>visible para el cliente</Sello> : null}
+      </p>
+    </li>
+  )
+}
+
+function RenglonDocumento({
+  d,
+  amparados,
+}: {
+  d: DocumentoDelExpediente
+  amparados: ReadonlyMap<string, string>
+}) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-[var(--color-foja)] px-4 py-3">
+      <div>
+        <p className="font-medium">
+          {d.nombre}
+          {d.version > 1 ? (
+            <span className="ml-2 align-middle">
+              <Sello tono="neutro">versión {d.version}</Sello>
+            </span>
+          ) : null}
+          {d.visibleCliente ? (
+            <span className="ml-2 align-middle">
+              <Sello>visible para el cliente</Sello>
+            </span>
+          ) : null}
+        </p>
+        <p className="text-nota text-[var(--color-tinta-suave)]">
+          {TIPO_DOCUMENTO_ETIQUETA[d.tipo]}
+          {d.tamanoBytes ? ` · ${tamanoLegible(d.tamanoBytes)}` : ''}
+          {d.autorNombre ? ` · ${d.autorNombre}` : ''}
+          {` · ${fechaLarga(d.creadoEl.slice(0, 10))}`}
+          {d.acuseDeId && amparados.get(d.acuseDeId)
+            ? ` · acuse de "${amparados.get(d.acuseDeId)}"`
+            : ''}
+        </p>
+        {d.notas ? (
+          <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">{d.notas}</p>
+        ) : null}
+      </div>
+
+      {/* Un enlace, no un formulario: la CSP lleva `form-action 'self'` y los
+          navegadores no coinciden en si eso alcanza a la redirección que sigue
+          al envío. El servidor firma un enlace que dura un minuto. */}
+      <a href={`/api/documentos/${d.id}`}>
+        <Boton variante="secundario" type="button">
+          Descargar
+        </Boton>
+      </a>
+    </li>
+  )
+}
+
 export default async function PaginaExpediente({
   params,
 }: {
@@ -82,9 +168,11 @@ export default async function PaginaExpediente({
 }) {
   const sesion = await exigirPanel()
   const { id } = await params
-  const [expediente, plazos] = await Promise.all([
+  const [expediente, plazos, bitacora, documentos] = await Promise.all([
     obtenerExpediente(id),
     plazosDelExpediente(id),
+    bitacoraDelExpediente(id),
+    documentosDelExpediente(id),
   ])
 
   // `obtenerExpediente` no distingue "no existe" de "no tienes acceso", y aquí
@@ -104,6 +192,7 @@ export default async function PaginaExpediente({
     (e) => e.clave === expediente.etapaActual,
   )
   const paralelas = expediente.etapas.filter((e) => e.paralela)
+  const nombresDeDocumentos = new Map(documentos.map((d) => [d.id, d.nombre]))
 
   return (
     <div className="flex flex-col gap-7">
@@ -331,6 +420,65 @@ export default async function PaginaExpediente({
             </ul>
           </div>
         ) : null}
+      </Foja>
+
+      <Foja className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <Rotulo>Documentos</Rotulo>
+          <span className="text-menor text-[var(--color-tinta-suave)]">
+            {documentos.length === 0
+              ? 'Ninguno'
+              : `${documentos.length} ${documentos.length === 1 ? 'archivo' : 'archivos'}`}
+          </span>
+        </div>
+
+        {documentos.length === 0 ? (
+          <p className="text-menor text-[var(--color-tinta-suave)]">
+            Todavía no hay ninguno. Se guardan en un almacén privado y se
+            descargan con un enlace que dura un minuto.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-px border-y border-[var(--color-regla)] bg-[var(--color-regla)]">
+            {documentos.map((d) => (
+              <RenglonDocumento key={d.id} d={d} amparados={nombresDeDocumentos} />
+            ))}
+          </ul>
+        )}
+
+        <SubirDocumento
+          expedienteId={id}
+          documentos={documentos.map((d) => ({
+            id: d.id,
+            nombre: d.nombre,
+            version: d.version,
+          }))}
+        />
+      </Foja>
+
+      <Foja className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-4">
+          <Rotulo>Bitácora</Rotulo>
+          <span className="text-menor text-[var(--color-tinta-suave)]">
+            {bitacora.length === 0
+              ? 'Vacía'
+              : `${bitacora.length} ${bitacora.length === 1 ? 'actuación' : 'actuaciones'}`}
+          </span>
+        </div>
+
+        {bitacora.length === 0 ? (
+          <p className="text-menor text-[var(--color-tinta-suave)]">
+            Todavía no hay nada asentado. Se llena sola conforme registras
+            notificaciones y cierras plazos, y puedes asentar a mano lo demás.
+          </p>
+        ) : (
+          <ol className="flex flex-col">
+            {bitacora.map((a) => (
+              <RenglonActuacion key={a.id} a={a} />
+            ))}
+          </ol>
+        )}
+
+        <AsentarActuacion expedienteId={id} />
       </Foja>
     </div>
   )

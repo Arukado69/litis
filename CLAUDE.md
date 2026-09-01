@@ -61,10 +61,10 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**343 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
-plazos, el panel "qué vence", la edición del expediente y **las alertas por
-correo** ya funcionan contra Supabase, con identidad visual propia (ver
-[`docs/DISENO.md`](docs/DISENO.md)).
+**380 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+plazos, el panel "qué vence", la edición del expediente, las alertas por correo
+y **la bitácora con sus documentos** ya funcionan contra Supabase, con identidad
+visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -348,7 +348,52 @@ alguien abría el panel; esto avisa aunque nadie lo abra. Detalle completo en
   escondería la deriva del esquema. Tres consultas en un proceso diario no
   cuestan nada; un tipo que miente sí.
 
-### 5.13 Seguridad de acceso — `src/lib/seguridad/`
+### 5.13 Bitácora y documentos — `src/lib/bitacora/`, `src/lib/documentos/`
+
+Las actuaciones ya se escribían desde tres lugares (notificación, cierre de
+plazo, edición) y no había dónde leerlas. Ahora se leen, y se pueden asentar a
+mano. Migración `0010` para el almacén.
+
+- ⚠️ **La bitácora no se reescribe.** `actuaciones` no tiene política de UPDATE
+  ni DELETE (migración `0004`). Corregir es asentar otra actuación que
+  rectifique, como se agrega una foja en vez de tachar la anterior. La pantalla
+  lo dice en voz alta en vez de dejar que alguien lo descubra.
+- ⚠️ **`visible_cliente` se decide al escribir y NO se puede deshacer.** La fila
+  no se edita — y aunque se pudiera, el cliente ya lo vio.
+- ⚠️ **Una nota interna NUNCA se marca visible.** Es la única categoría cuyo
+  nombre le promete al despacho que el cliente no la va a ver; dejar que una
+  casilla mal marcada rompa esa promesa convertiría el campo en una trampa. Se
+  fuerza en `leerActuacion` **y** en la acción: ocultar la casilla no detiene a
+  quien llame la Server Action directo.
+- **La fecha es cuándo OCURRIÓ, no cuándo se capturó.** Se captura el lunes lo
+  que pasó el viernes. Una fecha futura se rechaza: la bitácora registra
+  hechos, y un plan va en la agenda.
+- ⚠️ **El bucket `documentos` es PRIVADO y no hay una sola ruta pública.** Ahí
+  vive la identificación oficial de un cliente y las pruebas del asunto. Se
+  descarga con URL firmada de **un minuto**, generada en el servidor con la
+  sesión de quien pide (no con clave de servicio), así que la RLS sigue
+  decidiendo.
+- ⚠️ **La descarga es un enlace GET, no un formulario.** La CSP lleva
+  `form-action 'self'` y los navegadores no coinciden en si eso alcanza a la
+  redirección que sigue al envío; un botón que unos bloquean en silencio es
+  peor que uno feo. Vive en `GET /api/documentos/[id]`.
+- ⚠️ **La ruta es `{despacho}/{expediente}/{uuid}-{nombre}` y el orden importa.**
+  Las políticas de Storage (`0010`) leen el SEGUNDO segmento. Cambiar el orden
+  aquí sin cambiarlas allá abriría los archivos de todos los despachos. El
+  despacho sale de la sesión, nunca del formulario.
+- ⚠️ **No se sobrescribe: se sube otra versión.** Cada subida tiene su uuid, y
+  el mismo nombre suma versión. En un juicio el borrador y lo presentado son
+  dos documentos distintos y los dos importan por separado. Sin política de
+  UPDATE en `storage.objects`.
+- **Primero el archivo, después la fila.** Al revés, la lista mostraría un
+  documento que al oprimirlo no existe. Si la fila falla, el archivo se limpia.
+- El nombre del archivo se sanea (`nombreSeguro`) y **nunca decide permisos**:
+  lo teclea quien sube. Quien decide es el id del expediente, que pone el
+  servidor. Tope de 25 MB y lista blanca de tipos; el límite de cuerpo de las
+  Server Actions se levantó a 30 MB para que el rechazo lo dé nuestra
+  validación, con su mensaje, y no el runtime.
+
+### 5.14 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -360,7 +405,7 @@ alguien abría el panel; esto avisa aunque nadie lo abra. Detalle completo en
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.14 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.15 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -379,24 +424,24 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.15 Esquema — `supabase/migrations/`
+### 5.16 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
 alertas · `0006` alta de despacho transaccional · `0007` apertura de expediente
 transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
-invitaciones al despacho.
+invitaciones al despacho · `0010` almacén privado de documentos.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0009`; el esquema está
-al corriente. R5 no necesitó migración: `plazo_alertas_enviadas` ya estaba en
-la `0005`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0009`. **Pendiente la
+`0010`** — sin ella no hay bucket y la subida de documentos falla. R5 no
+necesitó migración: `plazo_alertas_enviadas` ya estaba en la `0005`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva nueve migraciones de
+⚠️ `src/types/db.ts` está **escrito a mano** y lleva diez migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.16 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.17 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
@@ -457,7 +502,9 @@ margen rojo de la hoja de máquina.
 15. **Un aviso que no salió no está dado.** Nada se marca como notificado sin
     haber salido de verdad, y si el registro de envíos no se puede leer, la
     corrida se detiene en vez de repetirlo todo.
-16. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+16. **Ningún archivo de cliente vive en un bucket público.** Se descarga con URL
+    firmada de vida corta, generada con la sesión de quien pide.
+17. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones

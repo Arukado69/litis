@@ -91,16 +91,19 @@ Si no se puede leer el registro de envíos, la corrida se detiene y avisa en vez
 de reenviarle el mismo aviso a todos. Un envío simulado no se registra. Sin
 migración: `plazo_alertas_enviadas` ya estaba en la `0005`.
 
-**343 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0009` aplicadas; el esquema está al corriente.
+### R6 — Bitácora y documentos ✅
+
+La bitácora se lee y se puede asentar a mano, con la advertencia de que no se
+edita ni se borra. Documentos en bucket **privado** con URL firmada de un
+minuto, tipo, versión y acuse ligado al escrito que ampara. Una nota interna
+nunca se marca visible para el cliente. Migración `0010`.
+
+**380 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0009` aplicadas; **falta aplicar la `0010`**.
 
 ---
 
 ## Siguiente
-
-### R6 — Bitácora y documentos
-Actuaciones con `visible_cliente`. Documentos en bucket privado con URL firmada,
-tipo, versión y acuse.
 
 ### R7 — Agenda de audiencias
 Vista de calendario con audiencias y vencimientos juntos. Es la vista que un

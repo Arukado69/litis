@@ -76,8 +76,9 @@ grave es peor que no tener registro.
 - Identidad visual propia, con la cinta de días hábiles
 - Equipo del despacho: invitación con token hasheado, papeles y baja
 - Alertas por correo: corrida diaria que avisa aunque nadie abra el panel
+- Bitácora inmutable y documentos en almacén privado, con versiones
 
-**343 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**380 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

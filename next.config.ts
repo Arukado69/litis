@@ -33,6 +33,15 @@ const CSP = [
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  /**
+   * Las Server Actions aceptan 1 MB por omisión, y por ahí sube un escaneo de
+   * un expediente con anexos. Se levanta un poco POR ENCIMA del tope propio
+   * (25 MB, en `lib/documentos/archivos.ts`) para que el archivo demasiado
+   * grande lo rechace nuestra validación —con un mensaje que dice qué hacer—
+   * y no el runtime con un error que no explica nada.
+   */
+  experimental: { serverActions: { bodySizeLimit: '30mb' } },
+
   // Raíz explícita. Next la infiere subiendo hasta encontrar un lockfile, y si
   // este proyecto queda anidado dentro de otro (como durante el trasplante
   // desde ns-hub) termina compilando archivos del padre. Fijarla también
