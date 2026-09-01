@@ -162,7 +162,67 @@ siempre. Cada nivel se manda una sola vez por plazo; la idempotencia entra como
 parámetro y el índice único `(plazo_id, nivel)` es la red final.
 
 Un plazo `atendido` no genera alertas. Llenar de avisos lo que ya está hecho
-enseña a ignorar los avisos.
+enseña a ignorar los avisos. Tampoco los de un expediente concluido o
+archivado: un aviso de un asunto cerrado es ruido, y el ruido enseña a ignorar
+la bandeja.
+
+### Un correo por persona, no uno por plazo
+
+Un litigante con cinco términos apretados recibiría cinco correos idénticos en
+el mismo minuto. Al tercer día los archiva sin abrirlos, y el día que llegue el
+que sí importaba también lo va a archivar sin abrirlo. Así que se agrupa: **un
+correo por persona**, con todo lo suyo ordenado de más urgente a menos, y el
+asunto dice lo peor que hay dentro.
+
+Lo que **no tiene responsable** le llega al titular, marcado como huérfano: es
+el caso más peligroso —nadie lo está viendo, así que nadie lo va a reclamar— y
+dejarlo sin destinatario sería avisar de todo menos de lo único que ya está
+fallando. Si tampoco hay titular con correo, la corrida lo reporta al operador
+en vez de tragárselo.
+
+### La corrida diaria
+
+`GET /api/cron/alertas-plazos`, protegido con `CRON_SECRET`. Corre con clave de
+servicio porque no hay sesión.
+
+**Sin `CRON_SECRET` contesta 503 y no corre.** Un endpoint abierto que manda
+correo es un cañón de spam apuntando a los clientes del despacho. Falla cerrado
+y lo dice, en vez de quedarse abierto en silencio. El secreto se compara en
+tiempo constante (`lib/seguridad/comparar.ts`).
+
+Tres reglas que valen más que el código:
+
+**⚠️ Si no se puede leer `plazo_alertas_enviadas`, la corrida se detiene.**
+Ese registro es lo único que impide repetir un aviso. Si la lectura falla y la
+corrida sigue con el registro vacío, todos los plazos en ventana reciben otra
+vez su aviso — y otra vez mañana, y pasado. En una semana el correo del
+despacho está en spam y el aviso que sí importaba se pierde con los demás. Se
+detiene, avisa al operador y no manda nada. **Es preferible no avisar hoy que
+quemar el correo de la firma.**
+
+**Se manda primero y se registra después.** Si se registrara antes y el envío
+fallara, el aviso quedaría marcado como dado sin haber salido nunca, y ese
+término se queda sin avisar para siempre. Al revés, lo peor que pasa es un
+correo repetido mañana. Entre un término perdido y un correo duplicado no hay
+comparación.
+
+**⚠️ Un envío simulado NO se registra.** Sin `RESEND_API_KEY` el correo no sale:
+se escribe en consola. Si eso contara como enviado, un despliegue con la llave
+mal puesta marcaría todos los avisos como dados sin que saliera uno solo, y
+ninguno se volvería a intentar. El sistema diría que avisó, en verde, el día que
+se pierda un término. La corrida lo reporta con `modoSimulacion: true`.
+
+### El crontab
+
+```cron
+# Todos los días a las 7:00 (hora del servidor). Antes de que abra el juzgado.
+0 7 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" \
+  https://TU-DOMINIO/api/cron/alertas-plazos >> /var/log/litis-alertas.log 2>&1
+```
+
+`curl -f` hace que un 500 sea un fallo del cron y quede en su bitácora, no
+enterrado en un 200. La corrida es segura de repetir: dos llamadas el mismo día
+no mandan dos veces el mismo aviso.
 
 ## 8. Cómo se cierra un plazo
 
@@ -264,6 +324,9 @@ por si algún día un cron lo marca; hasta entonces, un plazo vencido sigue sien
 | `src/lib/plazos/alertas.ts` | Ventanas de aviso en días hábiles |
 | `src/lib/plazos/registro.ts` | Captura de la notificación |
 | `src/lib/plazos/cierre.ts` | Cierre del plazo y detección de extemporaneidad |
+| `src/lib/alertas/destinatarios.ts` | A quién le llega cada aviso, agrupado por persona |
+| `src/lib/alertas/redaccion.ts` | El texto del aviso |
+| `src/lib/alertas/corrida.ts` | La corrida diaria (con efectos) |
 
 Todo es puro y sin efectos. 105 pruebas cubren el módulo.
 

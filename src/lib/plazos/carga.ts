@@ -7,6 +7,19 @@ import type { EntradaCatalogo } from './registro'
 import type { IdRegimen } from './regimenes'
 
 /**
+ * El calendario al que se cae cuando un plazo no dice con cuál se computó.
+ * Es el del Poder Judicial de la Federación.
+ */
+const CLAVE_POR_OMISION = 'pjf-2026'
+
+/**
+ * Lo mínimo que necesita `cargarTodosLosCalendarios` de un cliente de Supabase.
+ * Se escribe así para que acepte tanto el de sesión como el de servicio, que
+ * son tipos distintos aunque hablen el mismo lenguaje.
+ */
+type ClienteConCalendarios = Awaited<ReturnType<typeof clienteServidor>>
+
+/**
  * Carga desde la base lo que el motor de plazos necesita.
  *
  * El motor es puro y no sabe de Supabase: recibe un `Calendario` ya armado.
@@ -195,4 +208,53 @@ export async function cargarCalendariosPorId(
     mapa.set(fila.id, armarCalendario(fila, porCalendario.get(fila.id) ?? []))
   }
   return mapa
+}
+
+/**
+ * Todos los calendarios, para la corrida de alertas.
+ *
+ * ⚠️ Recibe el cliente por parámetro porque el cron **no tiene sesión**: corre
+ * con clave de servicio y `clienteServidor()` —que se apoya en las cookies de
+ * la petición— no aplica ahí. Pasarlo por parámetro es lo que permite que la
+ * misma función sirva a una pantalla con sesión y a un cron sin ella, en vez de
+ * duplicar el armado del calendario en dos lugares que después se separan.
+ *
+ * Devuelve además cuál usar cuando un plazo no dice con cuál se computó.
+ */
+export async function cargarTodosLosCalendarios(
+  cliente?: ClienteConCalendarios,
+): Promise<{ calendarios: Map<string, Calendario>; porOmision: Calendario | null }> {
+  const supabase = cliente ?? (await clienteServidor())
+
+  const [cabeceras, dias] = await Promise.all([
+    supabase
+      .from('calendarios')
+      .select('id, clave, nombre, vigencia_desde, vigencia_hasta, fin_de_semana_inhabil'),
+    supabase
+      .from('dias_inhabiles')
+      .select('calendario_id, desde, hasta, motivo, descripcion, fundamento')
+      .order('desde'),
+  ])
+
+  const porCalendario = new Map<string, FilaDia[]>()
+  for (const d of dias.data ?? []) {
+    const lista = porCalendario.get(d.calendario_id) ?? []
+    lista.push(d)
+    porCalendario.set(d.calendario_id, lista)
+  }
+
+  const calendarios = new Map<string, Calendario>()
+  let porOmision: Calendario | null = null
+
+  for (const fila of cabeceras.data ?? []) {
+    const armado = armarCalendario(fila, porCalendario.get(fila.id) ?? [])
+    calendarios.set(fila.id, armado)
+    if (fila.clave === CLAVE_POR_OMISION) porOmision = armado
+  }
+
+  // Sin el del PJF, cualquiera es mejor que ninguno: contar en días naturales
+  // avisaría tarde justo en los puentes, que es lo que esto existe para evitar.
+  if (!porOmision) porOmision = calendarios.values().next().value ?? null
+
+  return { calendarios, porOmision }
 }

@@ -82,17 +82,21 @@ Trae también el módulo de correo (`src/lib/email/`), que R5 va a reusar:
 plantilla en tablas con versión de texto plano, y envío por Resend que degrada
 a simulación sin API key.
 
-**321 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0008` aplicadas; **falta aplicar la `0009`**.
+### R5 — Alertas por correo ✅
+
+**La promesa central.** Corrida diaria por `GET /api/cron/alertas-plazos`,
+protegida con `CRON_SECRET` (sin él: 503). Un correo por persona con todo lo
+suyo ordenado por urgencia; lo que no tiene responsable le llega al titular.
+Si no se puede leer el registro de envíos, la corrida se detiene y avisa en vez
+de reenviarle el mismo aviso a todos. Un envío simulado no se registra. Sin
+migración: `plazo_alertas_enviadas` ya estaba en la `0005`.
+
+**343 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0009` aplicadas; el esquema está al corriente.
 
 ---
 
 ## Siguiente
-
-### R5 — Alertas por correo
-Cron protegido con `CRON_SECRET`. El módulo de correo ya está construido. Si no se puede leer el registro de envíos, la
-corrida **se detiene y alerta** en vez de reenviarle el mismo aviso a todos —
-la lección de la migración `0037` del proyecto anterior.
 
 ### R6 — Bitácora y documentos
 Actuaciones con `visible_cliente`. Documentos en bucket privado con URL firmada,

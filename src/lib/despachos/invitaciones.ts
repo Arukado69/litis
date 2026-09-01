@@ -27,8 +27,9 @@
  * transferir la titularidad es otra operación con otras consecuencias.
  */
 
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 
+import { mismoSecreto } from '@/lib/seguridad/comparar'
 import type { RolMembresia } from '@/types/db'
 
 export interface Problema {
@@ -80,18 +81,9 @@ export function hashDeToken(token: string): string {
   return createHash('sha256').update(token, 'utf8').digest('hex')
 }
 
-/**
- * Compara dos hashes en tiempo constante.
- *
- * Comparar con `===` filtra, por el tiempo que tarda, cuántos caracteres
- * iniciales acertó quien prueba. Con eso un token se reconstruye byte por byte
- * en vez de adivinarse entero.
- */
+/** Compara dos hashes en tiempo constante. Ver `lib/seguridad/comparar.ts`. */
 export function mismoHash(a: string, b: string): boolean {
-  const x = Buffer.from(a, 'utf8')
-  const y = Buffer.from(b, 'utf8')
-  if (x.length !== y.length) return false
-  return timingSafeEqual(x, y)
+  return mismoSecreto(a, b)
 }
 
 // ── La captura ──────────────────────────────────────────────────────────────

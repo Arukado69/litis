@@ -43,6 +43,11 @@ clientes y contrapartes ya registrados — y no decide por ti.
 el 3 de agosto de 2026 hay veinte casillas en la cinta y dos llenas: el resto
 son vacaciones del órgano. Se ve antes de leer nada.
 
+**Avisa aunque nadie abra el panel.** Una corrida diaria manda un correo por
+persona con sus términos ordenados por urgencia. Si no puede leer el registro
+de lo ya enviado, se detiene y avisa al operador: es preferible no avisar hoy
+que reenviarle el mismo aviso a todos hasta quemar el correo del despacho.
+
 **No ayuda a maquillar un término perdido.** Si la promoción se presentó
 después del vencimiento, lo advierte antes de guardar y lo asienta así en la
 bitácora, que no se puede editar. Un registro tranquilizador sobre un hecho
@@ -70,8 +75,9 @@ grave es peor que no tener registro.
 - Edición del expediente y alta de partes, con el cotejo de conflictos otra vez
 - Identidad visual propia, con la cinta de días hábiles
 - Equipo del despacho: invitación con token hasheado, papeles y baja
+- Alertas por correo: corrida diaria que avisa aunque nadie abra el panel
 
-**321 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**343 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

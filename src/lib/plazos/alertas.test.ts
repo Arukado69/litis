@@ -7,7 +7,10 @@ import {
   nivelPara,
   type PlazoVigilado,
 } from './alertas'
-import { CALENDARIO_PJF_2026 } from './calendarios-semilla'
+import {
+  CALENDARIO_LABORAL_2026,
+  CALENDARIO_PJF_2026,
+} from './calendarios-semilla'
 import { CATALOGO_PLAZOS, buscarPlazo, idsDuplicados } from './catalogo'
 
 const PJF = CALENDARIO_PJF_2026
@@ -16,6 +19,8 @@ function plazo(over: Partial<PlazoVigilado> = {}): PlazoVigilado {
   return {
     plazoId: 'p1',
     expedienteId: 'e1',
+    calendarioId: null,
+    numeroExpediente: 'INT-2026-001',
     caratula: 'Pérez vs. Constructora XYZ',
     etiqueta: 'Contestación de demanda',
     fechaVencimiento: '2026-03-16',
@@ -82,7 +87,7 @@ describe('calcularAlertas', () => {
       plazos: [plazo()],
       yaEnviados: new Set(),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas).toHaveLength(1)
@@ -95,7 +100,7 @@ describe('calcularAlertas', () => {
       plazos: [plazo({ atendido: true })],
       yaEnviados: new Set(),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas).toHaveLength(0)
@@ -106,7 +111,7 @@ describe('calcularAlertas', () => {
       plazos: [plazo()],
       yaEnviados: new Set([claveAlerta('p1', 't_menos_1')]),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas).toHaveLength(0)
@@ -118,7 +123,7 @@ describe('calcularAlertas', () => {
       plazos: [plazo()],
       yaEnviados: new Set([claveAlerta('p1', 't_menos_3')]),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas.map((a) => a.nivel)).toEqual(['t_menos_1'])
@@ -133,7 +138,7 @@ describe('calcularAlertas', () => {
       ],
       yaEnviados: new Set(),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas.map((a) => a.plazo.plazoId)).toEqual([
@@ -148,7 +153,7 @@ describe('calcularAlertas', () => {
       plazos: [plazo({ fechaVencimiento: '2026-06-30' })],
       yaEnviados: new Set(),
       hoy,
-      calendario: PJF,
+      calendarioPorOmision: PJF,
     })
 
     expect(alertas).toHaveLength(0)
@@ -188,5 +193,53 @@ describe('catálogo de plazos', () => {
   it('encuentra y no inventa', () => {
     expect(buscarPlazo('merc.contestacion.ordinario')?.dias).toBe(15)
     expect(buscarPlazo('no.existe')).toBeNull()
+  })
+})
+
+describe('calcularAlertas — cada plazo con su calendario', () => {
+  it('un federal y uno local no se cuentan con el mismo', () => {
+    // El PJF descansa del 16 de julio al 1 de agosto; el laboral no. Contar
+    // los dos con el mismo calendario manda el aviso tarde en uno de ellos, y
+    // esa es justo la falla que esta pieza existe para evitar.
+    const federal = plazo({
+      plazoId: 'federal',
+      calendarioId: 'cal-pjf',
+      fechaVencimiento: '2026-07-24',
+    })
+    const laboral = plazo({
+      plazoId: 'laboral',
+      calendarioId: 'cal-lab',
+      fechaVencimiento: '2026-07-24',
+    })
+
+    const alertas = calcularAlertas({
+      plazos: [federal, laboral],
+      yaEnviados: new Set(),
+      hoy: '2026-07-20',
+      calendarios: new Map([
+        ['cal-pjf', CALENDARIO_PJF_2026],
+        ['cal-lab', CALENDARIO_LABORAL_2026],
+      ]),
+      calendarioPorOmision: CALENDARIO_PJF_2026,
+    })
+
+    const porId = new Map(alertas.map((a) => [a.plazo.plazoId, a]))
+    // Para el federal no queda ningún día hábil de aquí al 24: está de
+    // vacaciones, así que el vencimiento le cae encima.
+    expect(porId.get('federal')?.diasRestantes).toBe(0)
+    // Para el laboral hay una semana de trabajo entera.
+    expect(porId.get('laboral')?.diasRestantes).toBe(4)
+    expect(porId.get('laboral')?.nivel).toBe('t_menos_5')
+  })
+
+  it('un calendario que no está en el mapa cae al de por omisión', () => {
+    const alertas = calcularAlertas({
+      plazos: [plazo({ calendarioId: 'no-existe', fechaVencimiento: '2026-03-16' })],
+      yaEnviados: new Set(),
+      hoy: '2026-03-13',
+      calendarios: new Map(),
+      calendarioPorOmision: PJF,
+    })
+    expect(alertas).toHaveLength(1)
   })
 })

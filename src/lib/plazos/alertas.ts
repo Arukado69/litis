@@ -22,6 +22,15 @@
  * La idempotencia va por fuera: cada nivel se manda UNA vez por plazo, y el
  * registro de lo enviado entra como parámetro (`yaEnviados`). La red final es
  * un índice único en la base.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CADA PLAZO SE CUENTA CON SU PROPIO CALENDARIO
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Un despacho con asuntos federales y locales tiene por lo menos dos, con
+ * periodos vacacionales distintos. Contar el portafolio entero con uno solo
+ * manda el aviso de "faltan 3" cuando en realidad falta 1 — y ese error, en la
+ * pieza que existe para que nadie pierda un término, es el único que no se
+ * puede permitir.
  */
 
 import { evaluarDia, type Calendario } from './calendario'
@@ -139,6 +148,10 @@ export function nivelPara(diasRestantes: number): NivelAlerta | null {
 export interface PlazoVigilado {
   plazoId: string
   expedienteId: string
+  /** Con cuál se computó. `null` cae al de por omisión. */
+  calendarioId: string | null
+  /** "431/2026" o el interno: para reconocer el asunto sin abrir nada. */
+  numeroExpediente: string
   /** "Pérez vs. Constructora XYZ" — para que el aviso se entienda sin abrir nada. */
   caratula: string
   /** "Contestación de demanda" */
@@ -175,9 +188,14 @@ export function calcularAlertas(args: {
   plazos: readonly PlazoVigilado[]
   yaEnviados: ReadonlySet<string>
   hoy: FechaISO
-  calendario: Calendario
+  /** Por id. Lo que no esté aquí cae a `calendarioPorOmision`. */
+  calendarios?: ReadonlyMap<string, Calendario>
+  calendarioPorOmision: Calendario
 }): AlertaPendiente[] {
   const pendientes: AlertaPendiente[] = []
+
+  const calendarioDe = (id: string | null): Calendario =>
+    (id ? args.calendarios?.get(id) : undefined) ?? args.calendarioPorOmision
 
   for (const plazo of args.plazos) {
     if (plazo.atendido) continue
@@ -185,7 +203,7 @@ export function calcularAlertas(args: {
     const diasRestantes = diasHabilesRestantes(
       args.hoy,
       plazo.fechaVencimiento,
-      args.calendario,
+      calendarioDe(plazo.calendarioId),
     )
     const nivel = nivelPara(diasRestantes)
     if (!nivel) continue

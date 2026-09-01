@@ -61,9 +61,10 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**321 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
-plazos, el panel "qué vence" y la edición del expediente ya funcionan contra
-Supabase, con identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
+**343 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+plazos, el panel "qué vence", la edición del expediente y **las alertas por
+correo** ya funcionan contra Supabase, con identidad visual propia (ver
+[`docs/DISENO.md`](docs/DISENO.md)).
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -314,7 +315,40 @@ El registro deja dentro al titular; esto mete a los demás. Migración `0009`.
 - ⚠️ **El origen de los enlaces sale de `NEXT_PUBLIC_SITE_URL`**, nunca del
   header `Host` (regla 9).
 
-### 5.12 Seguridad de acceso — `src/lib/seguridad/`
+### 5.12 Alertas por correo — `src/lib/alertas/`, `GET /api/cron/alertas-plazos`
+
+**La promesa central del producto.** Hasta aquí el sistema solo avisaba si
+alguien abría el panel; esto avisa aunque nadie lo abra. Detalle completo en
+[`docs/PLAZOS.md`](docs/PLAZOS.md).
+
+- ⚠️ **Sin `CRON_SECRET` el endpoint contesta 503 y NO corre.** Abierto sería un
+  cañón de spam apuntando a los clientes del despacho. El secreto se compara en
+  tiempo constante (`lib/seguridad/comparar.ts`, la única implementación de esa
+  regla: la comparten el cron y el token de invitación).
+- ⚠️ **Si no se puede leer `plazo_alertas_enviadas`, la corrida se detiene, avisa
+  al operador y no manda nada.** Seguir con el registro vacío le reenvía el
+  mismo aviso a TODOS los de la ventana, cada día, hasta quemar el correo del
+  despacho. Es preferible no avisar hoy. (La lección que costó caro en el
+  proyecto anterior.)
+- ⚠️ **Se manda primero y se registra después.** Al revés, un envío fallido
+  quedaría marcado como dado y ese término se queda sin avisar para siempre.
+  Entre un término perdido y un correo duplicado no hay comparación.
+- ⚠️ **Un envío simulado NO se registra.** Sin `RESEND_API_KEY` el correo no
+  sale; si contara como enviado, un despliegue con la llave mal puesta diría
+  que avisó de todo sin que saliera uno solo. La corrida lo reporta con
+  `modoSimulacion: true`.
+- **Un correo por persona, no uno por plazo.** Cinco correos idénticos en el
+  mismo minuto se archivan sin abrir, y el que importaba también. Lo que no
+  tiene responsable le llega al titular, marcado como huérfano.
+- **Cada plazo se cuenta con SU calendario** (misma lección que el panel). Un
+  aviso contado con el calendario equivocado llega tarde, y esta es la pieza
+  donde ese error no se puede permitir.
+- ⚠️ **La corrida no usa joins de PostgREST.** El cliente de servicio no infiere
+  las relaciones desde los tipos escritos a mano, y forzarlo con un cast
+  escondería la deriva del esquema. Tres consultas en un proceso diario no
+  cuestan nada; un tipo que miente sí.
+
+### 5.13 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -326,7 +360,7 @@ El registro deja dentro al titular; esto mete a los demás. Migración `0009`.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.13 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.14 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -345,7 +379,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.14 Esquema — `supabase/migrations/`
+### 5.15 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
@@ -353,16 +387,16 @@ alertas · `0006` alta de despacho transaccional · `0007` apertura de expedient
 transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
 invitaciones al despacho.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0008`. **Pendiente la
-`0009`** — se aplica pegando el archivo en el SQL Editor. Sin ella,
-`/panel/equipo` no puede invitar. Las nuevas se aplican pegando el archivo en el SQL Editor, en
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0009`; el esquema está
+al corriente. R5 no necesitó migración: `plazo_alertas_enviadas` ya estaba en
+la `0005`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
 ⚠️ `src/types/db.ts` está **escrito a mano** y lleva nueve migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.15 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.16 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
@@ -420,7 +454,10 @@ margen rojo de la hoja de máquina.
 14. **Ningún secreto se guarda en claro.** Un token de invitación, y cualquier
     credencial que venga después, va a la base como hash y se compara en tiempo
     constante. El claro vive una vez, en la respuesta que lo generó.
-15. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+15. **Un aviso que no salió no está dado.** Nada se marca como notificado sin
+    haber salido de verdad, y si el registro de envíos no se puede leer, la
+    corrida se detiene en vez de repetirlo todo.
+16. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones
