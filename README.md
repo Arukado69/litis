@@ -82,8 +82,9 @@ grave es peor que no tener registro.
 - Portada pública con precios, que enseña el cómputo del motor de verdad
 - Verificación del catálogo, firmada por abogado y por despacho
 - Tablero de etapas, con los asuntos que llevan meses sin moverse arriba
+- Portal del cliente: en qué va su asunto, sin plazos y sin promesas
 
-**467 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**485 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

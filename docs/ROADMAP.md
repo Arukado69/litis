@@ -127,16 +127,20 @@ cada tarjeta. Los estancados —sin plazo y sin movimiento en 60 días— van
 arriba, y los sin etapa aparte. Sin arrastrar y soltar: mover escribe en la
 bitácora inmutable. Sin migración.
 
-**467 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0010` aplicadas; el esquema está al corriente.
+### R9 — Portal del cliente ✅
+
+Solo lectura: en qué va el asunto en lenguaje llano, próximas audiencias, lo
+que el despacho marcó visible en la bitácora y en los documentos. Nunca los
+plazos. No promete fechas ni resultados, y sí dice cuándo se movió por última
+vez. El acceso se abre desde el expediente y la persona del padrón la fija la
+invitación. Migración `0011`.
+
+**485 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0010` aplicadas; **falta aplicar la `0011`**.
 
 ---
 
 ## Siguiente
-
-### R9 — Portal del cliente
-Solo lectura: en qué va su asunto en lenguaje llano, próxima audiencia,
-documentos compartidos. Ataca el "¿cómo va lo mío?" semanal.
 
 ### R11 — Suscripción
 Stripe por usuario/mes con nivel gratuito. Tope de asientos y de expedientes

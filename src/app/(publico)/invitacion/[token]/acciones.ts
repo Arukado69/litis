@@ -135,5 +135,8 @@ export async function aceptarInvitacion(
     )
   }
 
-  redirect('/panel')
+  // Cada quien a su herramienta. Mandar a todos a /panel funciona —el guardia
+  // rebota al cliente hacia /portal— pero le enseña por un instante una
+  // pantalla que no es la suya.
+  redirect(invitacion.rol === 'cliente' ? '/portal' : '/panel')
 }

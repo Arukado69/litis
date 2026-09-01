@@ -61,10 +61,11 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**467 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+**485 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
 plazos, el panel "qué vence", la agenda, **el tablero de etapas**, la edición
 del expediente, las alertas por correo, la bitácora con sus documentos y la
-verificación del catálogo ya funcionan contra Supabase, con identidad visual propia (ver
+verificación del catálogo y **el portal del cliente** ya funcionan contra
+Supabase, con identidad visual propia (ver
 [`docs/DISENO.md`](docs/DISENO.md)) y portada pública con precios.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
@@ -498,7 +499,42 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 - Solo entran los asuntos vivos (activo, suspendido, prospecto). Uno concluido
   volvería el tablero un inventario.
 
-### 5.18 Seguridad de acceso — `src/lib/seguridad/`
+### 5.18 Portal del cliente — `src/lib/portal/`, `/portal`
+
+Ataca el "¿cómo va lo mío?" semanal. Migración `0011` para la puerta; la
+visibilidad ya existía desde la `0003` y la `0004`.
+
+- ⚠️ **El cliente NUNCA ve plazos.** No es un pendiente: la `0005` no le da
+  política y no se la va a dar. La lista de términos que su abogado trae encima
+  es información que no puede interpretar y que solo produce llamadas de
+  angustia a las once de la noche. `lib/portal/datos.ts` ni siquiera tiene la
+  consulta, para que nadie la "arregle" después.
+- ⚠️ **Se traduce la FASE, no la etapa.** "Citación para sentencia" no le dice
+  nada a quien no es abogado, y peor: suena a que ya se resolvió. Se traducen
+  las seis fases universales del tablero —ya vía-agnósticas y ya probadas contra
+  todo el catálogo— en vez de treinta y ocho frases que se desincronizarían a la
+  primera reforma. Hay prueba de que ninguna etapa se queda sin traducción.
+- ⚠️ **Aquí no se promete nada.** Ni fechas de terminación, ni "ya falta poco",
+  ni pronósticos del resultado: un litigante no puede saber cuándo termina un
+  juicio, y un portal que lo insinúe convierte una expectativa del sistema en
+  una promesa del abogado. Hay pruebas que prohíben esas palabras.
+- **Sí se dice cuándo se movió por última vez**, sin disculparse: la pregunta
+  real detrás del "¿cómo va?" casi nunca es "¿cuándo termina?" sino "¿siguen
+  trabajando en esto?". Y se cuenta desde el último movimiento VISIBLE, no
+  desde cualquier cambio interno.
+- ⚠️ **La persona del padrón la fija la invitación, no quien acepta.** Es el
+  despacho quien sabe que ese correo es el del representante de Constructora
+  XYZ; elegirla al aceptar dejaría que alguien se vincule a otro cliente y lea
+  un expediente ajeno.
+- **Dar acceso es de `titular` o `abogado`**: abrirle el expediente a alguien de
+  fuera del despacho es una decisión sobre el secreto profesional, no una
+  captura.
+- El aviso del portal **explica por qué no está todo**, en vez de dejar que el
+  cliente suponga que se le esconde algo.
+- `exigirPortal` rechaza al personal: sin `persona_id` no verían nada y creerían
+  que algo se rompió.
+
+### 5.19 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -510,7 +546,7 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.19 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.20 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -529,24 +565,25 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.20 Esquema — `supabase/migrations/`
+### 5.21 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
 alertas · `0006` alta de despacho transaccional · `0007` apertura de expediente
 transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
-invitaciones al despacho · `0010` almacén privado de documentos.
+invitaciones al despacho · `0010` almacén privado de documentos · `0011`
+acceso del cliente al portal.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0010`; el esquema está
-al corriente. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0010`. **Pendiente la
+`0011`** — sin ella no se le puede dar acceso a un cliente. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
 `audiencias` ya estaban en la `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva diez migraciones de
+⚠️ `src/types/db.ts` está **escrito a mano** y lleva once migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.21 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.22 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero

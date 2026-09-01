@@ -142,5 +142,9 @@ export async function exigirPortal(): Promise<Sesion> {
     if (await usuarioSinDespacho()) redirect('/bienvenida')
     redirect('/acceso')
   }
+  // El personal no tiene `persona_id`, así que en el portal no vería nada: un
+  // despacho que entra aquí por error se topa con una pantalla vacía y cree
+  // que algo se rompió. Se le devuelve a su herramienta.
+  if (esPersonal(sesion.activa.rol)) redirect('/panel')
   return sesion
 }

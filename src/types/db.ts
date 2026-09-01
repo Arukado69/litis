@@ -13,7 +13,7 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0009`.
+ * Espejo de `supabase/migrations/0001`–`0011`.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
@@ -150,6 +150,8 @@ export type InvitacionRow = {
   token_hash: string
   estado: EstadoInvitacion
   expira_el: string
+  /** Solo en invitaciones de rol `cliente`: a qué persona del padrón se liga. */
+  persona_id: string | null
   invitada_por: string | null
   aceptada_el: string | null
   aceptada_por: string | null

@@ -40,6 +40,7 @@ import { ROL_ETIQUETA, type RolParte } from '@/lib/expedientes/partes'
 import { fechaLarga, fechaLargaConDia } from '@/lib/plazos/fecha'
 import type { EstadoPlazo, RolMembresia } from '@/types/db'
 
+import { AccesoDelCliente } from './acceso-cliente'
 import { CerrarAudiencia, SenalarAudiencia } from './audiencias'
 import { AsentarActuacion, SubirDocumento } from './bitacora'
 import { CerrarPlazo } from './cerrar-plazo'
@@ -474,6 +475,23 @@ export default async function PaginaExpediente({
             </ul>
           </div>
         ) : null}
+      </Foja>
+
+      <Foja className="flex flex-col gap-4">
+        <div>
+          <Rotulo>El cliente en su portal</Rotulo>
+          <p className="mt-1 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+            Un acceso de solo lectura para {expediente.clienteNombre ?? 'el cliente'}:
+            en qué etapa va el asunto, sus audiencias, y lo que marques como
+            visible en la bitácora y en los documentos. Nunca los plazos ni las
+            notas internas — son información que no se puede interpretar sin
+            contexto legal y que solo produce llamadas de angustia.
+          </p>
+        </div>
+        <AccesoDelCliente
+          expedienteId={id}
+          clienteNombre={expediente.clienteNombre}
+        />
       </Foja>
 
       <Foja className="flex flex-col gap-4">

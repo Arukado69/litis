@@ -85,6 +85,9 @@ export interface EtapaDelExpediente {
 }
 
 export interface ExpedienteCompleto extends ExpedienteEnLista {
+  /** La persona del padrón que es el cliente. Es la llave del portal. */
+  clientePersonaId: string | null
+  clienteNombre: string | null
   responsableId: string | null
   resultado: ResultadoExpediente | null
   fechaConclusion: string | null
@@ -108,7 +111,7 @@ export async function obtenerExpediente(
   const { data, error } = await supabase
     .from('expedientes')
     .select(
-      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, organo_id, instancia, cuantia, notas, restringido, fecha_inicio, fecha_conclusion, estado, resultado, etapa_actual, actualizado_el, responsable_id, perfiles:responsable_id(nombre)',
+      'id, numero_interno, numero_organo, caratula, materia, via, fuero, entidad, organo_id, instancia, cuantia, notas, restringido, fecha_inicio, fecha_conclusion, estado, resultado, etapa_actual, actualizado_el, responsable_id, cliente_persona_id, perfiles:responsable_id(nombre), personas:cliente_persona_id(nombre)',
     )
     .eq('id', id)
     .maybeSingle()
@@ -134,6 +137,11 @@ export async function obtenerExpediente(
 
   return {
     id: data.id,
+    clientePersonaId: data.cliente_persona_id,
+    clienteNombre: (() => {
+      const p = Array.isArray(data.personas) ? data.personas[0] : data.personas
+      return p?.nombre ?? null
+    })(),
     responsableId: data.responsable_id,
     resultado: data.resultado,
     fechaConclusion: data.fecha_conclusion,
