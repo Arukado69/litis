@@ -77,8 +77,10 @@ grave es peor que no tener registro.
 - Equipo del despacho: invitación con token hasheado, papeles y baja
 - Alertas por correo: corrida diaria que avisa aunque nadie abra el panel
 - Bitácora inmutable y documentos en almacén privado, con versiones
+- Agenda: audiencias y vencimientos en el mismo calendario
+- Portada pública con precios, que enseña el cómputo del motor de verdad
 
-**380 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**413 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 

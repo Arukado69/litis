@@ -98,16 +98,26 @@ edita ni se borra. Documentos en bucket **privado** con URL firmada de un
 minuto, tipo, versión y acuse ligado al escrito que ampara. Una nota interna
 nunca se marca visible para el cliente. Migración `0010`.
 
-**380 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0009` aplicadas; **falta aplicar la `0010`**.
+### R7 — Agenda de audiencias ✅
+
+Alta, diferimiento y celebración. Audiencias y vencimientos en el mismo
+calendario, con los días imposibles arriba. Un día con audiencia queda marcado
+como tomado. Diferir deja dos registros: la vieja asentada y la nueva. Sin
+migración.
+
+### Portada pública ✅
+
+Encabezado con la cinta, el problema, la traza del cómputo **producida por el
+motor real**, qué hace, qué NO hace, y precios por usuario al mes con nivel
+gratuito. Los precios viven en `src/lib/marketing/planes.ts` y la página dice
+que son una hipótesis, no una medición.
+
+**413 pruebas.** Typecheck, lint y build limpios.
+Migraciones `0001`–`0010` aplicadas; el esquema está al corriente.
 
 ---
 
 ## Siguiente
-
-### R7 — Agenda de audiencias
-Vista de calendario con audiencias y vencimientos juntos. Es la vista que un
-litigante abre primero en la mañana.
 
 ### R8 — Tablero de etapas
 Ahora sí el Kanban, con las etapas reales de cada vía y las paralelas fuera del

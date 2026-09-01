@@ -61,10 +61,11 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**380 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
-plazos, el panel "qué vence", la edición del expediente, las alertas por correo
-y **la bitácora con sus documentos** ya funcionan contra Supabase, con identidad
-visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)).
+**413 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+plazos, el panel "qué vence", la agenda, la edición del expediente, las alertas
+por correo y la bitácora con sus documentos ya funcionan contra Supabase, con
+identidad visual propia (ver [`docs/DISENO.md`](docs/DISENO.md)) y **portada
+pública con precios**.
 
 ### 5.1 Motor de plazos — `src/lib/plazos/`
 
@@ -393,7 +394,40 @@ mano. Migración `0010` para el almacén.
   Server Actions se levantó a 30 MB para que el rechazo lo dé nuestra
   validación, con su mensaje, y no el runtime.
 
-### 5.14 Seguridad de acceso — `src/lib/seguridad/`
+### 5.14 Agenda de audiencias — `src/lib/audiencias/`, `/panel/agenda`
+
+- **Audiencias y vencimientos en la MISMA lista.** Compiten por el mismo día;
+  separarlos obliga a hacer el cruce de cabeza cada mañana.
+- ⚠️ **Un día con audiencia es un día TOMADO**, no "un pendiente más". El
+  traslado, la espera y el desahogo se llevan la jornada; lo que venza ese día
+  se trabaja antes. Los vencimientos que caen ahí se marcan.
+- ⚠️ **Diferir NO cambia la fecha encima.** El día señalado ocurrió como hecho:
+  se fue al juzgado y se esperó. Quedan DOS registros —la vieja `diferida` con
+  su motivo y la nueva `programada`— más la actuación en la bitácora.
+- **Celebrar exige el resultado.** Qué pasó en la audiencia ES la audiencia; sin
+  eso queda un día en blanco irreconstruible.
+- **Lo que falta al señalar advierte pero no bloquea.** Se señala con lo que
+  dice el acuerdo. La advertencia que importa: sin responsable, es una audiencia
+  a la que no va nadie.
+- La agenda enseña **todos** los días, también los vacíos e inhábiles: una que
+  solo muestra lo que tiene algo esconde cuántos días de trabajo quedan.
+- El tipo de audiencia es **lista abierta**: entre 32 entidades y todas las
+  materias no cabe en un catálogo cerrado.
+
+### 5.15 Portada pública — `src/app/page.tsx`, `src/components/marketing/`
+
+- ⚠️ **Todo lo que se enseña sale del motor de verdad.** La cinta y la traza del
+  cómputo los produce el mismo código que corre en el panel, no un dibujo. Una
+  portada que promete un cómputo y enseña una imagen del cómputo puede mentir
+  sin que nadie se entere — justo en el producto cuyo argumento es "no finge
+  certeza". Si se corrige un calendario, la portada se corrige sola.
+- **Los precios viven en `src/lib/marketing/planes.ts`**, en un solo lugar, y la
+  página dice que son una **hipótesis** y no una medición: no hay un despacho
+  pagando todavía.
+- Hay una sección de **lo que NO hace**. Quien lo descubre en la semana tres se
+  siente engañado, y con razón; decirlo antes cuesta registros y ahorra bajas.
+
+### 5.16 Seguridad de acceso — `src/lib/seguridad/`
 
 - `limite-intentos.ts` — freno anti-fuerza-bruta en **dos dimensiones**:
   (IP + correo) con mano dura y (IP) con holgura. Solo por correo, el atacante
@@ -405,7 +439,7 @@ mano. Migración `0010` para el almacén.
 ⚠️ El registro vive en memoria del proceso. Alcanza con UN contenedor; con
 varias réplicas hay que mudarlo a Redis o a una tabla.
 
-### 5.15 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
+### 5.17 Acceso y alta de despacho — `src/app/(publico)/`, `src/lib/despachos/`
 
 `/acceso` · `/registro` · `/bienvenida` · `/panel`, con guardias en
 `src/lib/auth/sesion.ts`.
@@ -424,7 +458,7 @@ varias réplicas hay que mudarlo a Redis o a una tabla.
 - Los mensajes de error **no revelan si un correo existe**. Distinguir "no
   existe" de "contraseña mala" convierte el acceso en un verificador de cuentas.
 
-### 5.16 Esquema — `supabase/migrations/`
+### 5.18 Esquema — `supabase/migrations/`
 
 `0001` núcleo multi-tenant · `0002` catálogos jurídicos · `0003` expedientes,
 partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos y
@@ -432,16 +466,16 @@ alertas · `0006` alta de despacho transaccional · `0007` apertura de expedient
 transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
 invitaciones al despacho · `0010` almacén privado de documentos.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0009`. **Pendiente la
-`0010`** — sin ella no hay bucket y la subida de documentos falla. R5 no
-necesitó migración: `plazo_alertas_enviadas` ya estaba en la `0005`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0010`; el esquema está
+al corriente. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
+`audiencias` ya estaban en la `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
 ⚠️ `src/types/db.ts` está **escrito a mano** y lleva diez migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
-### 5.17 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
+### 5.19 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
 Sistema propio, documentado en [`docs/DISENO.md`](docs/DISENO.md). El
 vocabulario sale del material de un litigante mexicano: el archivero
