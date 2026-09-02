@@ -662,9 +662,19 @@ degrada a **simulación**.
   archive nada, y que el titular no pueda regalarse el plan. Un candado que solo
   vive en la base no se puede probar con Vitest. La `0010` se omite ahí: crea
   políticas sobre `storage.objects`, que solo existe en Supabase.
-- **Bloqueo:** falta crear en Stripe el producto y el precio por asiento y poner
-  `STRIPE_PRECIO_DESPACHO`. El precio ($390 MXN por asiento al mes) sigue siendo
-  una hipótesis, no una medición.
+- ⚠️ **El portal de facturación exige una configuración creada en el panel de
+  Stripe** (Ajustes → Facturación → Portal de clientes) y, en modo real, aviso
+  de privacidad y términos publicados. Sin ella Stripe rechaza cada sesión, así
+  que el botón falla siempre. La llave del conector de Stripe **no** puede
+  crearla por API: hay que hacerlo desde el panel. El fallo se anuncia en
+  pantalla (`?portal=error`) en vez de dejar el botón sin hacer nada.
+- **Bloqueos:** el producto y el precio ya existen en la cuenta real
+  (`prod_VBQnHcXM3sIe2J` / `price_1UB3wHRD2Fg2YJsu3660vmro`, $390 MXN por
+  asiento al mes); faltan el endpoint del webhook con su `whsec_`, la
+  configuración del portal, y decidir el IVA —el precio quedó con
+  `tax_behavior: unspecified`, que Stripe deja cambiar una sola vez—. Litis
+  todavía no tiene páginas de aviso de privacidad ni de términos, y el portal
+  en modo real las pide. El precio sigue siendo una hipótesis, no una medición.
 
 ## 6. Reglas que no se negocian
 

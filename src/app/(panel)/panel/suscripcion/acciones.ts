@@ -93,13 +93,23 @@ export async function contratar(
  * Cancelar se hace ahí y no aquí a propósito. La baja de un servicio tiene
  * requisitos que cambian por país, y una pantalla propia que "cancele" sin
  * mover la suscripción de verdad es la peor versión posible de esto.
+ *
+ * ⚠️ **Si no se puede abrir, se dice.** Esta acción no devuelve estado —es un
+ * `form action` a secas—, así que un `return` en el camino de error dejaba el
+ * botón sin hacer absolutamente nada: se oprime, la página se queda igual, y no
+ * hay forma de saber si se rompió algo o si no se oprimió bien. Por eso el
+ * fallo vuelve a la misma pantalla con el motivo en la barra de direcciones.
+ *
+ * Y el motivo más probable no es un error de red: **el portal de Stripe exige
+ * una configuración creada en el panel** (y en modo real, con aviso de
+ * privacidad y términos). Sin ella, Stripe rechaza cada sesión.
  */
 export async function abrirPortalDeCobro(): Promise<void> {
   const sesion = await exigirTitular()
-  if (!sesion) return
+  if (!sesion) redirect('/panel/suscripcion?portal=no-eres-titular')
 
   const clienteId = await clienteDeStripe(sesion.activa.despachoId)
-  if (!clienteId) return
+  if (!clienteId) redirect('/panel/suscripcion?portal=sin-cliente')
 
   const portal = await crearSesionDePortal({
     clienteId,
@@ -107,4 +117,8 @@ export async function abrirPortalDeCobro(): Promise<void> {
   })
 
   if (portal.estado === 'listo') redirect(portal.url)
+  if (portal.estado === 'simulado') redirect('/panel/suscripcion?portal=simulado')
+
+  console.error(`[cobro] no se pudo abrir el portal: ${portal.motivo}`)
+  redirect('/panel/suscripcion?portal=error')
 }

@@ -79,6 +79,49 @@ function Medidor({
   )
 }
 
+/**
+ * Por qué no se abrió el portal de Stripe.
+ *
+ * El botón del portal es un `form action` sin estado, así que sin esto el
+ * fallo se veía como "oprimí y no pasó nada" — la peor forma de fallar, porque
+ * ni siquiera se sabe que falló.
+ */
+function AvisoDelPortal({ motivo }: { motivo: string }) {
+  if (motivo === 'simulado') {
+    return (
+      <Aviso tono="informativo">
+        No hay llaves de Stripe configuradas en este servidor, así que no hay
+        portal que abrir. Nada cambió.
+      </Aviso>
+    )
+  }
+
+  if (motivo === 'sin-cliente') {
+    return (
+      <Aviso tono="informativo">
+        Este despacho todavía no tiene un cobro abierto en Stripe, así que no hay
+        nada que administrar.
+      </Aviso>
+    )
+  }
+
+  if (motivo === 'no-eres-titular') {
+    return (
+      <Aviso tono="informativo">
+        El cobro lo administra el titular del despacho.
+      </Aviso>
+    )
+  }
+
+  return (
+    <Aviso tono="error">
+      No se pudo abrir el portal de Stripe. La causa más común es que el portal
+      no tenga configuración creada en el panel de Stripe; el motivo exacto quedó
+      en la consola del servidor. Tu suscripción no cambió.
+    </Aviso>
+  )
+}
+
 function Vigencia({ suscripcion }: { suscripcion: Suscripcion }) {
   if (!suscripcion.periodoFin) return null
   const dia = fechaLarga(suscripcion.periodoFin.slice(0, 10))
@@ -114,7 +157,9 @@ export default async function PaginaSuscripcion({
   )
 
   const exceso = excedido(suscripcion, consumo)
-  const cobro = (await searchParams).cobro
+  const params = await searchParams
+  const cobro = params.cobro
+  const portal = typeof params.portal === 'string' ? params.portal : null
   const simulacion = !hayStripe()
   const precio = PLAN_DE_PAGA?.precio ?? 0
 
@@ -126,6 +171,8 @@ export default async function PaginaSuscripcion({
           {sesion.activa.despachoNombre}
         </p>
       </div>
+
+      {portal ? <AvisoDelPortal motivo={portal} /> : null}
 
       {cobro === 'listo' ? (
         <Aviso tono="exito">
