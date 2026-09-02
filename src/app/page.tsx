@@ -125,7 +125,7 @@ export default function Inicio() {
         <Precios />
         <Cierre />
 
-        <footer className="border-t border-[var(--color-regla)] pt-6">
+        <footer className="flex flex-col gap-4 border-t border-[var(--color-regla)] pt-6">
           <p className="max-w-prose text-nota text-[var(--color-tinta-suave)]">
             {MARCA.nombre} es una herramienta de control interno. No es asesoría
             jurídica y no emite dictámenes: los cómputos son sugerencias que el
@@ -133,6 +133,21 @@ export default function Inicio() {
             órgano. La responsabilidad profesional del término es de quien firma
             la promoción.
           </p>
+
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-nota">
+            <Link
+              href="/aviso-de-privacidad"
+              className="text-[var(--color-tinta-suave)] underline underline-offset-4 hover:text-[var(--color-tinta)]"
+            >
+              Aviso de privacidad
+            </Link>
+            <Link
+              href="/terminos-y-condiciones"
+              className="text-[var(--color-tinta-suave)] underline underline-offset-4 hover:text-[var(--color-tinta)]"
+            >
+              Términos y condiciones
+            </Link>
+          </div>
         </footer>
       </main>
     </>

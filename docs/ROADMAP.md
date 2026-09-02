@@ -165,9 +165,17 @@ que ese despacho diga.
 
 ### Pendientes que no son rebanada
 
-- **Crear en Stripe el producto y el precio por asiento**, y poner
-  `STRIPE_PRECIO_DESPACHO`. La cuenta existe y está vacía; sin el precio, el
-  módulo de cobro queda en simulación.
+- **Terminar de conectar Stripe.** El producto y el precio ya existen en la
+  cuenta real (`$390 MXN` por asiento al mes); faltan el endpoint del webhook
+  con su `whsec_`, la configuración del portal de facturación —que la llave del
+  conector no puede crear por API— y decidir si el precio lleva IVA incluido o
+  por encima.
+- **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
+  un abogado revise el aviso de privacidad y los términos. Mientras falten, las
+  dos páginas se anuncian solas como borrador.
+- **Exportar el despacho con un botón.** Los términos dicen que los datos son
+  del despacho y que se entregan a solicitud; hoy ese camino es manual, y
+  haberlo escrito obliga a construirlo.
 - **Regenerar `src/types/db.ts`** con `supabase gen types`: doce migraciones de
   posible deriva escritas a mano.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como

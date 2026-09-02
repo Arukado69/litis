@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 
@@ -68,6 +69,24 @@ export function FormularioRegistro() {
       />
 
       <BotonEnviar />
+
+      {/* Va debajo del botón y no en una casilla: una casilla más que palomear
+          se palomea sin leer, y lo que aquí importa es que las dos direcciones
+          estén a un clic cuando alguien las quiera leer de verdad. */}
+      <p className="text-nota text-[var(--color-tinta-suave)]">
+        Al crear tu despacho aceptas los{' '}
+        <Link
+          href="/terminos-y-condiciones"
+          className="underline underline-offset-4"
+        >
+          términos y condiciones
+        </Link>{' '}
+        y el{' '}
+        <Link href="/aviso-de-privacidad" className="underline underline-offset-4">
+          aviso de privacidad
+        </Link>
+        .
+      </p>
     </form>
   )
 }

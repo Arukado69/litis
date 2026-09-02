@@ -676,6 +676,39 @@ degrada a **simulación**.
   todavía no tiene páginas de aviso de privacidad ni de términos, y el portal
   en modo real las pide. El precio sigue siendo una hipótesis, no una medición.
 
+### 5.24 Documentos legales — `src/lib/legal/`, `/aviso-de-privacidad`, `/terminos-y-condiciones`
+
+Aviso de privacidad y términos de uso, en el grupo de rutas `(legal)`. Existen
+porque Stripe pide las dos direcciones para dejar configurar el portal de
+facturación, pero el contenido no es trámite.
+
+- ⚠️ **Se anuncian como borrador mientras falten los datos del responsable**
+  (`src/lib/legal/responsable.ts`: razón social, domicilio, correo para ARCO,
+  jurisdicción y el trato del IVA). Están vacíos a propósito: poner una razón
+  social inventada en un aviso de privacidad no es un borrador, es un documento
+  falso en un sitio que recibe datos de abogados y de sus clientes. La banda
+  desaparece sola en cuanto se llenen, y hay prueba de que hoy aparece.
+- **El inventario de datos y de encargados es un dato, no un párrafo**
+  (`tratamiento.ts`): dice qué se trata, para qué y **en qué tabla vive**, para
+  poder cotejarlo contra la base. Cuando una migración agregue una columna con
+  datos de una persona, se edita ahí y el aviso se actualiza con ella.
+- **La cláusula que separa responsable de encargado es la que importa.** Aquí no
+  se guardan «datos de usuarios»: se guardan expedientes cubiertos por el
+  secreto profesional. De la cuenta responde Litis; **del padrón y de los
+  expedientes responde el despacho**, y Litis solo los procesa por cuenta suya.
+- **Lo que los términos dicen del cómputo es el mismo texto que la pantalla**:
+  `AVISO_COMPUTO` se importa de `lib/brand`, no se reescribe. Nada de una
+  versión suave para vender y otra dura en la letra chica. Igual los topes y el
+  precio, que salen de `TOPES_POR_PLAN` y de `PLANES`: un contrato que promete
+  diez expedientes mientras el sistema corta en ocho es una promesa incumplida
+  por escrito.
+- **Los términos declaran lo que el producto no tiene.** No hay compromiso de
+  disponibilidad y **no hay exportación con un botón** —se entrega a solicitud—.
+  Decirlo obliga a construirla; callarlo habría sido más cómodo y menos cierto.
+- ⚠️ El texto es un andamio técnico exacto, **no un documento legal revisado**.
+  Lo primero que tiene que verificar quien responda por él son las citas y los
+  plazos de respuesta de derechos ARCO.
+
 ## 6. Reglas que no se negocian
 
 1. **Ninguna tabla de dominio sin `despacho_id`.** Ninguna política de RLS sin
