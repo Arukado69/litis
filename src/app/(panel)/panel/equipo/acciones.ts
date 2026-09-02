@@ -20,6 +20,8 @@ import {
 import { enviarConPlantilla } from '@/lib/email/envio'
 import { envSitioUrl } from '@/lib/supabase/env'
 import { clienteServidor } from '@/lib/supabase/server'
+import { suscripcionYConsumo } from '@/lib/suscripcion/datos'
+import { puedeSumarAsiento } from '@/lib/suscripcion/limites'
 import type { RolMembresia } from '@/types/db'
 
 import {
@@ -95,6 +97,15 @@ export async function invitarAlEquipo(
     const problemas: Record<string, string> = {}
     for (const p of problemasCaptura) problemas[p.campo] ??= p.mensaje
     return invitarConProblemas(campos, problemas)
+  }
+
+  // El asiento se aparta al invitar, no al aceptar. Si se cobrara solo al
+  // aceptar, se mandan veinte invitaciones con un asiento pagado y el tope
+  // aparece cuando ya están todos adentro — el peor momento para enterarse.
+  const { suscripcion, consumo } = await suscripcionYConsumo(despachoId)
+  const cupo = puedeSumarAsiento(suscripcion, consumo)
+  if (!cupo.permitido) {
+    return invitarConError(campos, `${cupo.motivo} ${cupo.salida}`)
   }
 
   const token = generarToken()

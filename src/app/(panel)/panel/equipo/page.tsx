@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { Aviso, Boton, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
@@ -16,6 +17,8 @@ import {
   puedeDarDeBaja,
 } from '@/lib/despachos/invitaciones'
 import { fechaLarga } from '@/lib/plazos/fecha'
+import { suscripcionYConsumo } from '@/lib/suscripcion/datos'
+import { asientosLibres, puedeSumarAsiento } from '@/lib/suscripcion/limites'
 
 import { cambiarRol, darDeBaja, reactivar, revocarInvitacion } from './acciones'
 import { FormularioInvitar } from './formulario'
@@ -32,11 +35,17 @@ export default async function PaginaEquipo() {
   const despachoId = sesion.activa.despachoId
   const esTitular = sesion.activa.rol === 'titular'
 
-  const [equipo, pendientes, carga] = await Promise.all([
+  const [equipo, pendientes, carga, cobro] = await Promise.all([
     equipoDelDespacho(despachoId),
     esTitular ? invitacionesPendientes(despachoId) : Promise.resolve([]),
     cargaPorPersona(despachoId),
+    suscripcionYConsumo(despachoId),
   ])
+
+  // El asiento se aparta al invitar, no al aceptar: por eso el conteo incluye
+  // las invitaciones sin contestar.
+  const cupo = puedeSumarAsiento(cobro.suscripcion, cobro.consumo)
+  const libres = asientosLibres(cobro.suscripcion, cobro.consumo)
 
   return (
     <div className="flex flex-col gap-7">
@@ -173,7 +182,26 @@ export default async function PaginaEquipo() {
                 Quien acepte va a ver los expedientes del despacho, sus plazos y
                 sus audiencias. {ROL_ALCANCE.abogado}
               </p>
+              {cupo.permitido ? (
+                <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">
+                  {libres === 1
+                    ? 'Queda 1 asiento en tu plan.'
+                    : `Quedan ${libres} asientos en tu plan.`}{' '}
+                  Los clientes del portal no ocupan asiento.
+                </p>
+              ) : null}
             </div>
+
+            {cupo.permitido ? null : (
+              <Aviso tono="error">
+                {cupo.motivo} {cupo.salida}{' '}
+                <Link href="/panel/suscripcion" className="underline">
+                  Ver la suscripción
+                </Link>
+                .
+              </Aviso>
+            )}
+
             <FormularioInvitar />
           </Foja>
 

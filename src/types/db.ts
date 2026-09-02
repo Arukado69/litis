@@ -13,7 +13,7 @@
  * **toda migración que cambie una tabla actualiza este archivo en el mismo
  * commit.**
  *
- * Espejo de `supabase/migrations/0001`–`0011`.
+ * Espejo de `supabase/migrations/0001`–`0012`.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
@@ -46,6 +46,7 @@ export type RolMembresia =
 export type EstadoMembresia = 'invitada' | 'activa' | 'suspendida'
 export type EstadoInvitacion = 'pendiente' | 'aceptada' | 'revocada'
 export type PlanSuscripcion = 'gratuito' | 'profesional' | 'despacho'
+export type EstadoSuscripcion = 'gratuita' | 'activa' | 'morosa' | 'cancelada'
 export type FueroDb = 'federal' | 'comun'
 export type MotivoInhabilDb = 'feriado' | 'vacaciones' | 'suspension'
 export type TipoPersonaDb = 'fisica' | 'moral'
@@ -114,10 +115,31 @@ export type DespachoRow = {
   telefono: string | null
   correo_contacto: string | null
   plan: PlanSuscripcion
+  /** Asientos de personal pagados. Los clientes del portal no ocupan. */
   asientos_incluidos: number
+  /** Expedientes ni concluidos ni archivados. `null` = sin tope. */
   expedientes_tope: number | null
+  estado_suscripcion: EstadoSuscripcion
+  stripe_cliente_id: string | null
+  stripe_suscripcion_id: string | null
+  periodo_fin: string | null
+  cancela_al_fin: boolean
   creado_el: string
   actualizado_el: string
+}
+
+/**
+ * Bitácora de webhooks de Stripe. `evento_id` único: ahí vive toda la
+ * idempotencia. La tabla tiene RLS encendida y **sin políticas** — solo la
+ * clave de servicio entra.
+ */
+export type SuscripcionEventoRow = {
+  id: string
+  evento_id: string
+  tipo: string
+  despacho_id: string | null
+  carga: unknown
+  recibido_el: string
 }
 
 export type PerfilRow = {
@@ -469,6 +491,7 @@ export type Database = {
         Relationships: []
       }
       plazo_alertas_enviadas: Tabla<PlazoAlertaEnviadaRow, 'plazo_id' | 'nivel'>
+      suscripcion_eventos: Tabla<SuscripcionEventoRow, 'evento_id' | 'tipo'>
     }
     Views: Record<never, never>
     Functions: {
@@ -480,6 +503,10 @@ export type Database = {
         Returns: boolean
       }
       persona_del_usuario: { Args: { p_despacho: string }; Returns: string }
+      /** Expedientes ni concluidos ni archivados. Cuenta también los restringidos. */
+      expedientes_activos: { Args: { p_despacho: string }; Returns: number }
+      /** Membresías activas que no son del portal del cliente. */
+      asientos_ocupados: { Args: { p_despacho: string }; Returns: number }
       puede_ver_expediente: { Args: { p_expediente: string }; Returns: boolean }
       puede_editar_expediente: {
         Args: { p_expediente: string }
@@ -541,6 +568,7 @@ export type Database = {
       estado_membresia: EstadoMembresia
       estado_invitacion: EstadoInvitacion
       plan_suscripcion: PlanSuscripcion
+      estado_suscripcion: EstadoSuscripcion
       fuero: FueroDb
       motivo_inhabil: MotivoInhabilDb
       tipo_persona: TipoPersonaDb

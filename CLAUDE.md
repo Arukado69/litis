@@ -572,14 +572,16 @@ partes y etapas · `0004` actuaciones, documentos y audiencias · `0005` plazos 
 alertas · `0006` alta de despacho transaccional · `0007` apertura de expediente
 transaccional · `0008` semilla de calendarios y catálogo de plazos · `0009`
 invitaciones al despacho · `0010` almacén privado de documentos · `0011`
-acceso del cliente al portal.
+acceso del cliente al portal · `0012` suscripción, topes del plan y blindaje de
+las columnas de cobro.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0010`. **Pendiente la
-`0011`** — sin ella no se le puede dar acceso a un cliente. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0011`. **Pendiente la
+`0012`** — sin ella no hay topes ni cobro, y el titular puede escribirse el plan
+que quiera. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
 `audiencias` ya estaban en la `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
 orden.
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva once migraciones de
+⚠️ `src/types/db.ts` está **escrito a mano** y lleva doce migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
 `npx supabase gen types typescript --project-id <id>`.
 
@@ -601,6 +603,68 @@ margen rojo de la hoja de máquina.
 - Sin sombras, sin tarjetas idénticas, sin versalitas rastreadas de rótulo, sin
   cadenas de puntos medios. Están descartados por escrito en `docs/DISENO.md`
   para que no vuelvan de contrabando.
+
+### 5.23 Suscripción y topes — `src/lib/suscripcion/`, `/panel/suscripcion`
+
+Cobro **por asiento al mes** con nivel gratuito, por Stripe Checkout hospedado
+(los datos de tarjeta no pasan por este servidor). Sin llaves, todo el módulo
+degrada a **simulación**.
+
+- **La regla que manda sobre todas las demás:** el tope solo puede frenar
+  **abrir un expediente** y **sumar un asiento**. Nada más. Cerrar un plazo,
+  asentar, subir documentos, computar, recibir alertas y leer lo capturado
+  funcionan igual con la suscripción morosa, vencida o cancelada. Un cobro que
+  impide registrar que se presentó en tiempo convierte un problema de tarjeta
+  en un término perdido. `ACCIONES_TOPADAS` es una lista cerrada con prueba, y
+  la pantalla arma con ella la lista de "lo que el tope nunca frena": si algún
+  día una acción se vuelve topada, la pantalla deja de prometerla sola.
+- **Al bajar de plan no se suspende a nadie ni se archiva nada.** El despacho
+  que se queda por encima del tope conserva sus expedientes y su equipo; lo que
+  pierde es crecer. Sale más caro cobrar de menos un mes que dejar a un pasante
+  fuera de un expediente que vence mañana.
+- **El candado está en la base, no en la Server Action** (`0012`). Los
+  disparadores `expedientes_exigir_cupo` y `membresias_exigir_cupo` corren
+  dentro de la transacción y rechazan con `LIT01`/`LIT02`; la aplicación
+  consulta antes solo para dar un mensaje que diga cómo salir, y traduce esos
+  códigos por si pierde la carrera. Contar va por función `security definer`:
+  con la RLS del usuario, un expediente restringido no se contaría y el tope se
+  saltaría solo por no poder ver lo que se cuenta.
+- ⚠️ **Las columnas de cobro están blindadas.** `despachos_actualizar` (0001)
+  deja al titular actualizar su despacho y no distingue columnas: sin el
+  disparador `blindar_cobro`, un `PATCH` a PostgREST desde la consola del
+  navegador se regala el plan. Solo la clave de servicio las mueve.
+- **El asiento se aparta al invitar, no al aceptar.** Si no, se mandan veinte
+  invitaciones con un asiento pagado y el tope aparece cuando ya están todos
+  adentro. **Los clientes del portal no ocupan asiento**: cobrar por ellos
+  empujaría al despacho a no darles acceso.
+- **La simulación no activa el plan.** Sin llaves la pantalla se recorre entera,
+  dice qué se cobraría y no cambia nada. Si activara, un despliegue con la llave
+  mal escrita regalaría el producto sin que nadie se enterara.
+- **Webhook:** `POST /api/webhooks/suscripcion`, cuatro eventos
+  (`checkout.session.completed` y `customer.subscription.created/updated/
+  deleted`). Firma verificada a mano (`firma.ts`: HMAC-SHA256 sobre el cuerpo
+  **crudo**, comparación en tiempo constante, ventana de cinco minutos contra
+  reenvíos). Idempotencia por `evento_id` único en `suscripcion_eventos`. Sin
+  `STRIPE_WEBHOOK_SECRET` contesta 503. Sin el SDK de Stripe: son dos POST
+  form-encoded y una verificación de firma.
+- ⚠️ `current_period_end` **se movió** al renglón de la suscripción en las
+  versiones recientes de la API; `eventos.ts` lo lee en los dos lugares porque
+  la versión de API la fija la cuenta, no este código.
+- **Los números del plan gratuito viven en `TOPES_POR_PLAN`** y de ahí los toma
+  la portada: si cambian, la promesa pública cambia con ellos. La `0012` los
+  repite solo como valor por omisión de la columna, con el comentario que lo
+  dice.
+- **Los disparadores se prueban contra un Postgres de verdad.**
+  `supabase/pruebas/correr.sh` levanta un Postgres de usar y tirar, aplica todas
+  las migraciones en orden y corre 18 afirmaciones sobre el comportamiento real:
+  que el 11º expediente se rechace con `LIT01`, que **con el plan al tope se
+  pueda seguir asentando en la bitácora**, que cancelar no suspenda a nadie ni
+  archive nada, y que el titular no pueda regalarse el plan. Un candado que solo
+  vive en la base no se puede probar con Vitest. La `0010` se omite ahí: crea
+  políticas sobre `storage.objects`, que solo existe en Supabase.
+- **Bloqueo:** falta crear en Stripe el producto y el precio por asiento y poner
+  `STRIPE_PRECIO_DESPACHO`. El precio ($390 MXN por asiento al mes) sigue siendo
+  una hipótesis, no una medición.
 
 ## 6. Reglas que no se negocian
 
@@ -646,7 +710,12 @@ margen rojo de la hoja de máquina.
     corrida se detiene en vez de repetirlo todo.
 16. **Ningún archivo de cliente vive en un bucket público.** Se descarga con URL
     firmada de vida corta, generada con la sesión de quien pide.
-17. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
+17. **El tope del plan nunca frena el trabajo con un término encima.** Solo
+    puede impedir abrir un expediente y sumar un asiento; cerrar un plazo,
+    asentar, subir un documento y recibir las alertas funcionan con la
+    suscripción morosa o cancelada. Bajar de plan no suspende a nadie ni
+    archiva nada. Hay pruebas que fijan la lista.
+18. **Nombres de esquema y código en español.** NS Hub mezclaba columnas en
     inglés con dominio en español y obligaba a traducir en cada consulta.
 
 ## 7. Convenciones

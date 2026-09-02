@@ -135,16 +135,44 @@ plazos. No promete fechas ni resultados, y sí dice cuándo se movió por últim
 vez. El acceso se abre desde el expediente y la persona del padrón la fija la
 invitación. Migración `0011`.
 
-**485 pruebas.** Typecheck, lint y build limpios.
-Migraciones `0001`–`0010` aplicadas; **falta aplicar la `0011`**.
+### R11 — Suscripción ✅
+
+Cobro por asiento al mes con nivel gratuito, por Stripe Checkout hospedado y con
+degradación a simulación sin llaves. El tope del plan gratuito —un asiento y
+diez expedientes activos— lo aplican disparadores de la base, no la Server
+Action: la comprobación de la aplicación existe para dar un mensaje que diga
+cómo salir. Las columnas de plan quedaron blindadas contra la sesión del propio
+titular, que hasta ahora podía escribírselas.
+
+La decisión que ordena todo lo demás: **el tope solo frena abrir un expediente y
+sumar un asiento**. Cerrar un plazo, asentar, subir documentos y recibir alertas
+funcionan con la suscripción morosa o cancelada, y bajar de plan no suspende a
+nadie ni archiva nada. Migración `0012`.
+
+**521 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
+migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
+Typecheck, lint y build limpios.
+Migraciones `0001`–`0011` aplicadas; **falta aplicar la `0012`**.
 
 ---
 
 ## Siguiente
 
-### R11 — Suscripción
-Stripe por usuario/mes con nivel gratuito. Tope de asientos y de expedientes
-activos en el plan gratuito.
+Antes de seguir agregando: **un litigante real usando esto**. Lo que falta para
+poder cobrarle está identificado y no es código —el catálogo de plazos sin
+verificar y el precio sin medir—, así que la siguiente rebanada se elige con lo
+que ese despacho diga.
+
+### Pendientes que no son rebanada
+
+- **Crear en Stripe el producto y el precio por asiento**, y poner
+  `STRIPE_PRECIO_DESPACHO`. La cuenta existe y está vacía; sin el precio, el
+  módulo de cobro queda en simulación.
+- **Regenerar `src/types/db.ts`** con `supabase gen types`: doce migraciones de
+  posible deriva escritas a mano.
+- **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
+  `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
+  firma.
 
 ---
 

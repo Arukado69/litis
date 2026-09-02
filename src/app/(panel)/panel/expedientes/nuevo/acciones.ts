@@ -15,6 +15,8 @@ import {
   padronParaConflictos,
 } from '@/lib/expedientes/datos'
 import { clienteServidor } from '@/lib/supabase/server'
+import { mensajeDeTope, suscripcionYConsumo } from '@/lib/suscripcion/datos'
+import { puedeAbrirExpediente } from '@/lib/suscripcion/limites'
 import type { RelacionPersona } from '@/types/db'
 
 import {
@@ -46,6 +48,16 @@ function comoCampos(formData: FormData): Record<string, string> {
  * en el primer uso.
  *
  * ─────────────────────────────────────────────────────────────────────────────
+ * EL TOPE DEL PLAN SE MIRA ANTES, PERO NO ES LA CERRADURA
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Se consulta aquí para dar un mensaje que diga cómo salir —concluir un asunto
+ * o pasar al plan de paga— en vez de un error de base de datos. La cerradura de
+ * verdad es el disparador de la `0012`, que corre dentro de la transacción y no
+ * se puede esquivar llamando a PostgREST directo. Por eso también se traduce
+ * abajo el código `LIT01`: si la carrera la gana otro alta, el rechazo viene de
+ * la base y tiene que leerse igual de bien.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
  * LA CONSTANCIA VA EN LA BITÁCORA
  * ─────────────────────────────────────────────────────────────────────────────
  * Cuando hubo hallazgos y alguien decidió seguir adelante, eso se asienta como
@@ -68,6 +80,13 @@ export async function abrirExpediente(
     const problemas: Record<string, string> = {}
     for (const p of problemasCaptura) problemas[p.campo] ??= p.mensaje
     return conProblemas(campos, problemas)
+  }
+
+  // ── 0. ¿Cabe un expediente más en el plan? ───────────────────────────────
+  const { suscripcion, consumo } = await suscripcionYConsumo(despachoId)
+  const cupo = puedeAbrirExpediente(suscripcion, consumo)
+  if (!cupo.permitido) {
+    return conError(campos, `${cupo.motivo} ${cupo.salida}`)
   }
 
   // ── 1. Conflicto de interés, sobre los nombres tecleados ─────────────────
@@ -215,7 +234,8 @@ export async function abrirExpediente(
   if (error || !expedienteId) {
     return conError(
       campos,
-      'No se pudo abrir el expediente. Vuelve a intentar en un momento.',
+      mensajeDeTope(error?.code) ??
+        'No se pudo abrir el expediente. Vuelve a intentar en un momento.',
     )
   }
 

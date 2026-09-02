@@ -127,11 +127,17 @@ export async function aceptarInvitacion(
   })
 
   if (error) {
+    // LIT02 = el despacho se quedó sin asientos entre que se mandó la
+    // invitación y este momento (alguien más entró primero, o bajaron el plan).
+    // Quien está de este lado no puede hacer nada al respecto, así que el
+    // mensaje manda al único que sí: el titular.
     return conError(
       valores,
       error.code === '23505'
         ? 'Esa cuenta ya pertenece a un despacho. Una cuenta entra a uno solo.'
-        : 'No se pudo aceptar la invitación. Puede que haya caducado mientras llenabas el formulario.',
+        : error.code === 'LIT02'
+          ? 'El despacho ya no tiene asientos libres en su plan. Pídele a quien te invitó que sume un asiento y vuelve a abrir este enlace: la invitación sigue viva.'
+          : 'No se pudo aceptar la invitación. Puede que haya caducado mientras llenabas el formulario.',
     )
   }
 

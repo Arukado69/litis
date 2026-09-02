@@ -47,6 +47,17 @@ export default async function LayoutPanel({
               {sesion.activa.despachoNombre} · {sesion.nombre || sesion.correo} (
               {ROL_ETIQUETA[sesion.activa.rol]})
             </span>
+            {/* La suscripción no es trabajo diario: va aquí, junto al nombre
+                del despacho, y no en la navegación de secciones. Solo el
+                titular contrata, así que a los demás ni se les enseña. */}
+            {sesion.activa.rol === 'titular' ? (
+              <Link
+                href="/panel/suscripcion"
+                className="underline decoration-[var(--color-regla-fuerte)] underline-offset-4 hover:text-[var(--color-sello)]"
+              >
+                Suscripción
+              </Link>
+            ) : null}
             <form action={cerrarSesion}>
               <Boton variante="fantasma" type="submit" className="px-0 py-0">
                 Salir

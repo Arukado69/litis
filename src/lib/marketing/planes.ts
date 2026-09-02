@@ -1,3 +1,5 @@
+import { TOPES_POR_PLAN } from '@/lib/suscripcion/limites'
+
 /**
  * Los planes, en UN solo lugar.
  *
@@ -44,13 +46,24 @@ export const PLANES: readonly Plan[] = [
     precio: 0,
     promesa: 'Para llevar tus propios asuntos sin perder un término.',
     incluye: [
-      'Hasta 10 expedientes activos',
+      // El número sale del motor de topes, no de la redacción: es el mismo que
+      // aplica la base. Una portada que promete doce y un sistema que corta en
+      // diez es una promesa incumplida el día que alguien la usa.
+      `Hasta ${TOPES_POR_PLAN.gratuito.expedientesActivos} expedientes activos`,
       'Cómputo de plazos con la traza a la vista',
       'Agenda de audiencias y vencimientos',
       'Alertas por correo antes de cada vencimiento',
       'Bitácora del expediente',
     ],
-    tope: 'Un solo usuario. Sin equipo ni documentos.',
+    /**
+     * Antes decía "sin equipo ni documentos", y era falso: el almacén de
+     * documentos nunca se topó. Solo dos cosas topan —abrir expediente y sumar
+     * asiento—, así que eso es lo único que la página puede decir que falta.
+     */
+    tope:
+      TOPES_POR_PLAN.gratuito.asientos === 1
+        ? 'Un solo usuario. Lo demás no se recorta: mismos plazos, mismas alertas, mismos documentos.'
+        : `Hasta ${TOPES_POR_PLAN.gratuito.asientos} usuarios.`,
     destacado: false,
   },
   {
@@ -61,6 +74,7 @@ export const PLANES: readonly Plan[] = [
     incluye: [
       'Expedientes sin tope',
       'Todo el equipo, con papeles y bajas',
+      'Un asiento por persona; los clientes del portal no ocupan',
       'Documentos en almacén privado, con versiones',
       'Detección de conflicto de interés contra tu padrón',
       'Reparto de responsables y aviso de días imposibles',

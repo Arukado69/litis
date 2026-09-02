@@ -25,7 +25,6 @@
     "resend": "^4.0.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
-    "stripe": "^22.3.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

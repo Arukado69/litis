@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { enviarConPlantilla } from '@/lib/email/envio'
+import { avisarAlOperador } from '@/lib/email/operador'
 import {
   calcularAlertas,
   claveAlerta,
@@ -99,27 +100,6 @@ export interface ResumenCorrida {
  * no cuestan nada; un tipo que miente sí.
  */
 
-/**
- * Avisa al operador de que algo se rompió.
- *
- * Nunca lanza: se llama justo cuando el camino principal ya falló, y una
- * excepción aquí escondería el fallo original detrás de otro.
- */
-async function avisarAlOperador(titulo: string, detalle: string): Promise<void> {
-  const destino = process.env.CORREO_ALERTAS?.trim()
-  console.error(`[alertas] ${titulo} — ${detalle}`)
-  if (!destino) return
-  try {
-    await enviarConPlantilla(destino, {
-      titulo,
-      parrafos: [detalle],
-      pie: 'Aviso automático de la corrida de alertas de Litis.',
-    })
-  } catch {
-    // Ya se escribió en consola. Nada más que hacer.
-  }
-}
-
 export async function correrAlertas(
   hoy = hoyEnMexico(),
 ): Promise<ResumenCorrida> {
@@ -150,6 +130,7 @@ export async function correrAlertas(
 
   if (errorPlazos) {
     await avisarAlOperador(
+      'alertas',
       'La corrida de alertas no pudo leer los plazos',
       `No salió ningún aviso. ${errorPlazos.message}`,
     )
@@ -173,6 +154,7 @@ export async function correrAlertas(
 
   if (errorRegistro) {
     await avisarAlOperador(
+      'alertas',
       'La corrida de alertas se detuvo',
       `No se pudo leer el registro de avisos ya enviados (${errorRegistro.message}), así que no se mandó ninguno. Seguir sin ese registro le reenviaría el mismo aviso a todos, todos los días, hasta quemar el correo del despacho.`,
     )
@@ -190,6 +172,7 @@ export async function correrAlertas(
   const { calendarios, porOmision } = await cargarTodosLosCalendarios()
   if (!porOmision) {
     await avisarAlOperador(
+      'alertas',
       'La corrida de alertas no encontró calendarios',
       'Sin calendario de días inhábiles no se pueden contar días hábiles, y contar en naturales avisaría tarde justo en los puentes. No salió ningún aviso.',
     )
@@ -277,6 +260,7 @@ export async function correrAlertas(
     if (sinDestinatario.length > 0) {
       resumen.sinDestinatario += sinDestinatario.length
       await avisarAlOperador(
+        'alertas',
         'Hay términos de los que no se le pudo avisar a nadie',
         `El despacho ${despachoId} tiene ${sinDestinatario.length} plazo(s) sin responsable y sin titular con correo:\n\n${sinDestinatario.map(renglon).join('\n')}`,
       )
@@ -345,6 +329,7 @@ async function registrar(
 
   if (error) {
     await avisarAlOperador(
+      'alertas',
       'Un aviso salió pero no se pudo registrar',
       `El correo a ${lote.destinatario.correo} sí se mandó, pero no quedó anotado en el registro (${error.message}), así que mañana se va a repetir. Revisa los permisos de plazo_alertas_enviadas.`,
     )

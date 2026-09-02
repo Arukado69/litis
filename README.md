@@ -83,8 +83,9 @@ grave es peor que no tener registro.
 - Verificación del catálogo, firmada por abogado y por despacho
 - Tablero de etapas, con los asuntos que llevan meses sin moverse arriba
 - Portal del cliente: en qué va su asunto, sin plazos y sin promesas
+- Suscripción por asiento al mes, con topes que nunca frenan un término
 
-**485 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**521 pruebas.** Plan completo en [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
@@ -99,6 +100,14 @@ npm run dev
 
 Las migraciones de `supabase/migrations/` se aplican en orden desde el SQL
 Editor de Supabase.
+
+```bash
+supabase/pruebas/correr.sh   # migraciones + pruebas sobre un Postgres de usar y tirar
+```
+
+Los topes del plan viven en disparadores de la base, no en la aplicación, así
+que se prueban ahí: el guion levanta un Postgres local, aplica todas las
+migraciones y verifica el comportamiento. No toca el proyecto de Supabase.
 
 ---
 
