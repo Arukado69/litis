@@ -575,11 +575,18 @@ invitaciones al despacho · `0010` almacén privado de documentos · `0011`
 acceso del cliente al portal · `0012` suscripción, topes del plan y blindaje de
 las columnas de cobro.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0011`. **Pendiente la
-`0012`** — sin ella no hay topes ni cobro, y el titular puede escribirse el plan
-que quiera. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
-`audiencias` ya estaban en la `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
-orden.
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0012`, verificadas
+objeto por objeto contra el esquema vivo: columnas, disparadores, permisos de
+cada función y la RLS de `suscripcion_eventos`. Ni R5 ni R7 necesitaron
+migración: `plazo_alertas_enviadas` y `audiencias` ya estaban en la `0005` y la
+`0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en orden.
+
+⚠️ **El registro `supabase_migrations.schema_migrations` no dice qué está
+aplicado.** Solo tiene las tres primeras: de la `0004` en adelante se aplicaron
+por el SQL Editor, que no escribe ahí. Leerlo como inventario hace creer que
+falta media base — y la tentación entonces es volver a correr migraciones que ya
+están puestas. Lo que hay que preguntar es el catálogo (`pg_proc`, `pg_trigger`,
+`information_schema.columns`).
 
 ⚠️ `src/types/db.ts` está **escrito a mano** y lleva doce migraciones de
 posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con

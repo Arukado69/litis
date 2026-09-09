@@ -152,7 +152,7 @@ nadie ni archiva nada. Migración `0012`.
 **521 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
 migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
 Typecheck, lint y build limpios.
-Migraciones `0001`–`0011` aplicadas; **falta aplicar la `0012`**.
+Migraciones `0001`–`0012` aplicadas y verificadas contra el esquema vivo.
 
 ---
 
