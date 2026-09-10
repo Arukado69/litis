@@ -74,7 +74,7 @@ export interface EntradaComputo {
   recorrerVencimientoInhabil?: boolean
 }
 
-export interface PasoComputo {
+export type PasoComputo = {
   orden: number
   titulo: string
   detalle: string
@@ -82,7 +82,7 @@ export interface PasoComputo {
   fundamento?: string
 }
 
-export interface DiaOmitido {
+export type DiaOmitido = {
   fecha: FechaISO
   motivo: MotivoInhabil
   descripcion: string

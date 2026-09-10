@@ -80,7 +80,7 @@ export async function cerrarPlazo(
   const { data: plazo } = await supabase
     .from('plazos')
     .select(
-      'id, expediente_id, etiqueta, estado, fecha_notificacion, fecha_vencimiento_efectiva',
+      'id, expediente_id, etiqueta, estado, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento',
     )
     .eq('id', plazoId)
     .maybeSingle()
@@ -109,7 +109,7 @@ export async function cerrarPlazo(
 
   const contexto = {
     hoy: hoyEnMexico(),
-    fechaVencimiento: plazo.fecha_vencimiento_efectiva,
+    fechaVencimiento: plazo.fecha_vencimiento_efectiva ?? plazo.fecha_vencimiento,
     fechaNotificacion: plazo.fecha_notificacion,
   }
 

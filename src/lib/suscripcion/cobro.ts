@@ -2,6 +2,7 @@ import 'server-only'
 
 import { avisarAlOperador } from '@/lib/email/operador'
 import { clienteServicio } from '@/lib/supabase/service'
+import type { Json } from '@/types/db'
 
 import type { Instruccion } from './eventos'
 
@@ -55,7 +56,7 @@ async function esNuevo(
 async function guardarCarga(
   eventoId: string,
   despachoId: string | null,
-  carga: unknown,
+  carga: Json,
 ): Promise<void> {
   const supabase = clienteServicio()
   await supabase
@@ -105,7 +106,7 @@ export async function aplicarEvento(
   eventoId: string,
   tipo: string,
   instruccion: Instruccion,
-  carga: unknown,
+  carga: Json,
 ): Promise<ResultadoEvento> {
   const nuevo = await esNuevo(eventoId, tipo)
 

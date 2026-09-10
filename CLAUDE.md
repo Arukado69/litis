@@ -61,7 +61,7 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**485 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+**530 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
 plazos, el panel "qué vence", la agenda, **el tablero de etapas**, la edición
 del expediente, las alertas por correo, la bitácora con sus documentos y la
 verificación del catálogo y **el portal del cliente** ya funcionan contra
@@ -95,6 +95,10 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
   constantes de `calendarios-semilla.ts` y `catalogo.ts` son la **semilla** con
   la que se generó la migración `0008`; en tiempo de ejecución solo se lee la
   tabla. `semilla.test.ts` falla si el SQL y el código se separan.
+- ⚠️ **`semilla.test.ts` NO comprueba que la `0008` se haya aplicado.** Compara
+  el SQL contra las constantes de TypeScript, los dos en el repositorio, y pasa
+  igual si ese SQL nunca corrió — que fue exactamente lo que pasó durante un
+  tiempo. Que la semilla esté en la base solo se verifica contando filas.
 
 ### 5.2 Expedientes — `src/lib/expedientes/`
 
@@ -148,11 +152,10 @@ Cruza las partes de un asunto nuevo contra el padrón. Devuelve `impedimento` o
 Clientes de servidor, navegador y servicio; validación de variables de entorno;
 proxy que refresca la sesión y bloquea `/panel` y `/portal`.
 
-⚠️ `src/types/db.ts` sigue **escrito a mano** y ya son ocho migraciones. El
-esquema está aplicado, así que lo correcto es sustituirlo por
-`npx supabase gen types typescript --project-id <id>` a la primera oportunidad.
-Mientras tanto la regla es estricta: **toda migración que cambie una tabla lo
-actualiza en el mismo commit.**
+⚠️ `src/types/db.ts` ya **se genera** desde el esquema vivo; el encabezado del
+archivo dice cómo. La regla ahora es: **toda migración que se aplique lo
+regenera en el mismo commit**, y se vuelve a pegar la capa de alias del final.
+Esa capa deriva de `Database` en vez de copiarlo, así que no puede desfasarse.
 
 ⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
 `crear_mi_despacho` (§5.9), **hoy no lo usa ningún camino**; queda para el cron
@@ -575,28 +578,20 @@ invitaciones al despacho · `0010` almacén privado de documentos · `0011`
 acceso del cliente al portal · `0012` suscripción, topes del plan y blindaje de
 las columnas de cobro.
 
-**Estado en el proyecto de Supabase:** aplicadas todas menos la `0008`.
-Comprobadas contra el esquema vivo objeto por objeto —columnas, disparadores,
-permisos de cada función, RLS y filas—, no por nombre de tabla. Ni R5 ni R7
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0012`, comprobadas
+contra el esquema vivo objeto por objeto —columnas, disparadores, permisos de
+cada función, RLS y filas—, no por nombre de tabla. Ni R5 ni R7
 necesitaron migración: `plazo_alertas_enviadas` y `audiencias` ya estaban en la
 `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor,
 en orden.
 
-⚠️ **LA `0008` NO ESTÁ APLICADA, Y ES LA SEMILLA DEL MOTOR.** No corrió ni su
-primera instrucción: falta la columna `calendarios.clave`, falta el índice
-`calendarios_clave_compartida`, y `calendarios`, `dias_inhabiles` y
-`plazos_catalogo` están **vacías**. Como los calendarios y el catálogo viven en
-la base y no en el código (§5.1), hoy el motor de plazos no tiene con qué
-contar: `cargarCalendarioPorClave` siempre devuelve `null` y
-`cargarTodosLosCalendarios` devuelve el mapa vacío. El archivo de la migración
-es coherente —se agrega ella misma la columna—, así que aplicarlo tal cual lo
-resuelve.
-
-⚠️ **Esto no lo detectó nada, y ahí está la lección.** Las tablas de la `0008`
-ya existían desde la `0002`, así que comparar nombres de tablas decía que todo
-estaba. `semilla.test.ts` compara el SQL contra las constantes de TypeScript
-—los dos en el repositorio— y pasa aunque ese SQL nunca se haya ejecutado. Una
-migración de datos solo se verifica contando filas en la base.
+La `0008` estuvo **sin aplicar** un buen rato sin que nada lo dijera, y la
+lección quedó cara: las tablas que siembra ya existían desde la `0002`, así que
+comparar nombres de tablas afirmaba que todo estaba puesto mientras
+`calendarios`, `dias_inhabiles` y `plazos_catalogo` estaban vacías y el motor
+no tenía con qué contar. **Una migración de datos solo se verifica contando
+filas.** Hoy tiene 2 calendarios, 16 días inhábiles y 16 entradas de catálogo,
+las 16 sin verificar (regla 4).
 
 ⚠️ **El registro `supabase_migrations.schema_migrations` no dice qué está
 aplicado.** Solo tiene las tres primeras: de la `0004` en adelante se aplicaron
@@ -605,9 +600,18 @@ falta media base — y la tentación entonces es volver a correr migraciones que
 están puestas. Lo que hay que preguntar es el catálogo (`pg_proc`, `pg_trigger`,
 `information_schema.columns`).
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva doce migraciones de
-posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
-`npx supabase gen types typescript --project-id <id>`.
+⚠️ `src/types/db.ts` ya **se genera**. Al hacerlo aparecieron cuatro funciones
+que faltaban (`es_servicio`, `contar_expedientes_activos`,
+`contar_asientos_ocupados`, `expediente_de_ruta`) y la lectura de
+`calendarios.clave`, que destapó lo de la `0008`. Detalle en el encabezado del
+archivo.
+
+⚠️ **Una columna generada se reporta nulable aunque no pueda serlo.**
+`fecha_vencimiento_efectiva` es `coalesce(fecha_vencimiento_ajustada,
+fecha_vencimiento)` sobre una columna `not null`: nunca es nula, pero Postgres
+la declara nulable y el generador lo copia. Quien la lea trae también
+`fecha_vencimiento` y repite el `coalesce` en TypeScript. Es pesimismo del
+generador, no deriva — y no se tapa con `!`.
 
 ### 5.22 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
@@ -754,12 +758,16 @@ facturación, pero el contenido no es trámite.
 8. **El nombre de la marca no se escribe a mano.** Sale de `src/lib/brand`.
 9. **Los enlaces de correo salen de `NEXT_PUBLIC_SITE_URL`**, nunca del header
    `Host`.
-10. **En `src/types/db.ts` todo se declara con `type`, jamás con `interface`.**
+10. **Todo lo que toca la base se declara con `type`, jamás con `interface`.**
     No es estilo. En TypeScript una `interface` no recibe índice implícito, así
     que no es asignable a `Record<string, unknown>` — lo que exige el
     `GenericSchema` de supabase-js. Con interfaces el esquema deja de conformar
     **en silencio**, el cliente cae al genérico y cada `.rpc()` y cada join se
     tipan como `undefined` o `never`. Ya costó una depuración.
+    ⚠️ Vale igual para **lo que se guarda en una columna `jsonb`**: `Json` pide
+    ese índice, así que un tipo del dominio declarado con `interface` no entra.
+    Por eso `PasoComputo`, `DiaOmitido` y `DiaContado` —la traza que se guarda
+    en `plazos.computo`— son `type`.
 11. **Un archivo `'use server'` solo exporta funciones async.** El estado
     inicial y los tipos de un formulario van en un `estado.ts` aparte, o el
     build se cae.

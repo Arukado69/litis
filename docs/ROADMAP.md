@@ -149,12 +149,12 @@ sumar un asiento**. Cerrar un plazo, asentar, subir documentos y recibir alertas
 funcionan con la suscripción morosa o cancelada, y bajar de plan no suspende a
 nadie ni archiva nada. Migración `0012`.
 
-**521 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
+**530 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
 migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
 Typecheck, lint y build limpios.
-Migraciones aplicadas todas menos la **`0008`**, que nunca corrió: sin ella
-`calendarios`, `dias_inhabiles` y `plazos_catalogo` están vacías y el motor de
-plazos no tiene con qué contar. Es el bloqueo número uno.
+Migraciones `0001`–`0012` aplicadas y comprobadas contra el esquema vivo. La
+`0008` llevaba tiempo sin aplicar sin que nada lo dijera; ya está, con la
+semilla de calendarios y catálogo dentro y sin una sola entrada verificada.
 
 ---
 
@@ -178,8 +178,6 @@ que ese despacho diga.
 - **Exportar el despacho con un botón.** Los términos dicen que los datos son
   del despacho y que se entregan a solicitud; hoy ese camino es manual, y
   haberlo escrito obliga a construirlo.
-- **Regenerar `src/types/db.ts`** con `supabase gen types`: doce migraciones de
-  posible deriva escritas a mano.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
   firma.

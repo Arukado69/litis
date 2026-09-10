@@ -67,7 +67,7 @@ export async function vencimientosDelDespacho(
   const { data } = await supabase
     .from('plazos')
     .select(
-      'id, etiqueta, fecha_vencimiento_efectiva, responsable_id, expediente_id, expedientes:expediente_id(despacho_id, numero_interno, numero_organo, caratula), perfiles:responsable_id(nombre)',
+      'id, etiqueta, fecha_vencimiento_efectiva, fecha_vencimiento, responsable_id, expediente_id, expedientes:expediente_id(despacho_id, numero_interno, numero_organo, caratula), perfiles:responsable_id(nombre)',
     )
     .eq('estado', 'pendiente')
     .order('fecha_vencimiento_efectiva')
@@ -87,7 +87,7 @@ export async function vencimientosDelDespacho(
         numeroExpediente: exp.numero_organo ?? exp.numero_interno,
         caratula: exp.caratula,
         etiqueta: p.etiqueta,
-        fecha: p.fecha_vencimiento_efectiva,
+        fecha: p.fecha_vencimiento_efectiva ?? p.fecha_vencimiento,
         responsableId: huerfano ? null : p.responsable_id,
         responsableNombre: huerfano ? null : (perfil?.nombre ?? null),
       },

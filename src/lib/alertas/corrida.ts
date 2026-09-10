@@ -122,7 +122,7 @@ export async function correrAlertas(
   const { data: filas, error: errorPlazos } = await supabase
     .from('plazos')
     .select(
-      'id, expediente_id, etiqueta, calendario_id, fecha_vencimiento_efectiva, responsable_id',
+      'id, expediente_id, etiqueta, calendario_id, fecha_vencimiento_efectiva, fecha_vencimiento, responsable_id',
     )
     .eq('estado', 'pendiente')
     .order('fecha_vencimiento_efectiva')
@@ -221,7 +221,7 @@ export async function correrAlertas(
       numeroExpediente: exp.numero_organo ?? exp.numero_interno,
       caratula: exp.caratula,
       etiqueta: fila.etiqueta,
-      fechaVencimiento: fila.fecha_vencimiento_efectiva,
+      fechaVencimiento: fila.fecha_vencimiento_efectiva ?? fila.fecha_vencimiento,
       responsableId: fila.responsable_id,
       responsableNombre: perfil?.nombre ?? null,
       responsableEmail: perfil?.correo ?? null,

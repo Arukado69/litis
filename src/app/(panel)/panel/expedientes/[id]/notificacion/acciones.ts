@@ -224,12 +224,14 @@ export async function registrarNotificacion(
     ajustado_por: hayAjuste ? sesion.usuarioId : null,
     ajustado_el: hayAjuste ? new Date().toISOString() : null,
     // La traza completa, para poder auditar el cómputo dentro de seis meses.
+    // Los arreglos del motor son `readonly` y `Json` pide mutables; se copian
+    // en vez de castear, que escondería cualquier deriva real del esquema.
     computo: {
-      pasos: resultado.pasos,
-      diasContados: resultado.diasContados,
-      diasOmitidos: resultado.diasOmitidos,
-      fundamentos: resultado.fundamentos,
-      advertencias,
+      pasos: [...resultado.pasos],
+      diasContados: [...resultado.diasContados],
+      diasOmitidos: [...resultado.diasOmitidos],
+      fundamentos: [...resultado.fundamentos],
+      advertencias: [...advertencias],
       calendario: { id: calendario.id, nombre: calendario.nombre },
       coberturaCompleta: resultado.coberturaCompleta,
     },

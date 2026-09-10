@@ -35,7 +35,7 @@ export async function plazosPendientes(
   const { data } = await supabase
     .from('plazos')
     .select(
-      'id, etiqueta, calendario_id, fecha_vencimiento_efectiva, confiabilidad, responsable_id, expediente_id, expedientes:expediente_id(despacho_id, numero_interno, caratula), perfiles:responsable_id(nombre)',
+      'id, etiqueta, calendario_id, fecha_vencimiento_efectiva, fecha_vencimiento, confiabilidad, responsable_id, expediente_id, expedientes:expediente_id(despacho_id, numero_interno, caratula), perfiles:responsable_id(nombre)',
     )
     // Solo lo que sigue corriendo: un plazo atendido o cancelado no es trabajo
     // pendiente, y dejarlo en la lista enseña a ignorarla.
@@ -58,7 +58,7 @@ export async function plazosPendientes(
         numeroInterno: exp.numero_interno,
         caratula: exp.caratula,
         etiqueta: p.etiqueta,
-        fechaVencimiento: p.fecha_vencimiento_efectiva,
+        fechaVencimiento: p.fecha_vencimiento_efectiva ?? p.fecha_vencimiento,
         responsableId: huerfano ? null : p.responsable_id,
         responsableNombre: huerfano ? null : (perfil?.nombre ?? null),
         confiabilidad:

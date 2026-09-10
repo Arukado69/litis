@@ -7,24 +7,35 @@
  *
  * y se vuelve a pegar la capa de alias del final. Sale del esquema VIVO, así
  * que describe lo que está aplicado en Supabase, no lo que dicen los archivos
- * de `supabase/migrations/`. Si los dos difieren, el que manda para el
- * compilador es este — y esa diferencia es un bloqueo que hay que resolver, no
- * un detalle.
+ * de `supabase/migrations/`. Si los dos difieren, para el compilador manda
+ * este — y esa diferencia es un bloqueo que se resuelve, no un detalle.
  *
- * Antes iba a mano y la regla era actualizarlo en el mismo commit que la
- * migración. Aguantó para las tablas y los enums —los veinte y los dieciséis
- * coincidían— pero se le habían quedado fuera cuatro funciones:
- * `es_servicio`, `contar_expedientes_activos`, `contar_asientos_ocupados` y
- * `expediente_de_ruta`. Un `.rpc()` a cualquiera de esas cuatro no compilaba, o
- * peor, se tipaba como `never` sin que nada lo dijera.
+ * ─────────────────────────────────────────────────────────────────────────
+ * QUÉ DESTAPÓ DEJAR DE ESCRIBIRLO A MANO
+ * ─────────────────────────────────────────────────────────────────────────
+ * La versión a mano compilaba con cero errores. La generada dio 26, y todos
+ * eran deriva que el compilador venía avalando:
+ *
+ * - **Cuatro funciones faltaban**: `es_servicio`, `contar_expedientes_activos`,
+ *   `contar_asientos_ocupados` y `expediente_de_ruta`. Un `.rpc()` a
+ *   cualquiera de ellas se tipaba como `never` sin que nada avisara.
+ * - **Columnas declaradas no nulas que la base tiene nulables**, entre ellas
+ *   `plazos.fecha_vencimiento` — de la que cuelga la detección de
+ *   extemporaneidad (§5.8). El tipo prometía que siempre había fecha.
+ * - **`calendarios.clave` se leía sin existir**: la migración `0008` no estaba
+ *   aplicada. Ahí el código estaba bien y la base incompleta; se aplicó la
+ *   `0008` en vez de tocar `carga.ts`.
+ *
+ * Las tablas (20) y los enums (16) sí coincidían: la disciplina de actualizar
+ * a mano aguantó para lo que se ve y falló en lo que no.
  *
  * ⚠️ TODO AQUÍ SE DECLARA CON `type`, NUNCA CON `interface`. No es estilo: en
  * TypeScript una `interface` no recibe índice implícito, así que no es
  * asignable a `Record<string, unknown>` — que es justo lo que exige el
  * `GenericSchema` de supabase-js. Con interfaces, el esquema entero deja de
  * conformar en silencio, el cliente cae al genérico y cada `.rpc()` y cada
- * join se tipan como `undefined` o `never`. El generador de Supabase usa
- * `type` por eso mismo; si algún día emitiera `interface`, hay que corregirlo.
+ * join se tipan como `undefined` o `never`. El generador usa `type` por eso
+ * mismo; si algún día emitiera `interface`, hay que corregirlo.
  *
  * ⚠️ Ahora `Relationships` trae las llaves foráneas de verdad, no `[]`. Los
  * joins anidados de PostgREST ya se pueden tipar. Donde el código los evita a
@@ -178,6 +189,7 @@ export type Database = {
       }
       calendarios: {
         Row: {
+          clave: string | null
           creado_el: string
           despacho_id: string | null
           fin_de_semana_inhabil: boolean
@@ -188,6 +200,7 @@ export type Database = {
           vigencia_hasta: string
         }
         Insert: {
+          clave?: string | null
           creado_el?: string
           despacho_id?: string | null
           fin_de_semana_inhabil?: boolean
@@ -198,6 +211,7 @@ export type Database = {
           vigencia_hasta: string
         }
         Update: {
+          clave?: string | null
           creado_el?: string
           despacho_id?: string | null
           fin_de_semana_inhabil?: boolean
