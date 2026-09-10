@@ -575,11 +575,28 @@ invitaciones al despacho · `0010` almacén privado de documentos · `0011`
 acceso del cliente al portal · `0012` suscripción, topes del plan y blindaje de
 las columnas de cobro.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0012`, verificadas
-objeto por objeto contra el esquema vivo: columnas, disparadores, permisos de
-cada función y la RLS de `suscripcion_eventos`. Ni R5 ni R7 necesitaron
-migración: `plazo_alertas_enviadas` y `audiencias` ya estaban en la `0005` y la
-`0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en orden.
+**Estado en el proyecto de Supabase:** aplicadas todas menos la `0008`.
+Comprobadas contra el esquema vivo objeto por objeto —columnas, disparadores,
+permisos de cada función, RLS y filas—, no por nombre de tabla. Ni R5 ni R7
+necesitaron migración: `plazo_alertas_enviadas` y `audiencias` ya estaban en la
+`0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor,
+en orden.
+
+⚠️ **LA `0008` NO ESTÁ APLICADA, Y ES LA SEMILLA DEL MOTOR.** No corrió ni su
+primera instrucción: falta la columna `calendarios.clave`, falta el índice
+`calendarios_clave_compartida`, y `calendarios`, `dias_inhabiles` y
+`plazos_catalogo` están **vacías**. Como los calendarios y el catálogo viven en
+la base y no en el código (§5.1), hoy el motor de plazos no tiene con qué
+contar: `cargarCalendarioPorClave` siempre devuelve `null` y
+`cargarTodosLosCalendarios` devuelve el mapa vacío. El archivo de la migración
+es coherente —se agrega ella misma la columna—, así que aplicarlo tal cual lo
+resuelve.
+
+⚠️ **Esto no lo detectó nada, y ahí está la lección.** Las tablas de la `0008`
+ya existían desde la `0002`, así que comparar nombres de tablas decía que todo
+estaba. `semilla.test.ts` compara el SQL contra las constantes de TypeScript
+—los dos en el repositorio— y pasa aunque ese SQL nunca se haya ejecutado. Una
+migración de datos solo se verifica contando filas en la base.
 
 ⚠️ **El registro `supabase_migrations.schema_migrations` no dice qué está
 aplicado.** Solo tiene las tres primeras: de la `0004` en adelante se aplicaron

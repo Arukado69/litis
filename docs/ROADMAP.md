@@ -152,7 +152,9 @@ nadie ni archiva nada. Migración `0012`.
 **521 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
 migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
 Typecheck, lint y build limpios.
-Migraciones `0001`–`0012` aplicadas y verificadas contra el esquema vivo.
+Migraciones aplicadas todas menos la **`0008`**, que nunca corrió: sin ella
+`calendarios`, `dias_inhabiles` y `plazos_catalogo` están vacías y el motor de
+plazos no tiene con qué contar. Es el bloqueo número uno.
 
 ---
 
