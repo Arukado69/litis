@@ -98,7 +98,11 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
 - ⚠️ **`semilla.test.ts` NO comprueba que la `0008` se haya aplicado.** Compara
   el SQL contra las constantes de TypeScript, los dos en el repositorio, y pasa
   igual si ese SQL nunca corrió — que fue exactamente lo que pasó durante un
-  tiempo. Que la semilla esté en la base solo se verifica contando filas.
+  tiempo. Tampoco lo comprueba `correr.sh`, que aplica todas las migraciones a
+  su Postgres desechable y por eso siempre las ve puestas. Que la semilla esté
+  en la base la contesta **`npm run verificar:semilla`**, que cuenta filas
+  contra el proyecto configurado; córrelo tras aplicar migraciones y tras cada
+  despliegue.
 
 ### 5.2 Expedientes — `src/lib/expedientes/`
 

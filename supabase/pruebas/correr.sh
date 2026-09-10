@@ -49,6 +49,13 @@ echo "migraciones aplicadas"
 psql -q -d litis -c "create schema pruebas; grant usage on schema pruebas to authenticated, service_role;" >/dev/null
 psql -q -d litis -v ON_ERROR_STOP=1 -f "$AQUI/ayudantes.sql" >/dev/null
 # Las afirmaciones se reportan con `raise notice`, así que aquí sí se escuchan.
-PGOPTIONS='-c client_min_messages=notice' \
-  psql -d litis -v ON_ERROR_STOP=1 -f "$AQUI/0012_topes.sql" 2>&1 |
-  sed -n 's/.*NOTICE:  //p'
+# `pipefail` (arriba) hace que un archivo en falla tumbe la corrida aunque la
+# salida pase por `sed`.
+# ⚠️ Los `ERROR:` se dejan pasar tal cual. Filtrar solo los `NOTICE` dejaba una
+# corrida en falla SIN UNA SOLA LÍNEA: se caía con estado 3 y sin decir por qué,
+# que es la peor forma de fallar.
+for prueba in "$AQUI"/0008_semilla.sql "$AQUI"/0012_topes.sql; do
+  PGOPTIONS='-c client_min_messages=notice' \
+    psql -d litis -v ON_ERROR_STOP=1 -f "$prueba" 2>&1 |
+    sed -n -e 's/.*NOTICE:  //p' -e '/ERROR:/p' -e '/FATAL:/p' -e '/^LINE /p'
+done

@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run test",
+    "verificar:semilla": "node supabase/pruebas/verificar-semilla.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
