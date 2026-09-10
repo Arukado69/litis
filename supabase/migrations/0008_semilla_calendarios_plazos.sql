@@ -9,10 +9,16 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- EL BLOQUE DE DATOS ESTÁ GENERADO, NO TECLEADO
 -- ─────────────────────────────────────────────────────────────────────────────
--- Sale de `src/lib/plazos/calendarios-semilla.ts` y `catalogo.ts` mediante el
--- generador de `scripts/`. Teclear las mismas 25 filas a mano garantizaría que
--- el SQL y el código dijeran cosas distintas dentro de tres meses. Hay una
--- prueba (`semilla.test.ts`) que falla si se separan.
+-- Sale de `src/lib/plazos/calendarios-semilla.ts` y `catalogo.ts`. Teclear las
+-- mismas 25 filas a mano garantizaría que el SQL y el código dijeran cosas
+-- distintas dentro de tres meses. Hay una prueba (`semilla.test.ts`) que falla
+-- si se separan.
+--
+-- ⚠️ El generador que produjo este bloque NO está en el repositorio. Se corrió
+-- una vez y no se guardó, así que hoy la sincronía la sostiene `semilla.test.ts`
+-- y no una herramienta: si cambian las constantes, este SQL se edita a mano
+-- hasta que la prueba vuelva a pasar. (Antes este comentario decía "el
+-- generador de `scripts/`", un directorio que no existe.)
 --
 -- ⚠️ Todo el catálogo entra SIN verificar. Es deliberado: los ordenamientos se
 -- reforman y el CNPCyF desplaza a los códigos locales hasta 2027. Un abogado
