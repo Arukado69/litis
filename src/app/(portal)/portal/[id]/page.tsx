@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import { exigirPortal } from '@/lib/auth/sesion'
 import { TIPO_DOCUMENTO_ETIQUETA } from '@/lib/documentos/archivos'
@@ -51,12 +52,12 @@ export default async function PaginaAsunto({
           Volver a mis asuntos
         </Link>
         <h1 className="mt-2 text-rotulo">{asunto.caratula}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1 flex flex-wrap items-center gap-2">
           {asunto.numeroOrgano ? <span>{asunto.numeroOrgano}</span> : null}
           {asunto.estado === 'suspendido' ? (
             <Sello tono="neutro">suspendido</Sello>
           ) : null}
-        </p>
+        </Tenue>
       </div>
 
       {/* En qué va, en palabras. Sin fechas de terminación y sin pronósticos:
@@ -64,15 +65,15 @@ export default async function PaginaAsunto({
       <Foja className="border-l-2 border-l-[var(--color-sello)]">
         <p className="text-guia font-medium">{llano.titulo}</p>
         <p className="mt-2 max-w-prose">{llano.queSignifica}</p>
-        <p className="mt-2 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-2 max-w-prose">
           {llano.queSigue}
-        </p>
-        <p className="mt-3 border-t border-[var(--color-regla)] pt-3 text-nota text-[var(--color-tinta-suave)]">
+        </Tenue>
+        <Tenue tamano="nota" className="mt-3 border-t border-[var(--color-regla)] pt-3">
           {ultimoMovimiento(asunto.ultimoMovimientoEl, hoy)}
           {asunto.responsableNombre
             ? ` · Lleva tu asunto: ${asunto.responsableNombre}`
             : ''}
-        </p>
+        </Tenue>
       </Foja>
 
       {audiencias.length > 0 ? (
@@ -85,17 +86,17 @@ export default async function PaginaAsunto({
                   {fechaLargaConDia(a.fecha)}
                   {a.hora ? `, ${a.hora}` : ''}
                 </p>
-                <p className="text-menor text-[var(--color-tinta-suave)]">
+                <Tenue>
                   {a.tipo}
                   {a.lugar ? ` · ${a.lugar}` : ''}
-                </p>
+                </Tenue>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota" className="mt-3">
             Las audiencias las señala el juzgado y a veces se difieren. Si
             cambia alguna, aparece aquí.
-          </p>
+          </Tenue>
         </Foja>
       ) : null}
 
@@ -106,27 +107,27 @@ export default async function PaginaAsunto({
             {documentos.map((d) => (
               <li key={d.id} className="border-l-2 border-[var(--color-regla)] pl-4">
                 <p className="font-medium">{d.nombre}</p>
-                <p className="text-nota text-[var(--color-tinta-suave)]">
+                <Tenue tamano="nota">
                   {TIPO_DOCUMENTO_ETIQUETA[d.tipo as TipoDocumento] ?? d.tipo} ·{' '}
                   {fechaLarga(d.creadoEl.slice(0, 10))}
-                </p>
+                </Tenue>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota" className="mt-3">
             Para recibir una copia, pídesela a tu abogado.
-          </p>
+          </Tenue>
         </Foja>
       ) : null}
 
       <Foja>
         <Rotulo>Qué ha pasado</Rotulo>
         {movimientos.length === 0 ? (
-          <p className="mt-3 text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-3">
             Todavía no hay movimientos que compartir. No quiere decir que no
             esté pasando nada: quiere decir que aún no hay un hecho del juzgado
             que reportar.
-          </p>
+          </Tenue>
         ) : (
           <ol className="mt-3 flex flex-col">
             {movimientos.map((m) => (
@@ -136,14 +137,14 @@ export default async function PaginaAsunto({
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
                   <p className="font-medium">{m.titulo}</p>
-                  <p className="text-menor text-[var(--color-tinta-suave)]">
+                  <Tenue>
                     {fechaLarga(m.fecha)}
-                  </p>
+                  </Tenue>
                 </div>
                 {m.detalle ? (
-                  <p className="mt-1 max-w-prose whitespace-pre-line text-menor text-[var(--color-tinta-suave)]">
+                  <Tenue className="mt-1 max-w-prose whitespace-pre-line">
                     {m.detalle}
-                  </p>
+                  </Tenue>
                 ) : null}
               </li>
             ))}
@@ -151,9 +152,9 @@ export default async function PaginaAsunto({
         )}
       </Foja>
 
-      <p className="max-w-prose border-t border-[var(--color-regla)] pt-4 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="max-w-prose border-t border-[var(--color-regla)] pt-4">
         {AVISO_PORTAL}
-      </p>
+      </Tenue>
     </div>
   )
 }

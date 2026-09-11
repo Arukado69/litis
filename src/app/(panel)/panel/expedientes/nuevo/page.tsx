@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { miembrosDelDespacho } from '@/lib/expedientes/datos'
@@ -35,10 +36,10 @@ export default async function PaginaNuevoExpediente() {
         <h1 className="mt-2 text-rotulo">
           Abrir expediente
         </h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           El número interno se asigna solo. Lo que falte —el número del juzgado,
           el órgano— se completa después.
-        </p>
+        </Tenue>
       </div>
 
       {cupo.permitido ? (

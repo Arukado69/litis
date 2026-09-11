@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Foja } from '@/components/ui/primitivos'
 import { clienteServidor } from '@/lib/supabase/server'
 
@@ -46,9 +47,9 @@ export default async function PaginaBienvenida() {
         <h1 className="text-rotulo">
           Falta un paso
         </h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           Confirma el nombre del despacho y entras.
-        </p>
+        </Tenue>
       </div>
 
       <FormularioBienvenida

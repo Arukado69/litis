@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { expedientesDelTablero, etapasParaMover } from '@/lib/tablero/datos'
@@ -37,9 +38,9 @@ function Tarjeta({
         {e.caratula}
       </Link>
 
-      <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="mt-0.5">
         {e.numeroOrgano ?? e.numeroInterno} · {e.viaNombre}
-      </p>
+      </Tenue>
 
       {/* La etapa REAL, siempre. La columna dice en qué fase va la cartera; esto
           dice qué toca en este asunto. */}
@@ -47,7 +48,7 @@ function Tarjeta({
         <p className="mt-1 text-menor">{e.etapaNombre}</p>
       ) : null}
 
-      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
         {e.responsableNombre ?? (
           <span className="font-medium text-[var(--color-urgente)]">
             Sin responsable
@@ -61,7 +62,7 @@ function Tarjeta({
         {dormido ? (
           <Sello tono="urgente">{diasSinMoverse(e, hoy)} días sin moverse</Sello>
         ) : null}
-      </p>
+      </Tenue>
 
       {e.paralelas.length > 0 ? (
         <p className="mt-1 flex flex-wrap gap-1">
@@ -118,12 +119,12 @@ export default async function PaginaTablero() {
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
         <h1 className="text-portada">Tablero</h1>
-        <p className="mt-2 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-2 max-w-prose">
           {tablero.total} {tablero.total === 1 ? 'asunto vivo' : 'asuntos vivos'} en
           las seis fases por las que pasa cualquier proceso. Las columnas son
           universales para poder comparar la cartera completa; debajo de cada
           asunto va su etapa <strong>real</strong>, que es la que dice qué toca.
-        </p>
+        </Tenue>
       </div>
 
       {/* Lo dormido va arriba: es lo que se cae por caducidad sin que nadie se
@@ -133,10 +134,10 @@ export default async function PaginaTablero() {
           <h2 className="text-guia text-[var(--color-urgente)]">
             Sin moverse hace más de {DIAS_PARA_ESTANCADO} días
           </h2>
-          <p className="mt-1 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1 max-w-prose">
             Ninguno tiene un plazo corriendo, así que nada los va a delatar. Son
             los que se caen por caducidad.
-          </p>
+          </Tenue>
           <ul className="mt-3 flex flex-col gap-1 text-menor">
             {dormidos.map((e) => (
               <li key={e.id}>
@@ -158,10 +159,10 @@ export default async function PaginaTablero() {
       {tablero.sinEtapa.length > 0 ? (
         <Foja>
           <h2 className="text-guia">Sin etapa capturada</h2>
-          <p className="mt-1 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1 max-w-prose">
             No están en ninguna columna porque no se sabe en qué van. Van aparte
             a propósito: repartirlos en “Preparación” los volvería invisibles.
-          </p>
+          </Tenue>
           <ul className="mt-3 border-t border-[var(--color-regla)]">
             {tablero.sinEtapa.map((e) => (
               <Tarjeta key={e.id} e={e} hoy={hoy} etapas={etapasDe(e.id)} />
@@ -173,9 +174,9 @@ export default async function PaginaTablero() {
       {tablero.total === 0 ? (
         <Foja className="flex flex-col gap-2">
           <p className="font-medium">Todavía no hay asuntos vivos.</p>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             El tablero se llena solo conforme abres expedientes.
-          </p>
+          </Tenue>
           <div className="mt-2">
             <Link href="/panel/expedientes/nuevo">
               <Boton>Abrir expediente</Boton>
@@ -196,9 +197,9 @@ export default async function PaginaTablero() {
                       {c.expedientes.length}
                     </span>
                   </h2>
-                  <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+                  <Tenue tamano="nota" className="mt-0.5">
                     {c.fase.descripcion}
-                  </p>
+                  </Tenue>
                 </div>
 
                 {c.expedientes.length === 0 ? (
@@ -229,11 +230,11 @@ export default async function PaginaTablero() {
         </Aviso>
       ) : null}
 
-      <p className="max-w-prose border-t border-[var(--color-regla)] pt-4 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="max-w-prose border-t border-[var(--color-regla)] pt-4">
         No se arrastran tarjetas a propósito: mover la etapa escribe en la
         bitácora, que no se edita ni se borra. Un arrastre accidental dejaría
         asentado para siempre que el asunto pasó a pruebas el día que no pasó.
-      </p>
+      </Tenue>
     </div>
   )
 }

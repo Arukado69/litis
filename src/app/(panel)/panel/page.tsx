@@ -78,7 +78,7 @@ function RenglonPendiente({ p }: { p: Pendiente }) {
         </div>
       ) : null}
 
-      <p className="mt-2 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="mt-2">
         {p.responsableNombre ?? (
           <span className="font-medium text-[var(--color-urgente)]">
             Sin responsable
@@ -88,7 +88,7 @@ function RenglonPendiente({ p }: { p: Pendiente }) {
         {p.confiabilidad === 'semilla_no_verificada'
           ? ' — cómputo sin verificar'
           : ''}
-      </p>
+      </Tenue>
     </Renglon>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { listarExpedientes } from '@/lib/expedientes/datos'
@@ -18,11 +19,11 @@ export default async function PaginaExpedientes() {
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-regla-fuerte)] pb-4">
         <div>
           <h1 className="text-portada">Expedientes</h1>
-          <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1">
             {expedientes.length === 0
               ? 'Todavía no hay ninguno.'
               : `${expedientes.length} en el despacho.`}
-          </p>
+          </Tenue>
         </div>
         <Link href="/panel/expedientes/nuevo">
           <Boton>Abrir expediente</Boton>

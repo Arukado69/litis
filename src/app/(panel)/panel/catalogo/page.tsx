@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { entradasDelRegimen, nombresDeVerificadores } from '@/lib/catalogo/datos'
@@ -75,11 +76,11 @@ function Entrada({
       ) : null}
 
       {entrada.verificadoEl ? (
-        <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota" className="mt-1">
           Verificada por {firmante ?? 'alguien del despacho'} el{' '}
           {fechaLarga(entrada.verificadoEl.slice(0, 10))}
           {entrada.verificacionNotas ? ` — ${entrada.verificacionNotas}` : ''}
-        </p>
+        </Tenue>
       ) : null}
 
       {puedeVerificar ? (
@@ -128,14 +129,14 @@ export default async function PaginaCatalogo({
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
         <h1 className="text-portada">Catálogo de plazos</h1>
-        <p className="mt-2 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-2 max-w-prose">
           Litis entrega el catálogo <strong>sin verificar</strong>, y así se
           muestra en cada cómputo hasta que un abogado del despacho lo confirme.
           No es cautela de más: los ordenamientos se reforman, y el Código
           Nacional de Procedimientos Civiles y Familiares está desplazando a los
           códigos locales a ritmos distintos por entidad. Un catálogo estático
           miente.
-        </p>
+        </Tenue>
       </div>
 
       <nav className="flex flex-wrap gap-2">
@@ -157,11 +158,11 @@ export default async function PaginaCatalogo({
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <h2 className="text-guia">{meta?.nombre ?? regimen}</h2>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             {resueltas.length} {resueltas.length === 1 ? 'entrada' : 'entradas'} ·{' '}
             {cuenta.verificada + cuenta.corregida} verificada
             {cuenta.verificada + cuenta.corregida === 1 ? '' : 's'}
-          </p>
+          </Tenue>
         </div>
 
         {sinVerificar > 0 ? (
@@ -193,10 +194,10 @@ export default async function PaginaCatalogo({
 
         {resueltas.length === 0 ? (
           <Foja className="mt-4">
-            <p className="text-menor text-[var(--color-tinta-suave)]">
+            <Tenue>
               Este régimen todavía no tiene entradas en el catálogo. Los plazos
               se pueden capturar a mano al registrar la notificación.
-            </p>
+            </Tenue>
           </Foja>
         ) : (
           <ul className="mt-4 flex flex-col gap-px border-y border-[var(--color-regla)] bg-[var(--color-regla)]">
@@ -213,12 +214,12 @@ export default async function PaginaCatalogo({
         )}
       </div>
 
-      <p className="max-w-prose border-t border-[var(--color-regla)] pt-4 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="max-w-prose border-t border-[var(--color-regla)] pt-4">
         Verificar no toca los plazos ya computados: cada uno guardó su
         confiabilidad el día en que se calculó, y esa constancia no se reescribe
         hacia atrás. La verificación aplica a lo que se compute de aquí en
         adelante.
-      </p>
+      </Tenue>
     </div>
   )
 }

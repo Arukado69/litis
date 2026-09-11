@@ -641,6 +641,14 @@ margen rojo de la hoja de máquina.
   vacío, renglón de lista—. Lo segundo nació porque el vocabulario existía sin
   un lugar donde vivir: el párrafo tenue estaba copiado 69 veces en 23
   archivos. Una pantalla nueva **compone**, no vuelve a escribir clases.
+- ⚠️ **A `tailwind-merge` hay que enseñarle la escala tipográfica** (`lib/utils/cn.ts`).
+  Sin declarar `text-nota|menor|obra|guia|rotulo|portada` como grupo `font-size`,
+  los toma por colores, los ve chocar con `text-[var(--color-…)]` y **descarta
+  el tamaño en silencio**. No es hipotético: `Boton`, `Sello` y `Aviso`
+  llevaban desde que se escribieron perdiendo el suyo en cuanto se les pasaba
+  un tono de color. Nada fallaba — solo se veían un punto más grandes de lo que
+  el sistema dice. Lo destapó comparar el HTML renderizado antes y después de
+  un cambio, que es la única forma de cazar una clase que se cae.
 - ⚠️ **`Renglon` importa `Urgencia` del dominio**
   (`lib/panel/pendientes`), no la redeclara. Deducir la unión de los selectores
   de `.margen` en el CSS daba tres valores y el dominio tiene cuatro:

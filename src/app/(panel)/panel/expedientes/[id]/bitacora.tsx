@@ -22,6 +22,7 @@ import {
   TIPO_DOCUMENTO_ETIQUETA,
   TOPE_BYTES,
 } from '@/lib/documentos/archivos'
+import { Tenue } from '@/components/ui/composicion'
 import { hoyEnMexico } from '@/lib/plazos/fecha'
 import type { TipoActuacion, TipoDocumento } from '@/types/db'
 
@@ -135,10 +136,10 @@ export function AsentarActuacion({ expedienteId }: { expedienteId: string }) {
           ayuda={AVISO_VISIBILIDAD}
         />
       ) : (
-        <p className="text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota">
           Una nota interna nunca se comparte con el cliente. Si esto es para él,
           asiéntalo como comunicación.
-        </p>
+        </Tenue>
       )}
 
       <Aviso tono="informativo">

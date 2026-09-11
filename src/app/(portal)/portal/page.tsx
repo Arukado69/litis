@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPortal } from '@/lib/auth/sesion'
 import { asuntosDelCliente } from '@/lib/portal/datos'
@@ -34,17 +35,17 @@ export default async function PaginaPortal() {
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
         <h1 className="text-portada">Mis asuntos</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {sesion.activa.despachoNombre}
-        </p>
+        </Tenue>
       </div>
 
       {asuntos.length === 0 ? (
         <Foja className="flex flex-col gap-2">
           <p className="font-medium">Todavía no hay asuntos a tu nombre aquí.</p>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             Si esperabas ver uno, escríbele a tu abogado.
-          </p>
+          </Tenue>
         </Foja>
       ) : (
         <ul className="flex flex-col gap-4">
@@ -64,14 +65,14 @@ export default async function PaginaPortal() {
                   </div>
 
                   <p className="mt-2 font-medium">{llano.titulo}</p>
-                  <p className="mt-0.5 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+                  <Tenue className="mt-0.5 max-w-prose">
                     {llano.queSignifica}
-                  </p>
+                  </Tenue>
 
-                  <p className="mt-2 text-nota text-[var(--color-tinta-suave)]">
+                  <Tenue tamano="nota" className="mt-2">
                     {ultimoMovimiento(a.ultimoMovimientoEl, hoy)}
                     {a.responsableNombre ? ` · Lleva tu asunto: ${a.responsableNombre}` : ''}
-                  </p>
+                  </Tenue>
                 </Link>
               </li>
             )
@@ -79,9 +80,9 @@ export default async function PaginaPortal() {
         </ul>
       )}
 
-      <p className="max-w-prose border-t border-[var(--color-regla)] pt-4 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="max-w-prose border-t border-[var(--color-regla)] pt-4">
         {AVISO_PORTAL}
-      </p>
+      </Tenue>
     </div>
   )
 }

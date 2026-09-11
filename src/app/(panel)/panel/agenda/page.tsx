@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Foja, Sello } from '@/components/ui/primitivos'
 import {
   armarAgenda,
@@ -42,9 +43,9 @@ function Dia({ dia }: { dia: DiaDeAgenda }) {
         {dia.esHoy ? (
           <p className="text-nota text-[var(--color-sello)]">hoy</p>
         ) : dia.inhabil ? (
-          <p className="text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota">
             {dia.motivoInhabil}
-          </p>
+          </Tenue>
         ) : null}
       </div>
 
@@ -63,7 +64,7 @@ function Dia({ dia }: { dia: DiaDeAgenda }) {
               {a.hora ? `${a.hora} · ` : ''}
               {a.tipo}
             </p>
-            <p className="text-menor text-[var(--color-tinta-suave)]">
+            <Tenue>
               <Link
                 href={`/panel/expedientes/${a.expedienteId}`}
                 className="underline decoration-[var(--color-regla-fuerte)] underline-offset-4 hover:text-[var(--color-sello)]"
@@ -71,14 +72,14 @@ function Dia({ dia }: { dia: DiaDeAgenda }) {
                 {a.numeroExpediente} · {a.caratula}
               </Link>
               {a.lugar ? ` · ${a.lugar}` : ''}
-            </p>
-            <p className="text-nota text-[var(--color-tinta-suave)]">
+            </Tenue>
+            <Tenue tamano="nota">
               {a.responsableNombre ?? (
                 <span className="font-medium text-[var(--color-urgente)]">
                   Nadie asignado
                 </span>
               )}
-            </p>
+            </Tenue>
           </div>
         ))}
 
@@ -93,7 +94,7 @@ function Dia({ dia }: { dia: DiaDeAgenda }) {
                 </span>
               ) : null}
             </p>
-            <p className="text-nota text-[var(--color-tinta-suave)]">
+            <Tenue tamano="nota">
               <Link
                 href={`/panel/expedientes/${v.expedienteId}`}
                 className="underline decoration-[var(--color-regla-fuerte)] underline-offset-4 hover:text-[var(--color-sello)]"
@@ -101,7 +102,7 @@ function Dia({ dia }: { dia: DiaDeAgenda }) {
                 {v.numeroExpediente} · {v.caratula}
               </Link>
               {v.responsableNombre ? ` · ${v.responsableNombre}` : ''}
-            </p>
+            </Tenue>
           </div>
         ))}
       </div>
@@ -140,11 +141,11 @@ export default async function PaginaAgenda() {
   return (
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
-        <p className="text-menor text-[var(--color-tinta-suave)]">
+        <Tenue>
           {fechaLargaConDia(hoy)}
-        </p>
+        </Tenue>
         <h1 className="mt-0.5 text-portada">Agenda</h1>
-        <p className="mt-2 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-2 max-w-prose">
           Las próximas cuatro semanas: {dias.length} días naturales,{' '}
           <strong className="font-semibold text-[var(--color-tinta)]">
             {habiles} hábiles
@@ -153,7 +154,7 @@ export default async function PaginaAgenda() {
           {cuantasAudiencias === 1 ? 'audiencia' : 'audiencias'}. Los
           vencimientos van en la misma lista a propósito: compiten por el mismo
           día.
-        </p>
+        </Tenue>
       </div>
 
       {/* Arriba de todo, como en el panel: solo sirve descubrirlo con tiempo. */}
@@ -172,10 +173,10 @@ export default async function PaginaAgenda() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota" className="mt-3">
             Una audiencia no se mueve y se lleva la jornada entre traslado,
             espera y desahogo. Lo que venza ese día hay que trabajarlo antes.
-          </p>
+          </Tenue>
         </Foja>
       ) : null}
 

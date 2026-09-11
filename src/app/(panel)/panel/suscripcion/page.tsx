@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { MONEDA, PLANES } from '@/lib/marketing/planes'
@@ -74,7 +75,7 @@ function Medidor({
         </div>
       )}
 
-      <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">{detalle}</p>
+      <Tenue tamano="nota" className="mt-1">{detalle}</Tenue>
     </div>
   )
 }
@@ -127,13 +128,13 @@ function Vigencia({ suscripcion }: { suscripcion: Suscripcion }) {
   const dia = fechaLarga(suscripcion.periodoFin.slice(0, 10))
 
   return (
-    <p className="text-menor text-[var(--color-tinta-suave)]">
+    <Tenue>
       {suscripcion.cancelaAlFin
         ? `Cancelada: llega hasta el ${dia} y después vuelve al plan gratuito. Nada se borra.`
         : suscripcion.estado === 'morosa'
           ? `El último cobro no pasó. El periodo en curso llega al ${dia} y mientras tanto no se bloquea nada: actualiza la tarjeta cuando puedas.`
           : `Periodo pagado hasta el ${dia}.`}
-    </p>
+    </Tenue>
   )
 }
 
@@ -167,9 +168,9 @@ export default async function PaginaSuscripcion({
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
         <h1 className="text-portada">Suscripción</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {sesion.activa.despachoNombre}
-        </p>
+        </Tenue>
       </div>
 
       {portal ? <AvisoDelPortal motivo={portal} /> : null}
@@ -227,11 +228,11 @@ export default async function PaginaSuscripcion({
             <Rotulo>
               {suscripcion.tieneCliente ? 'Tu cobro' : 'Pasar al plan de paga'}
             </Rotulo>
-            <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+            <Tenue className="mt-1">
               {suscripcion.tieneCliente
                 ? 'La tarjeta, los recibos, la cantidad de asientos y la cancelación se manejan en Stripe.'
                 : `Expedientes sin tope y un asiento por cada persona del despacho, a $${precio.toLocaleString('es-MX')} ${MONEDA} por asiento al mes.`}
-            </p>
+            </Tenue>
           </div>
 
           {simulacion ? (
@@ -267,7 +268,7 @@ export default async function PaginaSuscripcion({
 
       <section>
         <h2 className="mb-2 text-guia">Lo que el tope nunca frena</h2>
-        <p className="mb-3 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mb-3">
           Llegar al tope, o dejar de pagar, solo impide{' '}
           <strong className="font-medium text-[var(--color-tinta)]">
             abrir un expediente
@@ -278,7 +279,7 @@ export default async function PaginaSuscripcion({
           </strong>
           . Todo lo demás sigue funcionando igual, porque un problema de
           facturación no puede convertirse en un término perdido.
-        </p>
+        </Tenue>
         <ul className="grid gap-x-8 gap-y-1 border-t border-[var(--color-regla)] pt-3 text-menor sm:grid-cols-2">
           {ACCIONES_LIBRES.map((accion) => (
             <li key={accion} className="flex gap-2">

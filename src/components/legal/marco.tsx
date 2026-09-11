@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso } from '@/components/ui/primitivos'
 import { VIGENCIA, datosPendientes, esBorrador } from '@/lib/legal/responsable'
 import { fechaLarga } from '@/lib/plazos/fecha'
@@ -28,12 +29,12 @@ export function Documento({
     <article className="flex flex-col gap-8">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-5">
         <h1 className="text-portada">{titulo}</h1>
-        <p className="mt-2 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-2 max-w-prose">
           {entrada}
-        </p>
-        <p className="mt-3 text-nota text-[var(--color-tinta-suave)]">
+        </Tenue>
+        <Tenue tamano="nota" className="mt-3">
           Última actualización: {fechaLarga(VIGENCIA)}.
-        </p>
+        </Tenue>
       </div>
 
       {esBorrador() ? (

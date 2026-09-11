@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import {
@@ -51,9 +52,9 @@ export default async function PaginaEquipo() {
     <div className="flex flex-col gap-7">
       <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
         <h1 className="text-portada">Equipo</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {sesion.activa.despachoNombre}
-        </p>
+        </Tenue>
       </div>
 
       <section>
@@ -90,12 +91,12 @@ export default async function PaginaEquipo() {
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-nota text-[var(--color-tinta-suave)]">
+                  <Tenue tamano="nota">
                     {m.correo ?? 'sin correo'} · desde el {dia(m.desdeEl)}
                     {pendientesSuyos > 0
                       ? ` · ${pendientesSuyos} pendiente${pendientesSuyos === 1 ? '' : 's'} a su nombre`
                       : ''}
-                  </p>
+                  </Tenue>
                   {/* Dar de baja a alguien con términos vivos los deja sin
                       quien los vea. El panel los va a marcar huérfanos, pero
                       esto tiene que saberse ANTES de oprimir el botón. */}
@@ -165,12 +166,12 @@ export default async function PaginaEquipo() {
           })}
         </ul>
 
-        <p className="mt-2 text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota" className="mt-2">
           Dar de baja quita el acceso a todo de inmediato, pero no borra a la
           persona: las actuaciones que firmó y los plazos que cerró siguen
           ligados a su nombre. La bitácora es lo único que no se puede
           reconstruir.
-        </p>
+        </Tenue>
       </section>
 
       {esTitular ? (
@@ -178,17 +179,17 @@ export default async function PaginaEquipo() {
           <Foja className="flex flex-col gap-4">
             <div>
               <Rotulo>Invitar a alguien</Rotulo>
-              <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+              <Tenue className="mt-1">
                 Quien acepte va a ver los expedientes del despacho, sus plazos y
                 sus audiencias. {ROL_ALCANCE.abogado}
-              </p>
+              </Tenue>
               {cupo.permitido ? (
-                <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">
+                <Tenue tamano="nota" className="mt-1">
                   {libres === 1
                     ? 'Queda 1 asiento en tu plan.'
                     : `Quedan ${libres} asientos en tu plan.`}{' '}
                   Los clientes del portal no ocupan asiento.
-                </p>
+                </Tenue>
               ) : null}
             </div>
 
@@ -226,12 +227,12 @@ export default async function PaginaEquipo() {
                     >
                       <div>
                         <p className="font-medium">{i.correo}</p>
-                        <p className="text-nota text-[var(--color-tinta-suave)]">
+                        <Tenue tamano="nota">
                           {ROL_MEMBRESIA_ETIQUETA[i.rol]} ·{' '}
                           {vigente
                             ? `caduca el ${dia(i.expiraEl)}`
                             : `caducó el ${dia(i.expiraEl)}`}
-                        </p>
+                        </Tenue>
                       </div>
                       <div className="flex items-center gap-3">
                         {vigente ? null : <Sello tono="urgente">caducada</Sello>}

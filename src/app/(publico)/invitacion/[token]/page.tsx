@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Foja } from '@/components/ui/primitivos'
 import {
   hashDeToken,
@@ -52,12 +53,12 @@ export default async function PaginaInvitacion({
           Puede haber caducado —duran siete días—, haberse usado ya, o el
           titular pudo revocarla. Pídele que te mande una nueva.
         </Aviso>
-        <p className="text-menor text-[var(--color-tinta-suave)]">
+        <Tenue>
           ¿Ya tienes cuenta?{' '}
           <Link href="/acceso" className="font-medium underline">
             Entrar
           </Link>
-        </p>
+        </Tenue>
       </Foja>
     )
   }
@@ -66,19 +67,19 @@ export default async function PaginaInvitacion({
     <Foja className="flex flex-col gap-5">
       <div>
         <h1 className="text-rotulo">{invitacion.despacho_nombre}</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           Te invitaron a entrar como{' '}
           {ROL_MEMBRESIA_ETIQUETA[invitacion.rol].toLowerCase()}.{' '}
           {ROL_ALCANCE[invitacion.rol]}
-        </p>
+        </Tenue>
       </div>
 
       <FormularioAceptar token={token} correo={invitacion.correo} />
 
-      <p className="text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota">
         Al entrar vas a ver los expedientes del despacho, sus plazos y sus
         audiencias. Si no esperabas esta invitación, cierra esta página.
-      </p>
+      </Tenue>
     </Foja>
   )
 }

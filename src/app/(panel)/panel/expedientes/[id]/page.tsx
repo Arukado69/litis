@@ -152,13 +152,13 @@ function RenglonActuacion({ a }: { a: ActuacionEnBitacora }) {
       {a.detalle ? (
         <Tenue className="mt-1 whitespace-pre-line">{a.detalle}</Tenue>
       ) : null}
-      <p className="mt-1 flex flex-wrap items-center gap-2 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="mt-1 flex flex-wrap items-center gap-2">
         <span>{TIPO_ACTUACION_ETIQUETA[a.tipo]}</span>
         {a.autorNombre ? <span>· {a.autorNombre}</span> : null}
         {/* Que el cliente lo vea es un hecho del expediente, no un ajuste: se
             marca a la vista para que nadie se pregunte qué está compartido. */}
         {a.visibleCliente ? <Sello>visible para el cliente</Sello> : null}
-      </p>
+      </Tenue>
     </li>
   )
 }
