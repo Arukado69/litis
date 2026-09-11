@@ -1,6 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import {
+  LineaDeRenglon,
+  Renglon,
+  Tenue,
+} from '@/components/ui/composicion'
 import { Aviso, Boton, CintaDias, Foja, Sello } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { audienciasProgramadas, plazosPendientes } from '@/lib/panel/datos'
@@ -29,15 +34,12 @@ function leyendaDeCinta(p: Pendiente): string {
   return `${p.cinta.length} días naturales de aquí al vencimiento, ${habiles} de ellos hábiles.`
 }
 
-function Renglon({ p }: { p: Pendiente }) {
+function RenglonPendiente({ p }: { p: Pendiente }) {
   const apremia = p.urgencia === 'vencido' || p.urgencia === 'hoy'
 
   return (
-    <li
-      className="margen bg-[var(--color-foja)] py-3 pl-4 pr-3"
-      data-urgencia={p.urgencia}
-    >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <Renglon urgencia={p.urgencia}>
+      <LineaDeRenglon>
         <p className="font-medium">
           {p.titulo}
           {p.tipo === 'audiencia' ? (
@@ -53,7 +55,7 @@ function Renglon({ p }: { p: Pendiente }) {
         >
           {cuantoFalta(p.diasHabiles)}
         </p>
-      </div>
+      </LineaDeRenglon>
 
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <Link
@@ -62,10 +64,10 @@ function Renglon({ p }: { p: Pendiente }) {
         >
           {p.numeroInterno} · {p.caratula}
         </Link>
-        <p className="text-menor text-[var(--color-tinta-suave)]">
+        <Tenue>
           {fechaLargaConDia(p.fecha)}
           {p.hora ? `, ${p.hora}` : ''}
-        </p>
+        </Tenue>
       </div>
 
       {/* La cinta: cada celda un día natural, sólida si es hábil. Es lo que
@@ -87,7 +89,7 @@ function Renglon({ p }: { p: Pendiente }) {
           ? ' — cómputo sin verificar'
           : ''}
       </p>
-    </li>
+    </Renglon>
   )
 }
 
@@ -111,7 +113,7 @@ function Grupo({
           así la separación es una línea de un pixel y no otra tarjeta. */}
       <ul className="flex flex-col gap-px border-y border-[var(--color-regla)] bg-[var(--color-regla)]">
         {pendientes.map((p) => (
-          <Renglon key={`${p.tipo}-${p.id}`} p={p} />
+          <RenglonPendiente key={`${p.tipo}-${p.id}`} p={p} />
         ))}
       </ul>
     </section>
@@ -163,9 +165,7 @@ export default async function PaginaPanel() {
     <div className="flex flex-col gap-7">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-regla-fuerte)] pb-4">
         <div>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
-            {fechaLargaConDia(hoy)}
-          </p>
+          <Tenue>{fechaLargaConDia(hoy)}</Tenue>
           <h1 className="mt-0.5 text-portada">Qué vence</h1>
         </div>
         <Link href="/panel/expedientes/nuevo">
@@ -214,10 +214,10 @@ export default async function PaginaPanel() {
           <p className="font-medium">
             Nada por vencer en las próximas dos semanas.
           </p>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             Los plazos aparecen aquí en cuanto registras una notificación en
             algún expediente.
-          </p>
+          </Tenue>
         </Foja>
       ) : (
         <div className="flex flex-col gap-7">

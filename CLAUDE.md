@@ -635,6 +635,17 @@ margen rojo de la hoja de máquina.
 - Sin sombras, sin tarjetas idénticas, sin versalitas rastreadas de rótulo, sin
   cadenas de puntos medios. Están descartados por escrito en `docs/DISENO.md`
   para que no vuelvan de contrabando.
+- ⚠️ **Dos capas de componentes, y no se mezclan.** `ui/primitivos.tsx` dice CON
+  QUÉ se construye —foja, botón, campo, sello—; `ui/composicion.tsx` dice CÓMO
+  se compone una pantalla —cabecera, rótulo de sección, texto tenue, estado
+  vacío, renglón de lista—. Lo segundo nació porque el vocabulario existía sin
+  un lugar donde vivir: el párrafo tenue estaba copiado 69 veces en 23
+  archivos. Una pantalla nueva **compone**, no vuelve a escribir clases.
+- ⚠️ **`Renglon` importa `Urgencia` del dominio**
+  (`lib/panel/pendientes`), no la redeclara. Deducir la unión de los selectores
+  de `.margen` en el CSS daba tres valores y el dominio tiene cuatro:
+  `proximo` existe pero no tiñe el margen a propósito. El color sigue viviendo
+  solo en `globals.css`.
 
 ### 5.23 Suscripción y topes — `src/lib/suscripcion/`, `/panel/suscripcion`
 

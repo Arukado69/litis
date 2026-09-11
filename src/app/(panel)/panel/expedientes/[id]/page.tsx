@@ -2,6 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import {
+  Apartado,
+  Cabecera,
+  LineaDeRenglon,
+  Renglon,
+  RotuloDeSeccion,
+  Tenue,
+  Vacio,
+} from '@/components/ui/composicion'
 import { Aviso, Boton, Dato, Foja, Rotulo, Sello } from '@/components/ui/primitivos'
 import type { AudienciaEnAgenda } from '@/lib/audiencias/agenda'
 import { ESTADO_AUDIENCIA_ETIQUETA } from '@/lib/audiencias/audiencias'
@@ -67,13 +76,13 @@ function FilaPlazo({ p }: { p: PlazoDelExpediente }) {
           : 'border-[var(--color-tinta)]'
       }`}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+      <LineaDeRenglon className="gap-y-0">
         <span className="font-medium">{p.etiqueta}</span>
         <span className="text-menor">
           {cerrado ? 'Vencía' : 'Vence'} el {fechaLargaConDia(p.fechaVencimiento)}
         </span>
-      </div>
-      <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+      </LineaDeRenglon>
+      <Tenue tamano="nota" className="mt-0.5">
         {ESTADO_PLAZO_ETIQUETA[p.estado]}
         {p.atendidoEl ? ` el ${fechaLarga(p.atendidoEl.slice(0, 10))}` : ''} ·
         notificado el {fechaLarga(p.fechaNotificacion)}
@@ -81,7 +90,7 @@ function FilaPlazo({ p }: { p: PlazoDelExpediente }) {
         {p.confiabilidad === 'semilla_no_verificada'
           ? ' · cómputo sin verificar'
           : ''}
-      </p>
+      </Tenue>
       {/* Un vencimiento corregido a mano tiene que decir que lo fue, y por
           qué: si no, la fecha aparenta salir del motor. */}
       {p.ajustada ? (
@@ -101,15 +110,11 @@ function RenglonAudiencia({
   cerrable: boolean
 }) {
   return (
-    <li
-      className={
-        cerrable
-          ? 'margen bg-[var(--color-foja)] py-3 pl-4 pr-3'
-          : 'border-l-2 border-[var(--color-regla)] py-2 pl-4 text-[var(--color-tinta-suave)]'
-      }
-      data-urgencia={cerrable ? 'inminente' : undefined}
+    <Renglon
+      forma={cerrable ? 'vivo' : 'apagado'}
+      urgencia={cerrable ? 'inminente' : undefined}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <LineaDeRenglon>
         <p className={cerrable ? 'font-medium' : ''}>
           {a.tipo}
           {!cerrable ? (
@@ -122,8 +127,8 @@ function RenglonAudiencia({
           {fechaLargaConDia(a.fecha)}
           {a.hora ? `, ${a.hora}` : ''}
         </p>
-      </div>
-      <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+      </LineaDeRenglon>
+      <Tenue tamano="nota" className="mt-0.5">
         {a.lugar ?? 'Sin lugar capturado'}
         {' · '}
         {a.responsableNombre ?? (
@@ -131,25 +136,21 @@ function RenglonAudiencia({
             Nadie asignado
           </span>
         )}
-      </p>
+      </Tenue>
       {cerrable ? <CerrarAudiencia audienciaId={a.id} fecha={a.fecha} /> : null}
-    </li>
+    </Renglon>
   )
 }
 
 function RenglonActuacion({ a }: { a: ActuacionEnBitacora }) {
   return (
     <li className="border-l-2 border-[var(--color-regla)] py-2.5 pl-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <LineaDeRenglon>
         <p className="font-medium">{a.titulo}</p>
-        <p className="text-menor text-[var(--color-tinta-suave)]">
-          {fechaLarga(a.fecha)}
-        </p>
-      </div>
+        <Tenue>{fechaLarga(a.fecha)}</Tenue>
+      </LineaDeRenglon>
       {a.detalle ? (
-        <p className="mt-1 whitespace-pre-line text-menor text-[var(--color-tinta-suave)]">
-          {a.detalle}
-        </p>
+        <Tenue className="mt-1 whitespace-pre-line">{a.detalle}</Tenue>
       ) : null}
       <p className="mt-1 flex flex-wrap items-center gap-2 text-nota text-[var(--color-tinta-suave)]">
         <span>{TIPO_ACTUACION_ETIQUETA[a.tipo]}</span>
@@ -185,7 +186,7 @@ function RenglonDocumento({
             </span>
           ) : null}
         </p>
-        <p className="text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota">
           {TIPO_DOCUMENTO_ETIQUETA[d.tipo]}
           {d.tamanoBytes ? ` · ${tamanoLegible(d.tamanoBytes)}` : ''}
           {d.autorNombre ? ` · ${d.autorNombre}` : ''}
@@ -193,9 +194,11 @@ function RenglonDocumento({
           {d.acuseDeId && amparados.get(d.acuseDeId)
             ? ` · acuse de "${amparados.get(d.acuseDeId)}"`
             : ''}
-        </p>
+        </Tenue>
         {d.notas ? (
-          <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">{d.notas}</p>
+          <Tenue tamano="nota" className="mt-1">
+            {d.notas}
+          </Tenue>
         ) : null}
       </div>
 
@@ -251,57 +254,48 @@ export default async function PaginaExpediente({
 
   return (
     <div className="flex flex-col gap-7">
-      <div className="border-b border-[var(--color-regla-fuerte)] pb-4">
-        <Link
-          href="/panel/expedientes"
-          className="text-menor text-[var(--color-tinta-suave)] underline decoration-[var(--color-regla-fuerte)] underline-offset-4"
-        >
-          Volver a expedientes
-        </Link>
-
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-rotulo">{expediente.caratula}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-2 text-menor text-[var(--color-tinta-suave)]">
-              <span>{expediente.numeroInterno}</span>
-              {expediente.numeroOrgano ? (
-                <span>· {expediente.numeroOrgano}</span>
-              ) : (
-                <Sello tono="neutro">sin número de juzgado</Sello>
-              )}
-              {expediente.estado !== 'activo' ? (
-                <Sello>{ESTADO_EXPEDIENTE_ETIQUETA[expediente.estado]}</Sello>
-              ) : null}
-              {expediente.resultado ? (
-                <Sello>{RESULTADO_ETIQUETA[expediente.resultado]}</Sello>
-              ) : null}
-            </p>
-          </div>
-
-          <div className="flex gap-3">
+      <Cabecera
+        volver={{ href: '/panel/expedientes', texto: 'Volver a expedientes' }}
+        titulo={expediente.caratula}
+        debajo={
+          <>
+            <span>{expediente.numeroInterno}</span>
+            {expediente.numeroOrgano ? (
+              <span>· {expediente.numeroOrgano}</span>
+            ) : (
+              <Sello tono="neutro">sin número de juzgado</Sello>
+            )}
+            {expediente.estado !== 'activo' ? (
+              <Sello>{ESTADO_EXPEDIENTE_ETIQUETA[expediente.estado]}</Sello>
+            ) : null}
+            {expediente.resultado ? (
+              <Sello>{RESULTADO_ETIQUETA[expediente.resultado]}</Sello>
+            ) : null}
+          </>
+        }
+        acciones={
+          <>
             <Link href={`/panel/expedientes/${id}/editar`}>
               <Boton variante="secundario">Editar</Boton>
             </Link>
             <Link href={`/panel/expedientes/${id}/notificacion`}>
               <Boton>Registrar notificación</Boton>
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Foja>
         <Rotulo>Plazos</Rotulo>
         {plazos.length === 0 ? (
-          <p className="mt-3 text-menor text-[var(--color-tinta-suave)]">
+          <Vacio>
             Ninguno todavía. Registra una notificación y el sistema computa su
             plazo con la traza a la vista.
-          </p>
+          </Vacio>
         ) : (
           <div className="mt-3 flex flex-col gap-4">
             {corriendo.length === 0 ? (
-              <p className="text-menor text-[var(--color-tinta-suave)]">
-                Ningún plazo corriendo ahora mismo.
-              </p>
+              <Tenue>Ningún plazo corriendo ahora mismo.</Tenue>
             ) : (
               <ul className="flex flex-col gap-4">
                 {corriendo.map((p) => (
@@ -317,19 +311,20 @@ export default async function PaginaExpediente({
                 historial del asunto, y ahí está escrito lo que se presentó
                 tarde. */}
             {cerrados.length > 0 ? (
-              <details className="text-menor">
-                <summary className="cursor-pointer text-[var(--color-tinta-suave)]">
-                  {cerrados.length} plazo{cerrados.length === 1 ? '' : 's'}{' '}
-                  cerrado{cerrados.length === 1 ? '' : 's'}
-                </summary>
-                <ul className="mt-2 flex flex-col gap-2">
-                  {cerrados.map((p) => (
-                    <li key={p.id}>
-                      <FilaPlazo p={p} />
-                    </li>
-                  ))}
-                </ul>
-              </details>
+              <Apartado
+                resumen={
+                  <>
+                    {cerrados.length} plazo{cerrados.length === 1 ? '' : 's'}{' '}
+                    cerrado{cerrados.length === 1 ? '' : 's'}
+                  </>
+                }
+              >
+                {cerrados.map((p) => (
+                  <li key={p.id}>
+                    <FilaPlazo p={p} />
+                  </li>
+                ))}
+              </Apartado>
             ) : null}
           </div>
         )}
@@ -382,9 +377,9 @@ export default async function PaginaExpediente({
           </dl>
 
           {expediente.notas ? (
-            <p className="mt-5 border-t border-[var(--color-regla)] pt-4 text-menor text-[var(--color-tinta-suave)]">
+            <Tenue className="mt-5 border-t border-[var(--color-regla)] pt-4">
               {expediente.notas}
-            </p>
+            </Tenue>
           ) : null}
         </Foja>
 
@@ -401,10 +396,10 @@ export default async function PaginaExpediente({
                     </span>
                   ) : null}
                 </div>
-                <div className="text-nota text-[var(--color-tinta-suave)]">
+                <Tenue tamano="nota">
                   {ROL_ETIQUETA[p.rol as RolParte] ?? p.rol}
                   {p.abogadoContrario ? ` · abogado: ${p.abogadoContrario}` : ''}
-                </div>
+                </Tenue>
               </li>
             ))}
           </ul>
@@ -412,13 +407,16 @@ export default async function PaginaExpediente({
       </div>
 
       <Foja>
-        <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <Rotulo>Etapas</Rotulo>
-          <span className="text-menor text-[var(--color-tinta-suave)]">
-            {etapaActual ? etapaActual.nombre : 'Sin etapa'} · {progreso}% del
-            avance
-          </span>
-        </div>
+        <RotuloDeSeccion
+          cuenta={
+            <>
+              {etapaActual ? etapaActual.nombre : 'Sin etapa'} · {progreso}% del
+              avance
+            </>
+          }
+        >
+          Etapas
+        </RotuloDeSeccion>
 
         {/* Numeradas porque el juicio SÍ es una secuencia: la etapa cuatro no
             se alcanza sin pasar por la tres. Las paralelas van aparte,
@@ -449,9 +447,7 @@ export default async function PaginaExpediente({
                   <div>
                     <p className={esActual ? 'font-medium' : ''}>{e.nombre}</p>
                     {e.descripcion ? (
-                      <p className="text-nota text-[var(--color-tinta-suave)]">
-                        {e.descripcion}
-                      </p>
+                      <Tenue tamano="nota">{e.descripcion}</Tenue>
                     ) : null}
                   </div>
                 </li>
@@ -462,10 +458,10 @@ export default async function PaginaExpediente({
         {paralelas.length > 0 ? (
           <div className="mt-5 border-t border-[var(--color-regla)] pt-4">
             <p className="text-menor font-medium">Corren en paralelo</p>
-            <p className="mt-0.5 text-nota text-[var(--color-tinta-suave)]">
+            <Tenue tamano="nota" className="mt-0.5">
               El asunto no está en ellas: las tiene, sin dejar de avanzar por su
               propia etapa.
-            </p>
+            </Tenue>
             <ul className="mt-2 flex flex-wrap gap-2">
               {paralelas.map((e) => (
                 <li key={e.clave}>
@@ -480,13 +476,13 @@ export default async function PaginaExpediente({
       <Foja className="flex flex-col gap-4">
         <div>
           <Rotulo>El cliente en su portal</Rotulo>
-          <p className="mt-1 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1 max-w-prose">
             Un acceso de solo lectura para {expediente.clienteNombre ?? 'el cliente'}:
             en qué etapa va el asunto, sus audiencias, y lo que marques como
             visible en la bitácora y en los documentos. Nunca los plazos ni las
             notas internas — son información que no se puede interpretar sin
             contexto legal y que solo produce llamadas de angustia.
-          </p>
+          </Tenue>
         </div>
         <AccesoDelCliente
           expedienteId={id}
@@ -495,20 +491,21 @@ export default async function PaginaExpediente({
       </Foja>
 
       <Foja className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <Rotulo>Audiencias</Rotulo>
-          <span className="text-menor text-[var(--color-tinta-suave)]">
-            {programadas.length === 0
+        <RotuloDeSeccion
+          cuenta={
+            programadas.length === 0
               ? 'Ninguna señalada'
-              : `${programadas.length} ${programadas.length === 1 ? 'señalada' : 'señaladas'}`}
-          </span>
-        </div>
+              : `${programadas.length} ${programadas.length === 1 ? 'señalada' : 'señaladas'}`
+          }
+        >
+          Audiencias
+        </RotuloDeSeccion>
 
         {programadas.length === 0 ? (
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             No hay ninguna señalada. Al capturarla aparece en la agenda junto
             con los vencimientos, que es donde se ve si chocan.
-          </p>
+          </Tenue>
         ) : (
           <ul className="flex flex-col gap-3">
             {programadas.map((a) => (
@@ -518,17 +515,18 @@ export default async function PaginaExpediente({
         )}
 
         {audienciasPasadas.length > 0 ? (
-          <details className="text-menor">
-            <summary className="cursor-pointer text-[var(--color-tinta-suave)]">
-              {audienciasPasadas.length} anterior
-              {audienciasPasadas.length === 1 ? '' : 'es'}
-            </summary>
-            <ul className="mt-2 flex flex-col gap-2">
-              {audienciasPasadas.map((a) => (
-                <RenglonAudiencia key={a.id} a={a} cerrable={false} />
-              ))}
-            </ul>
-          </details>
+          <Apartado
+            resumen={
+              <>
+                {audienciasPasadas.length} anterior
+                {audienciasPasadas.length === 1 ? '' : 'es'}
+              </>
+            }
+          >
+            {audienciasPasadas.map((a) => (
+              <RenglonAudiencia key={a.id} a={a} cerrable={false} />
+            ))}
+          </Apartado>
         ) : null}
 
         <SenalarAudiencia
@@ -538,20 +536,21 @@ export default async function PaginaExpediente({
       </Foja>
 
       <Foja className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <Rotulo>Documentos</Rotulo>
-          <span className="text-menor text-[var(--color-tinta-suave)]">
-            {documentos.length === 0
+        <RotuloDeSeccion
+          cuenta={
+            documentos.length === 0
               ? 'Ninguno'
-              : `${documentos.length} ${documentos.length === 1 ? 'archivo' : 'archivos'}`}
-          </span>
-        </div>
+              : `${documentos.length} ${documentos.length === 1 ? 'archivo' : 'archivos'}`
+          }
+        >
+          Documentos
+        </RotuloDeSeccion>
 
         {documentos.length === 0 ? (
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             Todavía no hay ninguno. Se guardan en un almacén privado y se
             descargan con un enlace que dura un minuto.
-          </p>
+          </Tenue>
         ) : (
           <ul className="flex flex-col gap-px border-y border-[var(--color-regla)] bg-[var(--color-regla)]">
             {documentos.map((d) => (
@@ -571,20 +570,21 @@ export default async function PaginaExpediente({
       </Foja>
 
       <Foja className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-4">
-          <Rotulo>Bitácora</Rotulo>
-          <span className="text-menor text-[var(--color-tinta-suave)]">
-            {bitacora.length === 0
+        <RotuloDeSeccion
+          cuenta={
+            bitacora.length === 0
               ? 'Vacía'
-              : `${bitacora.length} ${bitacora.length === 1 ? 'actuación' : 'actuaciones'}`}
-          </span>
-        </div>
+              : `${bitacora.length} ${bitacora.length === 1 ? 'actuación' : 'actuaciones'}`
+          }
+        >
+          Bitácora
+        </RotuloDeSeccion>
 
         {bitacora.length === 0 ? (
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             Todavía no hay nada asentado. Se llena sola conforme registras
             notificaciones y cierras plazos, y puedes asentar a mano lo demás.
-          </p>
+          </Tenue>
         ) : (
           <ol className="flex flex-col">
             {bitacora.map((a) => (
