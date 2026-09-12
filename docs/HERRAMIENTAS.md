@@ -90,8 +90,13 @@ eventos que llegan cuando se pruebe el cobro de punta a punta.
 ⚠️ **No se puede desde una sesión en la nube.** Pide OAuth y el flujo se abre en
 un navegador; una sesión no interactiva no puede completarlo, y **nunca hay que
 pasarle un código de autorización ni un token por el chat**. Se autoriza desde
-los conectores de claude.ai, o con `/mcp` en una sesión interactiva. Hasta
-entonces sus herramientas están ahí pero no responden.
+los conectores de claude.ai, o con `/mcp` en una sesión interactiva.
+
+⚠️ **Autorizarlo NO alcanza a una sesión que ya está corriendo.** El conjunto de
+conectores se resuelve al arrancar, así que una sesión abierta antes de la
+autorización se queda sin una sola herramienta de Stripe —`ToolSearch` no
+encuentra ninguna— por más que la cuenta ya esté conectada. Hay que abrir una
+sesión nueva. Comprobado a la mala.
 
 ### Lo que NO resuelve
 
