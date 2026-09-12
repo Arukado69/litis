@@ -69,3 +69,37 @@ expedientes responde el despacho, no Litis (ver
 [`src/lib/legal/tratamiento.ts`](../src/lib/legal/tratamiento.ts))—. A este
 cuaderno se le suben códigos, criterios, acuerdos publicados y documentación
 técnica; nunca datos de una persona ni de un asunto.
+
+---
+
+## Stripe — `stripe` · **pendiente de autorizar**
+
+No está en `.mcp.json`: es un **conector de la cuenta de claude.ai**, no un
+servidor del repositorio. Por eso aparece en la sesión sin que este archivo lo
+declare, y por eso conectarlo no es editar un archivo sino autorizarlo una vez.
+
+### Por qué se quiere
+
+Para cerrar lo que falta de R11 sin ir y volver del panel de Stripe: crear el
+endpoint del webhook y traer su `whsec_`, consultar el producto y el precio ya
+creados (`prod_VBQnHcXM3sIe2J` / `price_1UB3wHRD2Fg2YJsu3660vmro`) y leer los
+eventos que llegan cuando se pruebe el cobro de punta a punta.
+
+### Cómo se conecta
+
+⚠️ **No se puede desde una sesión en la nube.** Pide OAuth y el flujo se abre en
+un navegador; una sesión no interactiva no puede completarlo, y **nunca hay que
+pasarle un código de autorización ni un token por el chat**. Se autoriza desde
+los conectores de claude.ai, o con `/mcp` en una sesión interactiva. Hasta
+entonces sus herramientas están ahí pero no responden.
+
+### Lo que NO resuelve
+
+- ⚠️ **La configuración del portal de facturación sigue siendo a mano.** Se crea
+  en Ajustes → Facturación → Portal de clientes y la llave del conector **no**
+  puede crearla por API (ver [`CLAUDE.md`](../CLAUDE.md) §5.23). El conector no
+  cambia eso.
+- ⚠️ **Autorizarlo es darle la cuenta real de Stripe**, no un entorno de
+  pruebas. Ahí viven el producto, el precio y —el día que haya— los cobros de
+  despachos que pagan. Lo que se le pida crear o borrar hay que leerlo dos
+  veces, y lo que se pueda hacer en modo de prueba se hace en modo de prueba.

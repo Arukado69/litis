@@ -173,6 +173,14 @@ que ese despacho diga.
   con su `whsec_`, la configuración del portal de facturación —que la llave del
   conector no puede crear por API— y decidir si el precio lleva IVA incluido o
   por encima.
+
+  **Antes de eso: autorizar el conector de Stripe.** Está disponible en la
+  sesión pero sin autorizar, y el flujo es OAuth en un navegador: no se puede
+  completar desde una sesión en la nube. Se hace desde los conectores de
+  claude.ai o con `/mcp` en una sesión interactiva, una sola vez. Con él, el
+  endpoint del webhook y su `whsec_` se crean desde aquí; la configuración del
+  portal sigue siendo a mano. Detalle en
+  [`docs/HERRAMIENTAS.md`](HERRAMIENTAS.md).
 - **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
   un abogado revise el aviso de privacidad y los términos. Mientras falten, las
   dos páginas se anuncian solas como borrador.
