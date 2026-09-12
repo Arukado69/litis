@@ -181,6 +181,24 @@ que ese despacho diga.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
   firma.
+- **Recorrer el panel con una cuenta de verdad.** Ninguna pantalla con sesión
+  —panel, expediente, tablero, portal— se ha visto corriendo contra Supabase:
+  las pruebas son de dominio puro y no cubren esas páginas.
+
+  Para hacerlo hay que **registrarse con un correo real**: el proyecto tiene
+  `mailer_autoconfirm: false`, así que exige confirmar por correo y con una
+  dirección inventada no se pasa de ahí. Lo que sí quedó comprobado en el
+  intento: el segundo camino de registro funciona —el alta cae en
+  `/bienvenida` y `crear_mi_despacho` deja perfil, despacho y membresía—.
+
+  ⚠️ **Lo que quedó sin resolver:** con un usuario insertado a mano en
+  `auth.users` el acceso prospera (Supabase devuelve token, la Server Action
+  responde `error: null` con 303 y la cookie `sb-…-auth-token` se pone) pero
+  toda ruta protegida rebota a `/acceso`. **No se sabe si es un defecto del
+  proxy o un artefacto del usuario sintético**, al que pudo faltarle algún
+  campo que espera `@supabase/ssr`. Con una cuenta nacida del alta real se
+  despeja en un minuto: si entra, era el usuario falso; si rebota, hay que
+  mirar `src/proxy.ts`.
 
 ---
 
