@@ -149,8 +149,9 @@ sumar un asiento**. Cerrar un plazo, asentar, subir documentos y recibir alertas
 funcionan con la suscripción morosa o cancelada, y bajar de plan no suspende a
 nadie ni archiva nada. Migración `0012`.
 
-**530 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
-migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
+**530 pruebas** en Vitest y **32 afirmaciones sobre la base** corriendo las
+migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`): 18 de
+los topes de la `0012` y 14 de la semilla de la `0008`.
 Typecheck, lint y build limpios.
 Migraciones `0001`–`0012` aplicadas y comprobadas contra el esquema vivo. La
 `0008` llevaba tiempo sin aplicar sin que nada lo dijera; ya está, con la

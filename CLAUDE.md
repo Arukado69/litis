@@ -707,7 +707,8 @@ degrada a **simulación**.
   dice.
 - **Los disparadores se prueban contra un Postgres de verdad.**
   `supabase/pruebas/correr.sh` levanta un Postgres de usar y tirar, aplica todas
-  las migraciones en orden y corre 18 afirmaciones sobre el comportamiento real:
+  las migraciones en orden y corre 18 afirmaciones sobre el comportamiento real
+  de la `0012` —más las 14 de la semilla de la `0008`, 32 en total—:
   que el 11º expediente se rechace con `LIT01`, que **con el plan al tope se
   pueda seguir asentando en la bitácora**, que cancelar no suspenda a nadie ni
   archive nada, y que el titular no pueda regalarse el plan. Un candado que solo
