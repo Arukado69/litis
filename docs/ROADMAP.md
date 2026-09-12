@@ -174,11 +174,12 @@ que ese despacho diga.
   conector no puede crear por API— y decidir si el precio lleva IVA incluido o
   por encima.
 
-  **Antes de eso: autorizar el conector de Stripe.** Está disponible en la
-  sesión pero sin autorizar, y el flujo es OAuth en un navegador: no se puede
-  completar desde una sesión en la nube. Se hace desde los conectores de
-  claude.ai o con `/mcp` en una sesión interactiva, una sola vez. Con él, el
-  endpoint del webhook y su `whsec_` se crean desde aquí; la configuración del
+  **El conector de Stripe ya está autorizado en la cuenta, pero falta
+  estrenarlo.** La sesión donde se autorizó no llegó a verlo —el conjunto de
+  conectores se resuelve al arrancar— así que sigue sin comprobarse que
+  responda. Lo primero en una sesión nueva es una LECTURA: pedir el producto y
+  el precio (`prod_VBQnHcXM3sIe2J` / `price_1UB3wHRD2Fg2YJsu3660vmro`). Si
+  contestan, sigue el endpoint del webhook y su `whsec_`; la configuración del
   portal sigue siendo a mano. Detalle en
   [`docs/HERRAMIENTAS.md`](HERRAMIENTAS.md).
 - **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
