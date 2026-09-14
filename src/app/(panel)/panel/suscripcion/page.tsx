@@ -18,6 +18,10 @@ import {
   type Consumo,
   type Suscripcion,
 } from '@/lib/suscripcion/limites'
+import {
+  PORQUE_SOLO_TITULAR,
+  puedeExportar,
+} from '@/lib/despachos/exportacion'
 import { hayStripe } from '@/lib/suscripcion/stripe'
 
 import { abrirPortalDeCobro } from './acciones'
@@ -265,6 +269,40 @@ export default async function PaginaSuscripcion({
           el consumo.
         </Aviso>
       )}
+
+      <Foja className="flex flex-col gap-4">
+        <div>
+          <Rotulo>Llevarte tus datos</Rotulo>
+          <Tenue className="mt-1">
+            Un archivo JSON con todo lo capturado: expedientes, partes, etapas,
+            bitácora, plazos con su traza, audiencias, el padrón y el equipo.
+            Descargarlo no cancela nada ni cambia tu plan.
+          </Tenue>
+        </div>
+
+        {puedeExportar(sesion.activa.rol) ? (
+          <>
+            {/* Un enlace, no un formulario: la CSP lleva `form-action 'self'`
+                y los navegadores no coinciden en si eso alcanza a lo que sigue
+                al envío. */}
+            <div>
+              <a href="/api/despacho/exportar">
+                <Boton variante="secundario" type="button">
+                  Descargar el despacho
+                </Boton>
+              </a>
+            </div>
+            <Tenue tamano="nota">
+              No incluye los archivos de los documentos —solo su ficha, con
+              nombre, tipo y versión—: el almacén es privado y se entregan a
+              solicitud. Tampoco el hash de las invitaciones abiertas, que es
+              una credencial y no un dato tuyo.
+            </Tenue>
+          </>
+        ) : (
+          <Aviso tono="informativo">{PORQUE_SOLO_TITULAR}</Aviso>
+        )}
+      </Foja>
 
       <section>
         <h2 className="mb-2 text-guia">Lo que el tope nunca frena</h2>

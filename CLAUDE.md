@@ -761,6 +761,57 @@ facturación, pero el contenido no es trámite.
   Lo primero que tiene que verificar quien responda por él son las citas y los
   plazos de respuesta de derechos ARCO.
 
+### 5.25 Exportar el despacho — `src/lib/despachos/exportacion*.ts`, `GET /api/despacho/exportar`
+
+Los términos prometían que los datos son del despacho y se entregan «en formato
+legible por máquina»; hasta aquí ese camino era un correo. Ahora es un botón en
+`/panel/suscripcion`. Sin migración.
+
+- ⚠️ **Solo el titular, y no por celo de permisos: por completitud.** La lectura
+  corre con la SESIÓN de quien pide —nunca con clave de servicio— y
+  `puede_ver_expediente` (`0003`) solo le da al titular los expedientes
+  restringidos que no son suyos. Con la sesión de un abogado el archivo saldría
+  sin esos y **sin decirlo**: una lista a la que le faltan asuntos se ve igual
+  de bien que una completa. El corte está en la aplicación (`puedeExportar`), no
+  en la RLS: un abogado que llame la ruta no obtendría datos ajenos, obtendría
+  un subconjunto de lo suyo creyendo que se llevó el despacho.
+- ⚠️ **Se pagina SIEMPRE, y con orden estable.** PostgREST corta en 1000 filas y
+  no avisa: sin paginar, el despacho con 1200 actuaciones se descarga 1000 y
+  cree que ese es su despacho. Y `.range()` sin `order by` puede repetir una
+  fila y saltarse otra entre páginas.
+- ⚠️ **`expediente_accesos` NO tiene columna `id`** (llave compuesta
+  `expediente_id, perfil_id`). El `order('id')` por omisión reventaba esa
+  consulta y con ella la exportación entera. Por eso `ORDEN` y `FILTRO` traen
+  las 19 tablas escritas, sin valor por omisión, y con el tipo `ColumnaDe<T>`:
+  una columna que no existe en esa tabla no compila. Está comprobado que el
+  compilador caza los dos errores, y las 38 parejas (tabla, columna) se
+  cotejaron contra el esquema vivo.
+- ⚠️ **El tachado vive en el armado, no en la consulta.** Si dependiera de que
+  cada `select` pidiera las columnas correctas, una consulta nueva con
+  `select('*')` colaría el secreto y el archivo se vería bien. Hoy se tacha
+  `invitaciones.token_hash` (regla 14) y hay prueba de que no sobrevive al JSON
+  serializado, que es lo que se descarga.
+- ⚠️ **Un error NO devuelve lo que alcanzó a leer: lanza.** Lo parcial con cara
+  de completo es peor que el fallo.
+- **El tope del plan no lo frena** (regla 17): `exportar_despacho` está en
+  `AccionDelDespacho` y fuera de `ACCIONES_TOPADAS`, así que la pantalla lo
+  promete sola. El día que un despacho se va es justo cuando su suscripción
+  está cancelada.
+- **Hay prueba de que se entrega todo lo que el aviso de privacidad declara**:
+  el aviso publica en qué tabla vive cada grupo de datos, y si declarara una
+  tabla que la exportación no trae, el despacho pediría sus datos y recibiría
+  menos de lo que se le dijo que había.
+- **Lo que NO trae va escrito dentro del archivo**, no solo en la pantalla:
+  quien lo abra en seis meses no va a tener la pantalla enfrente. No van los
+  archivos de los documentos (solo su ficha), ni `suscripcion_eventos` —que no
+  tiene política de lectura para ninguna sesión—, ni los catálogos compartidos,
+  que no son de ningún despacho.
+- **Bloqueos:** no hay constancia de quién exportó ni cuándo. La bitácora es por
+  expediente (`actuaciones.expediente_id`) y no hay dónde asentar un hecho del
+  despacho entero; inventar una tabla para eso es una migración, no un detalle.
+  Y el archivo se arma completo en memoria: alcanza para un despacho de 3 a 8
+  personas, no para uno de miles de expedientes.
+
 ## 6. Reglas que no se negocian
 
 1. **Ninguna tabla de dominio sin `despacho_id`.** Ninguna política de RLS sin

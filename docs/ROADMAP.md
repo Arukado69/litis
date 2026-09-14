@@ -149,7 +149,24 @@ sumar un asiento**. Cerrar un plazo, asentar, subir documentos y recibir alertas
 funcionan con la suscripción morosa o cancelada, y bajar de plan no suspende a
 nadie ni archiva nada. Migración `0012`.
 
-**530 pruebas** en Vitest y **32 afirmaciones sobre la base** corriendo las
+### Exportar el despacho ✅
+
+El botón que los términos prometían y no existía. Un JSON con todo lo capturado
+—19 tablas, del despacho a los plazos con su traza— desde `/panel/suscripcion`.
+
+Lo descarga **el titular**, y la razón no es de permisos sino de completitud: la
+lectura corre con la sesión de quien pide, y solo el titular ve los expedientes
+restringidos de los demás. Con otro papel el archivo saldría incompleto sin
+decirlo, que es peor que no tenerlo.
+
+Se pagina siempre y con orden estable —PostgREST corta en 1000 filas sin
+avisar—, el hash de las invitaciones se tacha al armar el archivo y no en la
+consulta, y un fallo de lectura no entrega lo que alcanzó: lanza. El tope del
+plan no lo frena, porque el día que un despacho se va es justo cuando su
+suscripción está cancelada. La cláusula 11 de los términos ya dice lo que hay,
+en vez de anunciar que no existe. Sin migración.
+
+**541 pruebas** en Vitest y **32 afirmaciones sobre la base** corriendo las
 migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`): 18 de
 los topes de la `0012` y 14 de la semilla de la `0008`.
 Typecheck, lint y build limpios.
@@ -185,9 +202,6 @@ que ese despacho diga.
 - **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
   un abogado revise el aviso de privacidad y los términos. Mientras falten, las
   dos páginas se anuncian solas como borrador.
-- **Exportar el despacho con un botón.** Los términos dicen que los datos son
-  del despacho y que se entregan a solicitud; hoy ese camino es manual, y
-  haberlo escrito obliga a construirlo.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
   firma.

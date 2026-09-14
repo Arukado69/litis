@@ -225,12 +225,19 @@ export default function PaginaTerminos() {
           borra.
         </p>
         <p>
-          Con franqueza sobre el estado de las cosas:{' '}
-          <strong>todavía no hay una función de exportación</strong> que te
-          descargue el despacho completo con un botón. Mientras no exista, se
-          entrega a solicitud, en formato legible por máquina y sin costo. Que
-          los datos sean tuyos y que puedas sacarlos no es negociable, aunque hoy
-          el camino sea manual.
+          Tus datos se descargan con un botón, desde la pantalla de suscripción:
+          un archivo en formato legible por máquina, sin costo, con todo lo que
+          el despacho tiene capturado —expedientes, partes, etapas, bitácora,
+          plazos con su traza, audiencias, padrón y equipo—. Lo descarga el
+          titular, y descargarlo no cancela nada.
+        </p>
+        <p>
+          Con franqueza sobre lo que ese archivo todavía no trae:{' '}
+          <strong>los archivos de los documentos no van dentro</strong>. Va su
+          ficha —nombre, tipo, versión y tamaño— y los archivos se entregan a
+          solicitud, también sin costo. El propio archivo lo dice adentro, para
+          que nadie lo descubra el día que los necesite. Que los datos sean
+          tuyos y que puedas sacarlos no es negociable.
         </p>
       </Clausula>
 
