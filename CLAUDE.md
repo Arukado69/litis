@@ -473,6 +473,37 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 - Verificar **no toca los plazos ya computados**: cada uno guardó su
   confiabilidad el día del cálculo y esa constancia no se reescribe hacia atrás.
 
+**El material para la sesión de verificación** — `src/lib/catalogo/dossier.ts`,
+`npm run catalogo:dossier`. La pantalla existía; lo que faltaba era la firma, y
+antes de la firma hay trabajo que no es de abogado. El generador arma un
+documento de trabajo con lo que hay hoy, qué calcula cada entrada, contra qué
+hay que cotejarla y qué preguntas deja abiertas.
+
+- ⚠️ **No propone un solo número.** Ni una corrección, ni un «debería ser». Todo
+  lo que imprime es o un dato de la base o una observación **mecánica** sobre la
+  forma de la cita. Un material de apoyo que sugiere plazos es un catálogo sin
+  verificar disfrazado de revisión, y quien lo lea de prisa se lleva el número y
+  firma. Hay prueba de que el documento lo dice en voz alta.
+- ⚠️ **Lee la BASE, no el repositorio** (misma doctrina que
+  `verificar:semilla`): las constantes son la semilla, el motor usa la tabla, y
+  esos dos ya se separaron una vez. Sin llaves se detiene con estado 2 en vez de
+  imprimir un documento vacío, que parecería un catálogo limpio.
+- **Caza citas que no alcanzan para verificar**: un mismo artículo citado por
+  entradas con plazos distintos. No dice que la cita esté mal — dice que ese
+  artículo distingue por fracción y la cita no dice cuál, así que ni quien
+  verifica ni quien lee el vencimiento en pantalla puede resolverlo. Hoy sale
+  una: tres recursos mercantiles de 9, 6 y 3 días señalando el art. 1079 del
+  Código de Comercio.
+- ⚠️ **9 de las 18 vías no tienen UN SOLO plazo de catálogo**: las 6 de
+  civil/familiar, las 2 laborales y la penal. No es un detalle de catálogo: es
+  la promesa central del producto apagada para esos asuntos —el selector sale
+  vacío, el término se captura a mano sin fundamento y el cómputo queda marcado
+  como no verificado—. El hueco está **declarado** en
+  `REGIMENES_SIN_CATALOGO`, con prueba que falla en los dos sentidos: agregar
+  una vía de un régimen sin plazos obliga a declararlo, y llenar el catálogo
+  laboral obliga a venir a quitarlo. Se llena cuando un abogado aporte los
+  plazos con su fundamento, nunca inventándolos (regla 4).
+
 ### 5.17 Tablero de etapas — `src/lib/tablero/`, `/panel/tablero`
 
 - ⚠️ **Columnas universales, etiqueta real en la tarjeta.** Cada vía tiene sus

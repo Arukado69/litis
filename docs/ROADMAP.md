@@ -204,7 +204,20 @@ que ese despacho diga.
   dos páginas se anuncian solas como borrador.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
-  firma.
+  firma, y esa no la puede poner nadie que no responda por ella.
+
+  Lo que sí está listo es todo lo que no es de abogado: **`npm run
+  catalogo:dossier`** arma el material de la sesión leyendo la base —qué hay,
+  qué calcula cada entrada, contra qué cotejarla, qué preguntas deja abierta la
+  forma en que está escrita— sin proponer un solo número.
+
+  ⚠️ **Y destapó un hueco más grande que la firma: 9 de las 18 vías no tienen
+  un solo plazo de catálogo** —las 6 de civil/familiar, las 2 laborales y la
+  penal—. Quien abra uno de esos asuntos encuentra el selector vacío y captura
+  el término a mano. Verificar las 16 entradas que hay y dejar esto igual deja
+  la mitad del catálogo en pie: conviene que la misma sesión con el abogado
+  cubra las dos cosas. El hueco está declarado en `REGIMENES_SIN_CATALOGO` con
+  prueba que falla en los dos sentidos.
 - **Recorrer el panel con una cuenta de verdad.** Ninguna pantalla con sesión
   —panel, expediente, tablero, portal— se ha visto corriendo contra Supabase:
   las pruebas son de dominio puro y no cubren esas páginas.

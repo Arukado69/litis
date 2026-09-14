@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "verificar:semilla": "node supabase/pruebas/verificar-semilla.mjs"
+    "verificar:semilla": "node supabase/pruebas/verificar-semilla.mjs",
+    "catalogo:dossier": "node --experimental-strip-types --no-warnings scripts/dossier-catalogo.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

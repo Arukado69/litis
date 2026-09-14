@@ -213,6 +213,33 @@ export const CATALOGO_PLAZOS: readonly PlazoCatalogo[] = [
   },
 ]
 
+/**
+ * Los regímenes que un despacho puede elegir y para los que NO hay un solo
+ * plazo de catálogo.
+ *
+ * ⚠️ **Está escrito para que el hueco sea declarado y no silencioso.** Hay una
+ * prueba que compara esta lista contra la realidad —las vías que el sistema
+ * ofrece cruzadas con las entradas que existen— y falla en los dos sentidos:
+ * si alguien agrega una vía de un régimen nuevo sin plazos, tiene que venir a
+ * declararlo aquí; si alguien llena el catálogo laboral, tiene que venir a
+ * quitarlo. Sin esa fricción, «no hay plazos para lo laboral» se convierte en
+ * un detalle que nadie recuerda.
+ *
+ * Y el hueco no es chico: quien abre uno de esos asuntos llega a la pantalla
+ * de cómputo, abre el selector de plazos y lo encuentra vacío. Captura el
+ * término a mano, sin fundamento, y el cómputo sale marcado como no
+ * verificado. Funciona — y es justo el trabajo que el producto venía a
+ * ahorrarle.
+ *
+ * Esto NO se llena inventando números: se llena cuando un abogado los aporta
+ * con su fundamento, como todo lo demás de este archivo (regla 4).
+ */
+export const REGIMENES_SIN_CATALOGO: readonly IdRegimen[] = [
+  'civil_familiar_local',
+  'laboral',
+  'penal_acusatorio',
+]
+
 export function plazosDeRegimen(regimen: IdRegimen): PlazoCatalogo[] {
   return CATALOGO_PLAZOS.filter((p) => p.regimen === regimen)
 }
