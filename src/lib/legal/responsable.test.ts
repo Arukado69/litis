@@ -9,7 +9,9 @@ import {
   LO_QUE_NO_SE_HACE,
 } from './tratamiento'
 import {
+  HUELLA_DATOS,
   HUELLA_VIGENTE,
+  IVA,
   RESPONSABLE,
   VIGENCIA,
   datosPendientes,
@@ -132,5 +134,27 @@ describe('la fecha de vigencia no se queda atrás', () => {
     for (const archivo of Object.keys(HUELLA_VIGENTE)) {
       expect(existsSync(archivo), archivo).toBe(true)
     }
+  })
+})
+
+describe('los datos impresos también cuentan', () => {
+  /**
+   * ⚠️ La mayor parte del texto publicado no vive en los archivos de las
+   * páginas: la razón social, el domicilio, el correo ARCO, la jurisdicción y la
+   * frase del IVA salen de `responsable.ts`. Cambiar cualquiera de ellos mueve
+   * lo que el documento dice sin tocar un byte de `page.tsx` — así que el hash
+   * de archivos, solo, dejaría pasar justo lo que más cambia.
+   */
+  it('la huella de los datos corresponde a la fecha declarada', () => {
+    const actual = createHash('sha256')
+      .update(JSON.stringify({ RESPONSABLE, IVA }))
+      .digest('hex')
+      .slice(0, 16)
+
+    expect(
+      actual,
+      `Los datos del responsable o el trato del IVA cambiaron desde ${VIGENCIA}. ` +
+        'Actualiza VIGENCIA y HUELLA_DATOS.',
+    ).toBe(HUELLA_DATOS)
   })
 })

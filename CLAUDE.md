@@ -766,8 +766,8 @@ porque Stripe pide las dos direcciones para dejar configurar el portal de
 facturación, pero el contenido no es trámite.
 
 - ⚠️ **Se anuncian como borrador mientras falten los datos del responsable**
-  (`src/lib/legal/responsable.ts`: razón social, domicilio, correo para ARCO,
-  jurisdicción y el trato del IVA). Están vacíos a propósito: poner una razón
+  (`src/lib/legal/responsable.ts`: razón social, domicilio, correo para ARCO y
+  jurisdicción; el trato del IVA ya está decidido). Están vacíos a propósito: poner una razón
   social inventada en un aviso de privacidad no es un borrador, es un documento
   falso en un sitio que recibe datos de abogados y de sus clientes. La banda
   desaparece sola en cuanto se llenen, y hay prueba de que hoy aparece.
@@ -791,14 +791,26 @@ facturación, pero el contenido no es trámite.
 - ⚠️ El texto es un andamio técnico exacto, **no un documento legal revisado**.
   Lo primero que tiene que verificar quien responda por él son las citas y los
   plazos de respuesta de derechos ARCO.
-- ⚠️ **`VIGENCIA` se vigila con una huella de los documentos** (`HUELLA_VIGENTE`,
-  pegada a la fecha en el mismo archivo, con prueba). La cláusula 12 promete que
-  «si estos términos cambian, la fecha de arriba lo refleja», y eso es de lo
-  poco de estas páginas que se puede comprobar sin ser abogado. Ya falló una
-  vez: la cláusula 11 se reescribió al construir la exportación (§5.25) y la
-  fecha se quedó doce días atrás — el documento se desmentía solo y nada lo
-  dijo. Cuando la prueba falle, el arreglo no es copiar el hash: es preguntarse
-  si el cambio movió lo que el documento promete.
+- ⚠️ **`VIGENCIA` se vigila con DOS huellas**, las dos pegadas a la fecha en el
+  mismo archivo y con prueba. La cláusula 12 promete que «si estos términos
+  cambian, la fecha de arriba lo refleja», y eso es de lo poco de estas páginas
+  que se puede comprobar sin ser abogado. Ya falló una vez: la cláusula 11 se
+  reescribió al construir la exportación (§5.25) y la fecha se quedó doce días
+  atrás — el documento se desmentía solo y nada lo dijo.
+  `HUELLA_VIGENTE` cubre los tres archivos publicados; **`HUELLA_DATOS` cubre
+  los valores que se imprimen dentro de ellos** —razón social, domicilio, correo
+  ARCO, jurisdicción y el IVA—, que es por donde cabía lo que más cambia:
+  cambiar la razón social mueve el aviso sin tocar un byte de `page.tsx`. Se
+  calcula sobre los valores y no sobre el archivo, para no ser circular. Cuando
+  una prueba falle, el arreglo no es copiar el hash: es preguntarse si el cambio
+  movió lo que el documento promete.
+- **El IVA quedó decidido: por encima** (`IVA = 'adicional'`). De ahí sale la
+  cláusula de los términos **y** el «+ IVA» junto al precio en la portada
+  (`sufijoDeIva`), que antes no aparecía: un precio público sin esa marca
+  mientras el contrato sí la lleva vale un 16 % de sorpresa. ⚠️ **Falta
+  reflejarlo en Stripe y es un cambio de una sola vez**: el precio sigue con
+  `tax_behavior: unspecified` y tiene que quedar en `exclusive`. Mientras no se
+  haga, el código y la cuenta que cobra dicen cosas distintas.
 
 ### 5.25 Exportar el despacho — `src/lib/despachos/exportacion*.ts`, `GET /api/despacho/exportar`
 

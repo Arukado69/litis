@@ -202,6 +202,17 @@ que ese despacho diga.
 - **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
   un abogado revise el aviso de privacidad y los términos. Mientras falten, las
   dos páginas se anuncian solas como borrador.
+
+  Faltan **cuatro**, y son hechos que solo tú tienes: razón social o nombre de
+  quien responde, domicilio, correo para las solicitudes ARCO y la ciudad cuyos
+  tribunales serían competentes. El quinto —el trato del IVA— ya está decidido:
+  **por encima**, y de ahí salen la cláusula de los términos y el «+ IVA» de la
+  portada.
+
+  ⚠️ **En Stripe el IVA sigue sin fijar, y es un cambio de una sola vez.** El
+  precio quedó con `tax_behavior: unspecified` y tiene que pasar a `exclusive`.
+  Mientras no se haga, el código dice «+ IVA» y la cuenta que le cobra al
+  despacho no lo sabe.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
   firma, y esa no la puede poner nadie que no responda por ella.

@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { Tenue } from '@/components/ui/composicion'
 import { Boton, CintaDias, Sello } from '@/components/ui/primitivos'
+import { sufijoDeIva } from '@/lib/legal/responsable'
 import { MONEDA, NO_HACE, PLANES, precioLegible } from '@/lib/marketing/planes'
 import { tramoDeDias } from '@/lib/plazos/calendario'
 import { CALENDARIO_PJF_2026 } from '@/lib/plazos/calendarios-semilla'
@@ -260,6 +261,10 @@ export function Precios() {
                 <span className="font-obra text-menor font-normal text-[var(--color-tinta-suave)]">
                   {' '}
                   {MONEDA} por usuario al mes
+                  {/* Sale de la constante del IVA, no de una cadena escrita
+                      aquí: un precio público sin «+ IVA» mientras el contrato
+                      sí lo dice vale un 16 % de sorpresa. */}
+                  {sufijoDeIva() ? ` ${sufijoDeIva()}` : ''}
                 </span>
               ) : null}
             </p>
