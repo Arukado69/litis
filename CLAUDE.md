@@ -927,6 +927,12 @@ legible por máquina»; hasta aquí ese camino era un correo. Ahora es un botón
 - Textos de interfaz en español, sin palabras domingueras.
 - Un commit por rebanada funcional.
 - `npm run check` corre typecheck + lint + pruebas.
+- **En CI corre lo mismo** (`.github/workflows/comprobar.yml`), en dos trabajos:
+  `check` más `next build` —que no es redundante: la regla 11 solo se cae ahí—,
+  y `supabase/pruebas/correr.sh` contra un Postgres de verdad. ⚠️
+  `verificar:semilla` NO está en CI a propósito: sin llaves sale con estado 2,
+  que es lo correcto pero pintaría rojo siempre. Ese se corre tras aplicar
+  migraciones y tras cada despliegue.
 
 ## 8. Disciplina
 
