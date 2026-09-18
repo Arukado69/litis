@@ -7,9 +7,13 @@
 # migraciones y tras cada despliegue, con las variables cargadas.
 name: Comprobar
 
+# ⚠️ `push` solo en la rama principal, y `pull_request` para lo demás. Con
+# `push: ['**']` más `pull_request`, cada empujón a una rama con PR abierto
+# dispara DOS corridas del mismo commit: el doble de minutos y dos resultados
+# que decir. Lo hizo en el primer push de este archivo.
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
 
 # Un push nuevo cancela la corrida anterior de la misma rama: revisar el
