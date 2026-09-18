@@ -47,8 +47,38 @@ export const RESPONSABLE: Responsable = {
 export type TratoDelIva = 'incluido' | 'adicional'
 export const IVA: TratoDelIva | null = null
 
-/** Fecha de la última actualización de los documentos. */
-export const VIGENCIA = '2026-09-02'
+/**
+ * Fecha de la última actualización de los documentos.
+ *
+ * ⚠️ No es decorativa: la cláusula 12 de los términos promete que «si estos
+ * términos cambian, la fecha de arriba lo refleja». Un documento legal que
+ * declara una fecha de vigencia anterior a su propio texto se desmiente solo, y
+ * es lo único de estas páginas que se puede comprobar desde afuera.
+ *
+ * Ya falló una vez: la cláusula 11 se reescribió el 14 de septiembre —al
+ * construir la exportación del despacho— y esta fecha se quedó en el 2. Nada lo
+ * dijo, porque nada lo estaba mirando. De ahí sale la huella de abajo.
+ */
+export const VIGENCIA = '2026-09-14'
+
+/**
+ * La huella de los documentos a los que esa fecha se refiere.
+ *
+ * ⚠️ **Vive pegada a `VIGENCIA` a propósito.** Hay una prueba que rehace estos
+ * hashes y falla si el texto se movió: entonces hay que venir aquí, y al venir
+ * se ve la fecha justo arriba. Separarlos —dejar la huella en el archivo de
+ * pruebas— habría permitido actualizar una sin mirar la otra, que es
+ * exactamente el error que esto existe para impedir.
+ *
+ * Que un cambio de formato también la rompa no es un defecto: en un documento
+ * legal, «¿esto cambió lo que promete?» es la pregunta correcta ante cualquier
+ * edición, y contestarla cuesta un minuto.
+ */
+export const HUELLA_VIGENTE: Record<string, string> = {
+  'src/app/(legal)/terminos-y-condiciones/page.tsx': '0ff2356e03ea2e5b',
+  'src/app/(legal)/aviso-de-privacidad/page.tsx': '86b31cb301221a41',
+  'src/lib/legal/tratamiento.ts': '63c56549daab077c',
+}
 
 const ETIQUETA_PENDIENTE: Record<keyof Responsable, string> = {
   razonSocial: 'la razón social o el nombre de quien responde',

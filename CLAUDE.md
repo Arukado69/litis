@@ -791,6 +791,14 @@ facturación, pero el contenido no es trámite.
 - ⚠️ El texto es un andamio técnico exacto, **no un documento legal revisado**.
   Lo primero que tiene que verificar quien responda por él son las citas y los
   plazos de respuesta de derechos ARCO.
+- ⚠️ **`VIGENCIA` se vigila con una huella de los documentos** (`HUELLA_VIGENTE`,
+  pegada a la fecha en el mismo archivo, con prueba). La cláusula 12 promete que
+  «si estos términos cambian, la fecha de arriba lo refleja», y eso es de lo
+  poco de estas páginas que se puede comprobar sin ser abogado. Ya falló una
+  vez: la cláusula 11 se reescribió al construir la exportación (§5.25) y la
+  fecha se quedó doce días atrás — el documento se desmentía solo y nada lo
+  dijo. Cuando la prueba falle, el arreglo no es copiar el hash: es preguntarse
+  si el cambio movió lo que el documento promete.
 
 ### 5.25 Exportar el despacho — `src/lib/despachos/exportacion*.ts`, `GET /api/despacho/exportar`
 
