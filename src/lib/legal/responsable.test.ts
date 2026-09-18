@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto'
+import { existsSync, readFileSync } from 'node:fs'
+
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -6,7 +9,11 @@ import {
   LO_QUE_NO_SE_HACE,
 } from './tratamiento'
 import {
+  HUELLA_DATOS,
+  HUELLA_VIGENTE,
+  IVA,
   RESPONSABLE,
+  VIGENCIA,
   datosPendientes,
   esBorrador,
   frenteAlIva,
@@ -91,5 +98,63 @@ describe('inventario del tratamiento', () => {
   it('la lista de lo que no se hace incluye no entrenar modelos con los expedientes', () => {
     expect(LO_QUE_NO_SE_HACE.join(' ')).toContain('entrenar modelos')
     expect(LO_QUE_NO_SE_HACE.join(' ')).toContain('No se venden')
+  })
+})
+
+describe('la fecha de vigencia no se queda atrás', () => {
+  /**
+   * ⚠️ La cláusula 12 de los términos promete que «si estos términos cambian, la
+   * fecha de arriba lo refleja». Esa promesa es de las pocas de estas páginas
+   * que se puede comprobar sin ser abogado, así que se comprueba.
+   *
+   * Ya falló: la cláusula 11 se reescribió al construir la exportación del
+   * despacho y `VIGENCIA` se quedó una semana atrás. El documento se desmentía
+   * a sí mismo y nada lo dijo, porque nada lo estaba mirando.
+   *
+   * Cuando esta prueba falle, el arreglo NO es copiar el hash nuevo: es
+   * preguntarse si el cambio movió lo que el documento promete y poner la fecha
+   * del día en que se movió. El hash vive pegado a `VIGENCIA` justamente para
+   * que al venir a tocarlo se vea la fecha.
+   */
+  it('la huella de los documentos corresponde a la fecha declarada', () => {
+    for (const [archivo, esperada] of Object.entries(HUELLA_VIGENTE)) {
+      const contenido = readFileSync(archivo)
+      const actual = createHash('sha256').update(contenido).digest('hex').slice(0, 16)
+      expect(
+        actual,
+        `${archivo} cambió desde la vigencia declarada (${VIGENCIA}). ` +
+          '¿El cambio movió lo que el documento promete? Actualiza VIGENCIA y esta huella.',
+      ).toBe(esperada)
+    }
+  })
+
+  /** Una huella sobre un archivo que ya no existe no vigila nada. */
+  it('vigila los tres documentos que se publican', () => {
+    expect(Object.keys(HUELLA_VIGENTE)).toHaveLength(3)
+    for (const archivo of Object.keys(HUELLA_VIGENTE)) {
+      expect(existsSync(archivo), archivo).toBe(true)
+    }
+  })
+})
+
+describe('los datos impresos también cuentan', () => {
+  /**
+   * ⚠️ La mayor parte del texto publicado no vive en los archivos de las
+   * páginas: la razón social, el domicilio, el correo ARCO, la jurisdicción y la
+   * frase del IVA salen de `responsable.ts`. Cambiar cualquiera de ellos mueve
+   * lo que el documento dice sin tocar un byte de `page.tsx` — así que el hash
+   * de archivos, solo, dejaría pasar justo lo que más cambia.
+   */
+  it('la huella de los datos corresponde a la fecha declarada', () => {
+    const actual = createHash('sha256')
+      .update(JSON.stringify({ RESPONSABLE, IVA }))
+      .digest('hex')
+      .slice(0, 16)
+
+    expect(
+      actual,
+      `Los datos del responsable o el trato del IVA cambiaron desde ${VIGENCIA}. ` +
+        'Actualiza VIGENCIA y HUELLA_DATOS.',
+    ).toBe(HUELLA_DATOS)
   })
 })

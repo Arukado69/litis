@@ -149,10 +149,30 @@ sumar un asiento**. Cerrar un plazo, asentar, subir documentos y recibir alertas
 funcionan con la suscripción morosa o cancelada, y bajar de plan no suspende a
 nadie ni archiva nada. Migración `0012`.
 
-**521 pruebas** en Vitest y **18 afirmaciones sobre la base** corriendo las
-migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`).
+### Exportar el despacho ✅
+
+El botón que los términos prometían y no existía. Un JSON con todo lo capturado
+—19 tablas, del despacho a los plazos con su traza— desde `/panel/suscripcion`.
+
+Lo descarga **el titular**, y la razón no es de permisos sino de completitud: la
+lectura corre con la sesión de quien pide, y solo el titular ve los expedientes
+restringidos de los demás. Con otro papel el archivo saldría incompleto sin
+decirlo, que es peor que no tenerlo.
+
+Se pagina siempre y con orden estable —PostgREST corta en 1000 filas sin
+avisar—, el hash de las invitaciones se tacha al armar el archivo y no en la
+consulta, y un fallo de lectura no entrega lo que alcanzó: lanza. El tope del
+plan no lo frena, porque el día que un despacho se va es justo cuando su
+suscripción está cancelada. La cláusula 11 de los términos ya dice lo que hay,
+en vez de anunciar que no existe. Sin migración.
+
+**541 pruebas** en Vitest y **32 afirmaciones sobre la base** corriendo las
+migraciones contra un Postgres de verdad (`supabase/pruebas/correr.sh`): 18 de
+los topes de la `0012` y 14 de la semilla de la `0008`.
 Typecheck, lint y build limpios.
-Migraciones `0001`–`0011` aplicadas; **falta aplicar la `0012`**.
+Migraciones `0001`–`0012` aplicadas y comprobadas contra el esquema vivo. La
+`0008` llevaba tiempo sin aplicar sin que nada lo dijera; ya está, con la
+semilla de calendarios y catálogo dentro y sin una sola entrada verificada.
 
 ---
 
@@ -170,17 +190,63 @@ que ese despacho diga.
   con su `whsec_`, la configuración del portal de facturación —que la llave del
   conector no puede crear por API— y decidir si el precio lleva IVA incluido o
   por encima.
+
+  **El conector de Stripe ya está autorizado en la cuenta, pero falta
+  estrenarlo.** La sesión donde se autorizó no llegó a verlo —el conjunto de
+  conectores se resuelve al arrancar— así que sigue sin comprobarse que
+  responda. Lo primero en una sesión nueva es una LECTURA: pedir el producto y
+  el precio (`prod_VBQnHcXM3sIe2J` / `price_1UB3wHRD2Fg2YJsu3660vmro`). Si
+  contestan, sigue el endpoint del webhook y su `whsec_`; la configuración del
+  portal sigue siendo a mano. Detalle en
+  [`docs/HERRAMIENTAS.md`](HERRAMIENTAS.md).
 - **Llenar los datos del responsable** en `src/lib/legal/responsable.ts` y que
   un abogado revise el aviso de privacidad y los términos. Mientras falten, las
   dos páginas se anuncian solas como borrador.
-- **Exportar el despacho con un botón.** Los términos dicen que los datos son
-  del despacho y que se entregan a solicitud; hoy ese camino es manual, y
-  haberlo escrito obliga a construirlo.
-- **Regenerar `src/types/db.ts`** con `supabase gen types`: doce migraciones de
-  posible deriva escritas a mano.
+
+  Faltan **cuatro**, y son hechos que solo tú tienes: razón social o nombre de
+  quien responde, domicilio, correo para las solicitudes ARCO y la ciudad cuyos
+  tribunales serían competentes. El quinto —el trato del IVA— ya está decidido:
+  **por encima**, y de ahí salen la cláusula de los términos y el «+ IVA» de la
+  portada.
+
+  ⚠️ **En Stripe el IVA sigue sin fijar, y es un cambio de una sola vez.** El
+  precio quedó con `tax_behavior: unspecified` y tiene que pasar a `exclusive`.
+  Mientras no se haga, el código dice «+ IVA» y la cuenta que le cobra al
+  despacho no lo sabe.
 - **Que un abogado verifique el catálogo de plazos.** Todo sigue saliendo como
   `semilla_no_verificada`, a propósito. R10 construyó la pantalla; falta la
-  firma.
+  firma, y esa no la puede poner nadie que no responda por ella.
+
+  Lo que sí está listo es todo lo que no es de abogado: **`npm run
+  catalogo:dossier`** arma el material de la sesión leyendo la base —qué hay,
+  qué calcula cada entrada, contra qué cotejarla, qué preguntas deja abierta la
+  forma en que está escrita— sin proponer un solo número.
+
+  ⚠️ **Y destapó un hueco más grande que la firma: 9 de las 18 vías no tienen
+  un solo plazo de catálogo** —las 6 de civil/familiar, las 2 laborales y la
+  penal—. Quien abra uno de esos asuntos encuentra el selector vacío y captura
+  el término a mano. Verificar las 16 entradas que hay y dejar esto igual deja
+  la mitad del catálogo en pie: conviene que la misma sesión con el abogado
+  cubra las dos cosas. El hueco está declarado en `REGIMENES_SIN_CATALOGO` con
+  prueba que falla en los dos sentidos.
+- **Recorrer el panel con una cuenta de verdad.** Ninguna pantalla con sesión
+  —panel, expediente, tablero, portal— se ha visto corriendo contra Supabase:
+  las pruebas son de dominio puro y no cubren esas páginas.
+
+  Para hacerlo hay que **registrarse con un correo real**: el proyecto tiene
+  `mailer_autoconfirm: false`, así que exige confirmar por correo y con una
+  dirección inventada no se pasa de ahí. Lo que sí quedó comprobado en el
+  intento: el segundo camino de registro funciona —el alta cae en
+  `/bienvenida` y `crear_mi_despacho` deja perfil, despacho y membresía—.
+
+  ⚠️ **Lo que quedó sin resolver:** con un usuario insertado a mano en
+  `auth.users` el acceso prospera (Supabase devuelve token, la Server Action
+  responde `error: null` con 303 y la cookie `sb-…-auth-token` se pone) pero
+  toda ruta protegida rebota a `/acceso`. **No se sabe si es un defecto del
+  proxy o un artefacto del usuario sintético**, al que pudo faltarle algún
+  campo que espera `@supabase/ssr`. Con una cuenta nacida del alta real se
+  despeja en un minuto: si entra, era el usuario falso; si rebota, hay que
+  mirar `src/proxy.ts`.
 
 ---
 

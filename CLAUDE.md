@@ -61,7 +61,7 @@ profesional de un abogado.
 ## 5. Lo construido hoy
 
 La lógica de dominio (§5.1 a §5.4) es **pura, sin base de datos y sin reloj**.
-**485 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
+**530 pruebas.** Acceso, registro, equipo, expedientes, cómputo y cierre de
 plazos, el panel "qué vence", la agenda, **el tablero de etapas**, la edición
 del expediente, las alertas por correo, la bitácora con sus documentos y la
 verificación del catálogo y **el portal del cliente** ya funcionan contra
@@ -95,6 +95,14 @@ El corazón del producto. Lee [`docs/PLAZOS.md`](docs/PLAZOS.md) antes de tocarl
   constantes de `calendarios-semilla.ts` y `catalogo.ts` son la **semilla** con
   la que se generó la migración `0008`; en tiempo de ejecución solo se lee la
   tabla. `semilla.test.ts` falla si el SQL y el código se separan.
+- ⚠️ **`semilla.test.ts` NO comprueba que la `0008` se haya aplicado.** Compara
+  el SQL contra las constantes de TypeScript, los dos en el repositorio, y pasa
+  igual si ese SQL nunca corrió — que fue exactamente lo que pasó durante un
+  tiempo. Tampoco lo comprueba `correr.sh`, que aplica todas las migraciones a
+  su Postgres desechable y por eso siempre las ve puestas. Que la semilla esté
+  en la base la contesta **`npm run verificar:semilla`**, que cuenta filas
+  contra el proyecto configurado; córrelo tras aplicar migraciones y tras cada
+  despliegue.
 
 ### 5.2 Expedientes — `src/lib/expedientes/`
 
@@ -148,11 +156,10 @@ Cruza las partes de un asunto nuevo contra el padrón. Devuelve `impedimento` o
 Clientes de servidor, navegador y servicio; validación de variables de entorno;
 proxy que refresca la sesión y bloquea `/panel` y `/portal`.
 
-⚠️ `src/types/db.ts` sigue **escrito a mano** y ya son ocho migraciones. El
-esquema está aplicado, así que lo correcto es sustituirlo por
-`npx supabase gen types typescript --project-id <id>` a la primera oportunidad.
-Mientras tanto la regla es estricta: **toda migración que cambie una tabla lo
-actualiza en el mismo commit.**
+⚠️ `src/types/db.ts` ya **se genera** desde el esquema vivo; el encabezado del
+archivo dice cómo. La regla ahora es: **toda migración que se aplique lo
+regenera en el mismo commit**, y se vuelve a pegar la capa de alias del final.
+Esa capa deriva de `Database` en vez de copiarlo, así que no puede desfasarse.
 
 ⚠️ El cliente de servicio salta toda la RLS. Tras mover el alta de despacho a
 `crear_mi_despacho` (§5.9), **hoy no lo usa ningún camino**; queda para el cron
@@ -466,6 +473,37 @@ regalarlo. Sin migración: la `0002` ya traía las columnas de firma.
 - Verificar **no toca los plazos ya computados**: cada uno guardó su
   confiabilidad el día del cálculo y esa constancia no se reescribe hacia atrás.
 
+**El material para la sesión de verificación** — `src/lib/catalogo/dossier.ts`,
+`npm run catalogo:dossier`. La pantalla existía; lo que faltaba era la firma, y
+antes de la firma hay trabajo que no es de abogado. El generador arma un
+documento de trabajo con lo que hay hoy, qué calcula cada entrada, contra qué
+hay que cotejarla y qué preguntas deja abiertas.
+
+- ⚠️ **No propone un solo número.** Ni una corrección, ni un «debería ser». Todo
+  lo que imprime es o un dato de la base o una observación **mecánica** sobre la
+  forma de la cita. Un material de apoyo que sugiere plazos es un catálogo sin
+  verificar disfrazado de revisión, y quien lo lea de prisa se lleva el número y
+  firma. Hay prueba de que el documento lo dice en voz alta.
+- ⚠️ **Lee la BASE, no el repositorio** (misma doctrina que
+  `verificar:semilla`): las constantes son la semilla, el motor usa la tabla, y
+  esos dos ya se separaron una vez. Sin llaves se detiene con estado 2 en vez de
+  imprimir un documento vacío, que parecería un catálogo limpio.
+- **Caza citas que no alcanzan para verificar**: un mismo artículo citado por
+  entradas con plazos distintos. No dice que la cita esté mal — dice que ese
+  artículo distingue por fracción y la cita no dice cuál, así que ni quien
+  verifica ni quien lee el vencimiento en pantalla puede resolverlo. Hoy sale
+  una: tres recursos mercantiles de 9, 6 y 3 días señalando el art. 1079 del
+  Código de Comercio.
+- ⚠️ **9 de las 18 vías no tienen UN SOLO plazo de catálogo**: las 6 de
+  civil/familiar, las 2 laborales y la penal. No es un detalle de catálogo: es
+  la promesa central del producto apagada para esos asuntos —el selector sale
+  vacío, el término se captura a mano sin fundamento y el cómputo queda marcado
+  como no verificado—. El hueco está **declarado** en
+  `REGIMENES_SIN_CATALOGO`, con prueba que falla en los dos sentidos: agregar
+  una vía de un régimen sin plazos obliga a declararlo, y llenar el catálogo
+  laboral obliga a venir a quitarlo. Se llena cuando un abogado aporte los
+  plazos con su fundamento, nunca inventándolos (regla 4).
+
 ### 5.17 Tablero de etapas — `src/lib/tablero/`, `/panel/tablero`
 
 - ⚠️ **Columnas universales, etiqueta real en la tarjeta.** Cada vía tiene sus
@@ -575,15 +613,40 @@ invitaciones al despacho · `0010` almacén privado de documentos · `0011`
 acceso del cliente al portal · `0012` suscripción, topes del plan y blindaje de
 las columnas de cobro.
 
-**Estado en el proyecto de Supabase:** aplicadas `0001`–`0011`. **Pendiente la
-`0012`** — sin ella no hay topes ni cobro, y el titular puede escribirse el plan
-que quiera. Ni R5 ni R7 necesitaron migración: `plazo_alertas_enviadas` y
-`audiencias` ya estaban en la `0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor, en
-orden.
+**Estado en el proyecto de Supabase:** aplicadas `0001`–`0012`, comprobadas
+contra el esquema vivo objeto por objeto —columnas, disparadores, permisos de
+cada función, RLS y filas—, no por nombre de tabla. Ni R5 ni R7
+necesitaron migración: `plazo_alertas_enviadas` y `audiencias` ya estaban en la
+`0005` y la `0004`. Las nuevas se aplican pegando el archivo en el SQL Editor,
+en orden.
 
-⚠️ `src/types/db.ts` está **escrito a mano** y lleva doce migraciones de
-posible deriva. Cuando el conector de Supabase esté disponible, regenerarlo con
-`npx supabase gen types typescript --project-id <id>`.
+La `0008` estuvo **sin aplicar** un buen rato sin que nada lo dijera, y la
+lección quedó cara: las tablas que siembra ya existían desde la `0002`, así que
+comparar nombres de tablas afirmaba que todo estaba puesto mientras
+`calendarios`, `dias_inhabiles` y `plazos_catalogo` estaban vacías y el motor
+no tenía con qué contar. **Una migración de datos solo se verifica contando
+filas.** Hoy tiene 2 calendarios, 16 días inhábiles y 16 entradas de catálogo,
+las 16 sin verificar (regla 4).
+
+⚠️ **El registro `supabase_migrations.schema_migrations` no dice qué está
+aplicado.** Solo tiene las tres primeras: de la `0004` en adelante se aplicaron
+por el SQL Editor, que no escribe ahí. Leerlo como inventario hace creer que
+falta media base — y la tentación entonces es volver a correr migraciones que ya
+están puestas. Lo que hay que preguntar es el catálogo (`pg_proc`, `pg_trigger`,
+`information_schema.columns`).
+
+⚠️ `src/types/db.ts` ya **se genera**. Al hacerlo aparecieron cuatro funciones
+que faltaban (`es_servicio`, `contar_expedientes_activos`,
+`contar_asientos_ocupados`, `expediente_de_ruta`) y la lectura de
+`calendarios.clave`, que destapó lo de la `0008`. Detalle en el encabezado del
+archivo.
+
+⚠️ **Una columna generada se reporta nulable aunque no pueda serlo.**
+`fecha_vencimiento_efectiva` es `coalesce(fecha_vencimiento_ajustada,
+fecha_vencimiento)` sobre una columna `not null`: nunca es nula, pero Postgres
+la declara nulable y el generador lo copia. Quien la lea trae también
+`fecha_vencimiento` y repite el `coalesce` en TypeScript. Es pesimismo del
+generador, no deriva — y no se tapa con `!`.
 
 ### 5.22 Identidad visual — `src/app/globals.css`, `src/app/fuentes.ts`
 
@@ -603,6 +666,25 @@ margen rojo de la hoja de máquina.
 - Sin sombras, sin tarjetas idénticas, sin versalitas rastreadas de rótulo, sin
   cadenas de puntos medios. Están descartados por escrito en `docs/DISENO.md`
   para que no vuelvan de contrabando.
+- ⚠️ **Dos capas de componentes, y no se mezclan.** `ui/primitivos.tsx` dice CON
+  QUÉ se construye —foja, botón, campo, sello—; `ui/composicion.tsx` dice CÓMO
+  se compone una pantalla —cabecera, rótulo de sección, texto tenue, estado
+  vacío, renglón de lista—. Lo segundo nació porque el vocabulario existía sin
+  un lugar donde vivir: el párrafo tenue estaba copiado 69 veces en 23
+  archivos. Una pantalla nueva **compone**, no vuelve a escribir clases.
+- ⚠️ **A `tailwind-merge` hay que enseñarle la escala tipográfica** (`lib/utils/cn.ts`).
+  Sin declarar `text-nota|menor|obra|guia|rotulo|portada` como grupo `font-size`,
+  los toma por colores, los ve chocar con `text-[var(--color-…)]` y **descarta
+  el tamaño en silencio**. No es hipotético: `Boton`, `Sello` y `Aviso`
+  llevaban desde que se escribieron perdiendo el suyo en cuanto se les pasaba
+  un tono de color. Nada fallaba — solo se veían un punto más grandes de lo que
+  el sistema dice. Lo destapó comparar el HTML renderizado antes y después de
+  un cambio, que es la única forma de cazar una clase que se cae.
+- ⚠️ **`Renglon` importa `Urgencia` del dominio**
+  (`lib/panel/pendientes`), no la redeclara. Deducir la unión de los selectores
+  de `.margen` en el CSS daba tres valores y el dominio tiene cuatro:
+  `proximo` existe pero no tiñe el margen a propósito. El color sigue viviendo
+  solo en `globals.css`.
 
 ### 5.23 Suscripción y topes — `src/lib/suscripcion/`, `/panel/suscripcion`
 
@@ -656,7 +738,8 @@ degrada a **simulación**.
   dice.
 - **Los disparadores se prueban contra un Postgres de verdad.**
   `supabase/pruebas/correr.sh` levanta un Postgres de usar y tirar, aplica todas
-  las migraciones en orden y corre 18 afirmaciones sobre el comportamiento real:
+  las migraciones en orden y corre 18 afirmaciones sobre el comportamiento real
+  de la `0012` —más las 14 de la semilla de la `0008`, 32 en total—:
   que el 11º expediente se rechace con `LIT01`, que **con el plan al tope se
   pueda seguir asentando en la bitácora**, que cancelar no suspenda a nadie ni
   archive nada, y que el titular no pueda regalarse el plan. Un candado que solo
@@ -683,8 +766,8 @@ porque Stripe pide las dos direcciones para dejar configurar el portal de
 facturación, pero el contenido no es trámite.
 
 - ⚠️ **Se anuncian como borrador mientras falten los datos del responsable**
-  (`src/lib/legal/responsable.ts`: razón social, domicilio, correo para ARCO,
-  jurisdicción y el trato del IVA). Están vacíos a propósito: poner una razón
+  (`src/lib/legal/responsable.ts`: razón social, domicilio, correo para ARCO y
+  jurisdicción; el trato del IVA ya está decidido). Están vacíos a propósito: poner una razón
   social inventada en un aviso de privacidad no es un borrador, es un documento
   falso en un sitio que recibe datos de abogados y de sus clientes. La banda
   desaparece sola en cuanto se llenen, y hay prueba de que hoy aparece.
@@ -708,6 +791,77 @@ facturación, pero el contenido no es trámite.
 - ⚠️ El texto es un andamio técnico exacto, **no un documento legal revisado**.
   Lo primero que tiene que verificar quien responda por él son las citas y los
   plazos de respuesta de derechos ARCO.
+- ⚠️ **`VIGENCIA` se vigila con DOS huellas**, las dos pegadas a la fecha en el
+  mismo archivo y con prueba. La cláusula 12 promete que «si estos términos
+  cambian, la fecha de arriba lo refleja», y eso es de lo poco de estas páginas
+  que se puede comprobar sin ser abogado. Ya falló una vez: la cláusula 11 se
+  reescribió al construir la exportación (§5.25) y la fecha se quedó doce días
+  atrás — el documento se desmentía solo y nada lo dijo.
+  `HUELLA_VIGENTE` cubre los tres archivos publicados; **`HUELLA_DATOS` cubre
+  los valores que se imprimen dentro de ellos** —razón social, domicilio, correo
+  ARCO, jurisdicción y el IVA—, que es por donde cabía lo que más cambia:
+  cambiar la razón social mueve el aviso sin tocar un byte de `page.tsx`. Se
+  calcula sobre los valores y no sobre el archivo, para no ser circular. Cuando
+  una prueba falle, el arreglo no es copiar el hash: es preguntarse si el cambio
+  movió lo que el documento promete.
+- **El IVA quedó decidido: por encima** (`IVA = 'adicional'`). De ahí sale la
+  cláusula de los términos **y** el «+ IVA» junto al precio en la portada
+  (`sufijoDeIva`), que antes no aparecía: un precio público sin esa marca
+  mientras el contrato sí la lleva vale un 16 % de sorpresa. ⚠️ **Falta
+  reflejarlo en Stripe y es un cambio de una sola vez**: el precio sigue con
+  `tax_behavior: unspecified` y tiene que quedar en `exclusive`. Mientras no se
+  haga, el código y la cuenta que cobra dicen cosas distintas.
+
+### 5.25 Exportar el despacho — `src/lib/despachos/exportacion*.ts`, `GET /api/despacho/exportar`
+
+Los términos prometían que los datos son del despacho y se entregan «en formato
+legible por máquina»; hasta aquí ese camino era un correo. Ahora es un botón en
+`/panel/suscripcion`. Sin migración.
+
+- ⚠️ **Solo el titular, y no por celo de permisos: por completitud.** La lectura
+  corre con la SESIÓN de quien pide —nunca con clave de servicio— y
+  `puede_ver_expediente` (`0003`) solo le da al titular los expedientes
+  restringidos que no son suyos. Con la sesión de un abogado el archivo saldría
+  sin esos y **sin decirlo**: una lista a la que le faltan asuntos se ve igual
+  de bien que una completa. El corte está en la aplicación (`puedeExportar`), no
+  en la RLS: un abogado que llame la ruta no obtendría datos ajenos, obtendría
+  un subconjunto de lo suyo creyendo que se llevó el despacho.
+- ⚠️ **Se pagina SIEMPRE, y con orden estable.** PostgREST corta en 1000 filas y
+  no avisa: sin paginar, el despacho con 1200 actuaciones se descarga 1000 y
+  cree que ese es su despacho. Y `.range()` sin `order by` puede repetir una
+  fila y saltarse otra entre páginas.
+- ⚠️ **`expediente_accesos` NO tiene columna `id`** (llave compuesta
+  `expediente_id, perfil_id`). El `order('id')` por omisión reventaba esa
+  consulta y con ella la exportación entera. Por eso `ORDEN` y `FILTRO` traen
+  las 19 tablas escritas, sin valor por omisión, y con el tipo `ColumnaDe<T>`:
+  una columna que no existe en esa tabla no compila. Está comprobado que el
+  compilador caza los dos errores, y las 38 parejas (tabla, columna) se
+  cotejaron contra el esquema vivo.
+- ⚠️ **El tachado vive en el armado, no en la consulta.** Si dependiera de que
+  cada `select` pidiera las columnas correctas, una consulta nueva con
+  `select('*')` colaría el secreto y el archivo se vería bien. Hoy se tacha
+  `invitaciones.token_hash` (regla 14) y hay prueba de que no sobrevive al JSON
+  serializado, que es lo que se descarga.
+- ⚠️ **Un error NO devuelve lo que alcanzó a leer: lanza.** Lo parcial con cara
+  de completo es peor que el fallo.
+- **El tope del plan no lo frena** (regla 17): `exportar_despacho` está en
+  `AccionDelDespacho` y fuera de `ACCIONES_TOPADAS`, así que la pantalla lo
+  promete sola. El día que un despacho se va es justo cuando su suscripción
+  está cancelada.
+- **Hay prueba de que se entrega todo lo que el aviso de privacidad declara**:
+  el aviso publica en qué tabla vive cada grupo de datos, y si declarara una
+  tabla que la exportación no trae, el despacho pediría sus datos y recibiría
+  menos de lo que se le dijo que había.
+- **Lo que NO trae va escrito dentro del archivo**, no solo en la pantalla:
+  quien lo abra en seis meses no va a tener la pantalla enfrente. No van los
+  archivos de los documentos (solo su ficha), ni `suscripcion_eventos` —que no
+  tiene política de lectura para ninguna sesión—, ni los catálogos compartidos,
+  que no son de ningún despacho.
+- **Bloqueos:** no hay constancia de quién exportó ni cuándo. La bitácora es por
+  expediente (`actuaciones.expediente_id`) y no hay dónde asentar un hecho del
+  despacho entero; inventar una tabla para eso es una migración, no un detalle.
+  Y el archivo se arma completo en memoria: alcanza para un despacho de 3 a 8
+  personas, no para uno de miles de expedientes.
 
 ## 6. Reglas que no se negocian
 
@@ -730,12 +884,16 @@ facturación, pero el contenido no es trámite.
 8. **El nombre de la marca no se escribe a mano.** Sale de `src/lib/brand`.
 9. **Los enlaces de correo salen de `NEXT_PUBLIC_SITE_URL`**, nunca del header
    `Host`.
-10. **En `src/types/db.ts` todo se declara con `type`, jamás con `interface`.**
+10. **Todo lo que toca la base se declara con `type`, jamás con `interface`.**
     No es estilo. En TypeScript una `interface` no recibe índice implícito, así
     que no es asignable a `Record<string, unknown>` — lo que exige el
     `GenericSchema` de supabase-js. Con interfaces el esquema deja de conformar
     **en silencio**, el cliente cae al genérico y cada `.rpc()` y cada join se
     tipan como `undefined` o `never`. Ya costó una depuración.
+    ⚠️ Vale igual para **lo que se guarda en una columna `jsonb`**: `Json` pide
+    ese índice, así que un tipo del dominio declarado con `interface` no entra.
+    Por eso `PasoComputo`, `DiaOmitido` y `DiaContado` —la traza que se guarda
+    en `plazos.computo`— son `type`.
 11. **Un archivo `'use server'` solo exporta funciones async.** El estado
     inicial y los tipos de un formulario van en un `estado.ts` aparte, o el
     build se cae.
@@ -769,6 +927,12 @@ facturación, pero el contenido no es trámite.
 - Textos de interfaz en español, sin palabras domingueras.
 - Un commit por rebanada funcional.
 - `npm run check` corre typecheck + lint + pruebas.
+- **En CI corre lo mismo** (`.github/workflows/comprobar.yml`), en dos trabajos:
+  `check` más `next build` —que no es redundante: la regla 11 solo se cae ahí—,
+  y `supabase/pruebas/correr.sh` contra un Postgres de verdad. ⚠️
+  `verificar:semilla` NO está en CI a propósito: sin llaves sale con estado 2,
+  que es lo correcto pero pintaría rojo siempre. Ese se corre tras aplicar
+  migraciones y tras cada despliegue.
 
 ## 8. Disciplina
 

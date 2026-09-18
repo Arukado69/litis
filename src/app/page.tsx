@@ -9,6 +9,7 @@ import {
   Precios,
   QueHace,
 } from '@/components/marketing/secciones'
+import { Tenue } from '@/components/ui/composicion'
 import { Boton, CintaDias } from '@/components/ui/primitivos'
 import { MARCA } from '@/lib/brand'
 import { tramoDeDias } from '@/lib/plazos/calendario'
@@ -71,9 +72,9 @@ export default function Inicio() {
 
       <main className="mx-auto flex max-w-3xl flex-col gap-12 px-6 py-16">
         <div>
-          <p className="text-menor text-[var(--color-tinta-suave)]">
+          <Tenue>
             Un término de veinte días, del 15 de julio al 3 de agosto de 2026
-          </p>
+          </Tenue>
 
           <div className="mt-5 overflow-x-auto pb-1">
             <CintaDias
@@ -92,10 +93,10 @@ export default function Inicio() {
             presenta fuera de término.
           </p>
 
-          <p className="mt-2 text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-2">
             Cada casilla es un día: llena si es hábil, vacía si no. La última es
             el vencimiento.
-          </p>
+          </Tenue>
         </div>
 
         <div className="border-t border-[var(--color-regla-fuerte)] pt-10">
@@ -126,13 +127,13 @@ export default function Inicio() {
         <Cierre />
 
         <footer className="flex flex-col gap-4 border-t border-[var(--color-regla)] pt-6">
-          <p className="max-w-prose text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota" className="max-w-prose">
             {MARCA.nombre} es una herramienta de control interno. No es asesoría
             jurídica y no emite dictámenes: los cómputos son sugerencias que el
             abogado verifica contra el ordenamiento aplicable y el calendario del
             órgano. La responsabilidad profesional del término es de quien firma
             la promoción.
-          </p>
+          </Tenue>
 
           <div className="flex flex-wrap gap-x-5 gap-y-1 text-nota">
             <Link

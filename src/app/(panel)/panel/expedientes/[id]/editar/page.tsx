@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Foja, Rotulo } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { miembrosDelDespacho, obtenerExpediente } from '@/lib/expedientes/datos'
@@ -45,10 +46,10 @@ export default async function PaginaEditar({
           Volver al expediente
         </Link>
         <h1 className="mt-2 text-rotulo">{expediente.caratula}</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {expediente.numeroInterno} ·{' '}
           {MATERIAS[expediente.materia as IdMateria]?.nombre ?? expediente.materia}
-        </p>
+        </Tenue>
       </div>
 
       <FormularioEdicion
@@ -77,25 +78,25 @@ export default async function PaginaEditar({
       <Foja className="flex flex-col gap-4">
         <div>
           <Rotulo>Agregar una parte</Rotulo>
-          <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1">
             Un tercero llamado a juicio o un codemandado que apareció en la
             contestación. Se vuelve a correr el cotejo de conflicto de interés:
             quien entra a mitad del juicio puede ser cliente del despacho en
             otro asunto.
-          </p>
+          </Tenue>
         </div>
         <FormularioParte expedienteId={id} roles={roles} />
       </Foja>
 
       {/* Lo que NO se edita, dicho en voz alta en vez de dejar al usuario
           buscándolo. */}
-      <p className="text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota">
         La materia, la vía y el fuero no se editan: de la vía sale el régimen
         con el que ya se computaron los plazos de este expediente, y cambiarla
         en caliente dejaría fechas calculadas con una regla y un expediente que
         dice otra. Si se capturó mal, se cierra este asunto y se abre el
         correcto.
-      </p>
+      </Tenue>
     </div>
   )
 }

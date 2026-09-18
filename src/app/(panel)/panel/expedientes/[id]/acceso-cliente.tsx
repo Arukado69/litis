@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Campo } from '@/components/ui/primitivos'
 
 import { darAccesoAlCliente } from './acciones-portal'
@@ -54,9 +55,9 @@ export function AccesoDelCliente({
         {estado.aviso ? (
           <p className="text-menor font-medium">{estado.aviso}</p>
         ) : null}
-        <p className="text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota">
           Este enlace se muestra una sola vez: en la base solo queda su huella.
-        </p>
+        </Tenue>
         <code className="overflow-x-auto rounded-sm border border-[var(--color-regla)] bg-[var(--color-foja)] p-2 text-nota">
           {estado.enlace}
         </code>

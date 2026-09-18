@@ -78,6 +78,7 @@ describe('qué se topa y qué no', () => {
       'verificar_catalogo',
       'dar_acceso_al_cliente',
       'recibir_alertas',
+      'exportar_despacho',
       'leer_expediente',
     ]
     for (const accion of jamas) {

@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Boton, CintaDias, Sello } from '@/components/ui/primitivos'
+import { sufijoDeIva } from '@/lib/legal/responsable'
 import { MONEDA, NO_HACE, PLANES, precioLegible } from '@/lib/marketing/planes'
 import { tramoDeDias } from '@/lib/plazos/calendario'
 import { CALENDARIO_PJF_2026 } from '@/lib/plazos/calendarios-semilla'
@@ -114,9 +116,9 @@ export function LaTraza() {
       </p>
 
       <div className="mt-6 border border-[var(--color-regla)] bg-[var(--color-foja)] p-5">
-        <p className="text-menor text-[var(--color-tinta-suave)]">
+        <Tenue>
           {ETIQUETA_DEMO}
-        </p>
+        </Tenue>
         <p className="mt-1 text-rotulo">
           Vence el{' '}
           {new Date(`${DEMO.fechaVencimiento}T00:00:00Z`).toLocaleDateString(
@@ -151,11 +153,11 @@ export function LaTraza() {
           ))}
         </ol>
 
-        <p className="mt-4 border-t border-[var(--color-regla)] pt-3 text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota" className="mt-4 border-t border-[var(--color-regla)] pt-3">
           Este cómputo lo produjo el mismo motor que corre dentro del panel, con
           el calendario del Poder Judicial de la Federación. No es una captura
           de pantalla.
-        </p>
+        </Tenue>
       </div>
     </Seccion>
   )
@@ -191,9 +193,9 @@ export function QueHace() {
         {CAPACIDADES.map((c) => (
           <div key={c.titulo} className="border-l-2 border-[var(--color-sello)] pl-4">
             <h3 className="text-guia">{c.titulo}</h3>
-            <p className="mt-1 max-w-prose text-menor text-[var(--color-tinta-suave)]">
+            <Tenue className="mt-1 max-w-prose">
               {c.texto}
-            </p>
+            </Tenue>
           </div>
         ))}
       </div>
@@ -212,18 +214,18 @@ export function NoFingeCerteza() {
         {NO_HACE.map((n) => (
           <li key={n.que} className="max-w-prose border-l-2 border-[var(--color-regla-fuerte)] pl-4">
             <p className="font-medium">{n.que}</p>
-            <p className="text-menor text-[var(--color-tinta-suave)]">{n.porque}</p>
+            <Tenue>{n.porque}</Tenue>
           </li>
         ))}
       </ul>
 
-      <p className="mt-6 max-w-prose border-t border-[var(--color-regla)] pt-4 text-menor text-[var(--color-tinta-suave)]">
+      <Tenue className="mt-6 max-w-prose border-t border-[var(--color-regla)] pt-4">
         Y el catálogo de plazos se entrega marcado como <strong>no
         verificado</strong>, y así se muestra hasta que un abogado del despacho
         lo confirme y quede la constancia. Los ordenamientos se reforman: el
         Código Nacional de Procedimientos Civiles y Familiares está desplazando
         a los códigos locales hasta 2027. Un catálogo estático miente.
-      </p>
+      </Tenue>
     </Seccion>
   )
 }
@@ -248,9 +250,9 @@ export function Precios() {
                 <h3 className="text-guia">{plan.nombre}</h3>
                 {plan.destacado ? <Sello>lo que usa un despacho</Sello> : null}
               </div>
-              <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+              <Tenue className="mt-1">
                 {plan.promesa}
-              </p>
+              </Tenue>
             </div>
 
             <p className="text-portada">
@@ -259,6 +261,10 @@ export function Precios() {
                 <span className="font-obra text-menor font-normal text-[var(--color-tinta-suave)]">
                   {' '}
                   {MONEDA} por usuario al mes
+                  {/* Sale de la constante del IVA, no de una cadena escrita
+                      aquí: un precio público sin «+ IVA» mientras el contrato
+                      sí lo dice vale un 16 % de sorpresa. */}
+                  {sufijoDeIva() ? ` ${sufijoDeIva()}` : ''}
                 </span>
               ) : null}
             </p>
@@ -272,7 +278,7 @@ export function Precios() {
             </ul>
 
             {plan.tope ? (
-              <p className="text-nota text-[var(--color-tinta-suave)]">{plan.tope}</p>
+              <Tenue tamano="nota">{plan.tope}</Tenue>
             ) : null}
 
             <div className="mt-auto pt-2">
@@ -288,11 +294,11 @@ export function Precios() {
 
       {/* La honestidad que el resto del producto ya practica, aplicada al
           precio. */}
-      <p className="mt-5 max-w-prose text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="mt-5 max-w-prose">
         Todavía no hay un despacho pagando, así que este precio es una hipótesis
         y no una medición. Si resulta que está mal puesto, se corrige — y quien
         ya esté dentro conserva el suyo.
-      </p>
+      </Tenue>
     </Seccion>
   )
 }

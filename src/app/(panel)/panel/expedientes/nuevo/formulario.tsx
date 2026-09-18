@@ -19,6 +19,7 @@ import {
   viasDeMateria,
   type IdMateria,
 } from '@/lib/expedientes/materias'
+import { Tenue } from '@/components/ui/composicion'
 import { ROLES_POR_MATERIA, ROL_ETIQUETA } from '@/lib/expedientes/partes'
 
 import { abrirExpediente } from './acciones'
@@ -54,10 +55,10 @@ function BloqueConflictos({ hallazgos }: { hallazgos: HallazgoVisible[] }) {
             ? 'Posible impedimento'
             : 'Coincidencias por revisar'}
         </h2>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           Antes de abrir el expediente, revisa estas coincidencias con tu
           padrón. Nada se ha guardado todavía.
-        </p>
+        </Tenue>
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -70,10 +71,10 @@ function BloqueConflictos({ hallazgos }: { hallazgos: HallazgoVisible[] }) {
               {h.nombreParte} ↔ {h.nombreRegistro}
             </p>
             <p className="mt-1 text-[var(--color-tinta-suave)]">{h.motivo}</p>
-            <p className="mt-1 text-nota text-[var(--color-tinta-suave)]">
+            <Tenue tamano="nota" className="mt-1">
               Coincidió por: {h.coincidencia.replace('_', ' ')} · En:{' '}
               {h.caratula}
-            </p>
+            </Tenue>
           </li>
         ))}
       </ul>
@@ -224,10 +225,10 @@ export function FormularioAlta({
       <Foja className="flex flex-col gap-4">
         <div>
           <h2 className="font-medium">La contraparte</h2>
-          <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+          <Tenue className="mt-1">
             Opcional, pero captúrala en cuanto la sepas: sin ella no se puede
             detectar un conflicto de interés más adelante.
-          </p>
+          </Tenue>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo etiqueta="Nombre" nombre="contraparteNombre"

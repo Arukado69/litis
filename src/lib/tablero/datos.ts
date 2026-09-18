@@ -44,7 +44,7 @@ export async function expedientesDelTablero(
       .in('expediente_id', ids),
     supabase
       .from('plazos')
-      .select('expediente_id, fecha_vencimiento_efectiva')
+      .select('expediente_id, fecha_vencimiento_efectiva, fecha_vencimiento')
       .in('expediente_id', ids)
       .eq('estado', 'pendiente')
       .order('fecha_vencimiento_efectiva'),
@@ -64,7 +64,7 @@ export async function expedientesDelTablero(
   const plazosPorExpediente = new Map<string, string[]>()
   for (const p of plazos ?? []) {
     const lista = plazosPorExpediente.get(p.expediente_id) ?? []
-    lista.push(p.fecha_vencimiento_efectiva)
+    lista.push(p.fecha_vencimiento_efectiva ?? p.fecha_vencimiento)
     plazosPorExpediente.set(p.expediente_id, lista)
   }
 

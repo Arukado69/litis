@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { aplicarEvento } from '@/lib/suscripcion/cobro'
 import { interpretarEvento } from '@/lib/suscripcion/eventos'
 import { verificarFirmaStripe } from '@/lib/suscripcion/firma'
+import type { Json } from '@/types/db'
 
 /**
  * `POST /api/webhooks/suscripcion` — lo que Stripe manda cuando algo cambia.
@@ -71,7 +72,11 @@ export async function POST(peticion: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 400 })
   }
 
-  const raiz = evento as { id?: unknown; type?: unknown; data?: unknown }
+  // `data` va tipado como `Json` y no como `unknown` porque salió de
+  // `JSON.parse`: cualquier propiedad suya es JSON por construcción, y así se
+  // puede guardar en la columna `jsonb` sin castear en el camino. `id` y `type`
+  // siguen en `unknown` a propósito — de esos sí se comprueba el tipo abajo.
+  const raiz = evento as { id?: unknown; type?: unknown; data?: Json }
   const eventoId = typeof raiz.id === 'string' ? raiz.id : null
   const tipo = typeof raiz.type === 'string' ? raiz.type : null
 
@@ -84,7 +89,10 @@ export async function POST(peticion: NextRequest) {
       eventoId,
       tipo,
       interpretarEvento(evento),
-      raiz.data,
+      // `null`, no `undefined`: la columna es `jsonb` y acepta nulo, pero
+      // `undefined` no es JSON y un evento sin `data` es un evento raro que
+      // igual conviene dejar registrado.
+      raiz.data ?? null,
     )
 
     return NextResponse.json(

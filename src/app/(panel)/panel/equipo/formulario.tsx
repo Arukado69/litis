@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { useFormStatus } from 'react-dom'
 
+import { Tenue } from '@/components/ui/composicion'
 import {
   Aviso,
   Boton,
@@ -79,10 +80,10 @@ export function FormularioInvitar() {
           <p className="text-menor font-medium">
             Este enlace se muestra una sola vez
           </p>
-          <p className="text-nota text-[var(--color-tinta-suave)]">
+          <Tenue tamano="nota">
             En la base solo queda su huella, así que aquí no se puede volver a
             consultar. Si se pierde, revoca la invitación y manda otra.
-          </p>
+          </Tenue>
           <code className="overflow-x-auto rounded-sm border border-[var(--color-regla)] bg-[var(--color-foja)] p-2 text-nota">
             {estado.enlace}
           </code>

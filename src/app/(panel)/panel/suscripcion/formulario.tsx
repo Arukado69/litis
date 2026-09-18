@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso, Boton, Campo } from '@/components/ui/primitivos'
 import { MONEDA } from '@/lib/marketing/planes'
 import { ASIENTOS_MAXIMOS } from '@/lib/suscripcion/limites'
@@ -61,7 +62,7 @@ export function FormularioContratar({
           />
         </div>
 
-        <p className="pb-2 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="pb-2">
           {total === null ? (
             'Pon cuántas personas van a usar Litis.'
           ) : (
@@ -72,17 +73,17 @@ export function FormularioContratar({
               al mes · ${precioPorAsiento.toLocaleString('es-MX')} por asiento
             </>
           )}
-        </p>
+        </Tenue>
 
         <div className="pb-1">
           <BotonContratar />
         </div>
       </div>
 
-      <p className="text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota">
         El pago se hace en Stripe, no aquí: los datos de la tarjeta no pasan por
         este servidor. Los clientes que entran al portal no ocupan asiento.
-      </p>
+      </Tenue>
 
       {estado.aviso ? <Aviso tono="informativo">{estado.aviso}</Aviso> : null}
     </form>
