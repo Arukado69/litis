@@ -11,10 +11,10 @@ import {
 import {
   HUELLA_DATOS,
   HUELLA_VIGENTE,
-  IVA,
   RESPONSABLE,
   VIGENCIA,
   datosPendientes,
+  datosPublicados,
   esBorrador,
   frenteAlIva,
   nombreDelResponsable,
@@ -147,14 +147,16 @@ describe('los datos impresos también cuentan', () => {
    */
   it('la huella de los datos corresponde a la fecha declarada', () => {
     const actual = createHash('sha256')
-      .update(JSON.stringify({ RESPONSABLE, IVA }))
+      .update(JSON.stringify(datosPublicados()))
       .digest('hex')
       .slice(0, 16)
 
     expect(
       actual,
-      `Los datos del responsable o el trato del IVA cambiaron desde ${VIGENCIA}. ` +
-        'Actualiza VIGENCIA y HUELLA_DATOS.',
+      `Algo que los documentos imprimen cambió desde ${VIGENCIA} —datos del ` +
+        'responsable, IVA, precio, moneda, topes del plan gratuito o el aviso ' +
+        'del cómputo—. ¿Movió lo que el documento promete? Actualiza VIGENCIA ' +
+        'y HUELLA_DATOS.',
     ).toBe(HUELLA_DATOS)
   })
 })

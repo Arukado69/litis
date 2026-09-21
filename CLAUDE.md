@@ -488,6 +488,12 @@ hay que cotejarla y qué preguntas deja abiertas.
   `verificar:semilla`): las constantes son la semilla, el motor usa la tabla, y
   esos dos ya se separaron una vez. Sin llaves se detiene con estado 2 en vez de
   imprimir un documento vacío, que parecería un catálogo limpio.
+- ⚠️ **El texto libre se escapa antes de entrar a una celda de tabla.** Un `|`
+  en el fundamento —«art. 1079 | art. 1080»— partía la celda y el renderizador
+  se comía la mitad: el abogado verificaría contra una cita incompleta sin que
+  nada se viera roto. Y el resumen NO trae un «ya verificadas»: el generador lee
+  el catálogo compartido y verificar COPIA la entrada al despacho, así que ese
+  renglón habría dicho «0» para siempre, incluso con las 16 firmadas.
 - **Caza citas que no alcanzan para verificar**: un mismo artículo citado por
   entradas con plazos distintos. No dice que la cita esté mal — dice que ese
   artículo distingue por fracción y la cita no dice cuál, así que ni quien
@@ -798,12 +804,17 @@ facturación, pero el contenido no es trámite.
   reescribió al construir la exportación (§5.25) y la fecha se quedó doce días
   atrás — el documento se desmentía solo y nada lo dijo.
   `HUELLA_VIGENTE` cubre los tres archivos publicados; **`HUELLA_DATOS` cubre
-  los valores que se imprimen dentro de ellos** —razón social, domicilio, correo
-  ARCO, jurisdicción y el IVA—, que es por donde cabía lo que más cambia:
-  cambiar la razón social mueve el aviso sin tocar un byte de `page.tsx`. Se
-  calcula sobre los valores y no sobre el archivo, para no ser circular. Cuando
-  una prueba falle, el arreglo no es copiar el hash: es preguntarse si el cambio
-  movió lo que el documento promete.
+  los valores que se imprimen dentro de ellos** (`datosPublicados()`), que es
+  por donde cabía lo que más cambia: cambiar la razón social mueve el aviso sin
+  tocar un byte de `page.tsx`. Se calcula sobre los valores y no sobre el
+  archivo, para no ser circular. Cuando una prueba falle, el arreglo no es
+  copiar el hash: es preguntarse si el cambio movió lo que el documento promete.
+  ⚠️ La primera versión de `HUELLA_DATOS` cubría solo `RESPONSABLE` y el IVA, y
+  dejaba fuera **el precio, la moneda, los topes del plan gratuito y
+  `AVISO_COMPUTO`** — que los términos también imprimen. Subir el precio habría
+  cambiado la cláusula 3 con las dos huellas en verde: el mismo hueco, un piso
+  más abajo. Si una cláusula empieza a citar una constante nueva, va a
+  `datosPublicados()`.
 - **El IVA quedó decidido: por encima** (`IVA = 'adicional'`). De ahí sale la
   cláusula de los términos **y** el «+ IVA» junto al precio en la portada
   (`sufijoDeIva`), que antes no aparecía: un precio público sin esa marca
@@ -830,6 +841,20 @@ legible por máquina»; hasta aquí ese camino era un correo. Ahora es un botón
   no avisa: sin paginar, el despacho con 1200 actuaciones se descarga 1000 y
   cree que ese es su despacho. Y `.range()` sin `order by` puede repetir una
   fila y saltarse otra entre páginas.
+- ⚠️ **El final de la paginación es una página VACÍA, no una página corta**, y
+  se avanza por lo que LLEGÓ, no por lo que se pidió. Si el proyecto tiene
+  `Max rows` por debajo del tamaño de página, la primera vuelve corta sin ser
+  la última: la condición ingenua descargaba 500 de 1200 filas y el archivo
+  decía `conteo: 500` sin un solo error. El bucle vive en `exportacion.ts` —el
+  módulo puro— justamente para poder probarlo, y hay prueba contra un servidor
+  que impone tope.
+- ⚠️ **80 ids por lote, no 200.** Cada uuid entrecomillado gasta ~39 caracteres:
+  200 son casi 8 KB solo de filtro, justo en el límite de línea de petición de
+  los proxys que van delante de PostgREST. Al que le reventaría es al despacho
+  más grande, que es el que más necesita llevarse sus datos.
+- ⚠️ **El nombre del archivo usa `hoyEnMexico()`**, no un `toISOString()`
+  recortado: a las siete de la tarde de un martes el ISO ya dice miércoles
+  (§5.1).
 - ⚠️ **`expediente_accesos` NO tiene columna `id`** (llave compuesta
   `expediente_id, perfil_id`). El `order('id')` por omisión reventaba esa
   consulta y con ella la exportación entera. Por eso `ORDEN` y `FILTRO` traen

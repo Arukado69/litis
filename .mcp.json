@@ -2,7 +2,10 @@
   "mcpServers": {
     "notebooklm": {
       "command": "npx",
-      "args": ["-y", "notebooklm-mcp@latest"]
+      "args": [
+        "-y",
+        "notebooklm-mcp@2.0.0"
+      ]
     }
   }
 }

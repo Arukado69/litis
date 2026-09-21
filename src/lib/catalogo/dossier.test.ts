@@ -153,3 +153,41 @@ describe('el documento', () => {
     expect(dossier).toMatch(/3 días habiles — Revocación/)
   })
 })
+
+describe('el texto libre no rompe la tabla', () => {
+  /**
+   * ⚠️ El fundamento y la nota los teclea una persona. Un `|` partía la celda
+   * y el renderizador se comía la mitad: el abogado verificaría contra una
+   * cita incompleta sin que nada se viera roto.
+   */
+  it('una cita con barra vertical no parte la celda', () => {
+    const dossier = armarDossier({
+      entradas: [entrada({ fundamento: 'CNPCyF art. 1079 | art. 1080' })],
+      vias: VIAS,
+      generadoEl: '2026-09-21',
+      proyecto: 'p',
+    })
+    expect(dossier).toContain('CNPCyF art. 1079 \\| art. 1080')
+  })
+
+  it('una nota de dos renglones se vuelve uno', () => {
+    const dossier = armarDossier({
+      entradas: [entrada({ nota: 'Primera línea.\nSegunda línea.' })],
+      vias: VIAS,
+      generadoEl: '2026-09-21',
+      proyecto: 'p',
+    })
+    expect(dossier).toContain('| **Advertencia que ya trae** | Primera línea. Segunda línea. |')
+  })
+
+  /** El renglón que estructuralmente siempre decía 0 ya no está. */
+  it('no promete una cuenta de verificadas que no puede saber', () => {
+    const dossier = armarDossier({
+      entradas: [entrada()],
+      vias: VIAS,
+      generadoEl: '2026-09-21',
+      proyecto: 'p',
+    })
+    expect(dossier).not.toMatch(/Ya verificadas/)
+  })
+})

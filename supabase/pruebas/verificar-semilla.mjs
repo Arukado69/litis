@@ -110,7 +110,7 @@ try {
 
   // ── El catálogo de plazos ────────────────────────────────────────────────
   const catalogo = await consultar(
-    'plazos_catalogo?select=clave,fundamento,verificado_por,verificado_el&despacho_id=is.null',
+    'plazos_catalogo?select=clave,fundamento,verificado_por,verificado_el,verificacion_notas&despacho_id=is.null',
   )
   verificar(
     `el catálogo compartido tiene sus ${ESPERADO.entradasCatalogo} entradas`,
@@ -119,7 +119,13 @@ try {
   )
 
   // ── REGLA 4 ──────────────────────────────────────────────────────────────
-  const verificadas = catalogo.filter((e) => e.verificado_por || e.verificado_el)
+  // ⚠️ Las MISMAS tres columnas que mira su gemela en `0008_semilla.sql`. Con
+  // dos columnas aquí y tres allá, una semilla con solo `verificacion_notas` puesta
+  // pasaba contra la base real y fallaba contra la desechable — y el guardián
+  // débil era justo el que corre contra el proyecto de verdad.
+  const verificadas = catalogo.filter(
+    (e) => e.verificado_por || e.verificado_el || e.verificacion_notas,
+  )
   verificar(
     'NINGUNA entrada compartida está marcada como verificada (regla 4)',
     verificadas.length === 0,

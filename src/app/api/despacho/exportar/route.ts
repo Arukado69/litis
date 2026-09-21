@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { exigirPanel } from '@/lib/auth/sesion'
+import { hoyEnMexico } from '@/lib/plazos/fecha'
 import { leerDespachoCompleto } from '@/lib/despachos/exportacion-datos'
 import {
   PORQUE_SOLO_TITULAR,
@@ -54,14 +55,42 @@ export async function GET() {
 
   const generadaEl = new Date().toISOString()
 
-  let filas
+  // ⚠️ El armado y el `stringify` van DENTRO del try, no solo la lectura. Un
+  // despacho lo bastante grande revienta `JSON.stringify` con `RangeError:
+  // Invalid string length`, y fuera del try eso caía en la página de error por
+  // omisión de Next: sin el 502 que explica que no se descargó nada y sin una
+  // línea en el registro del servidor diciendo qué despacho falló.
+  let cuerpo: string
+  let archivo: string
   try {
-    filas = await leerDespachoCompleto(sesion.activa.despachoId)
+    const filas = await leerDespachoCompleto(sesion.activa.despachoId)
+
+    const exportacion = armarExportacion({
+      despacho: {
+        id: sesion.activa.despachoId,
+        nombre: sesion.activa.despachoNombre,
+        slug: sesion.activa.despachoSlug,
+      },
+      generadaPor: {
+        perfil_id: sesion.usuarioId,
+        nombre: sesion.nombre,
+        correo: sesion.correo,
+      },
+      generadaEl,
+      filas,
+    })
+
+    cuerpo = JSON.stringify(exportacion, null, 2)
+    // El día de México, no el de UTC: a las siete de la tarde ya no coinciden.
+    archivo = nombreDelArchivo(sesion.activa.despachoSlug, hoyEnMexico())
   } catch (error) {
     // Se registra el detalle en el servidor y se contesta corto: el mensaje de
     // Postgres puede nombrar columnas y políticas, y esta ruta la puede llamar
     // cualquiera con sesión.
-    console.error('[exportar] falló la lectura', error)
+    console.error(
+      `[exportar] falló para el despacho ${sesion.activa.despachoId}`,
+      error,
+    )
     return NextResponse.json(
       {
         error:
@@ -71,24 +100,7 @@ export async function GET() {
     )
   }
 
-  const exportacion = armarExportacion({
-    despacho: {
-      id: sesion.activa.despachoId,
-      nombre: sesion.activa.despachoNombre,
-      slug: sesion.activa.despachoSlug,
-    },
-    generadaPor: {
-      perfil_id: sesion.usuarioId,
-      nombre: sesion.nombre,
-      correo: sesion.correo,
-    },
-    generadaEl,
-    filas,
-  })
-
-  const archivo = nombreDelArchivo(sesion.activa.despachoSlug, generadaEl)
-
-  return new NextResponse(JSON.stringify(exportacion, null, 2), {
+  return new NextResponse(cuerpo, {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'content-disposition': `attachment; filename="${archivo}"`,

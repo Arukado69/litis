@@ -144,6 +144,19 @@ const ADVERTENCIA = `> **Este documento no verifica nada.** Es el material de tr
 > entrada, y ahí queda la constancia de quién la hizo y contra qué texto.`
 
 /**
+ * Deja un texto libre en condiciones de ir dentro de una celda de tabla.
+ *
+ * ⚠️ Un `|` en el fundamento —«CNPCyF art. 1079 | art. 1080»— parte la celda en
+ * dos y el renderizador se come la mitad: el abogado verificaría contra una
+ * cita a la que le falta un pedazo, sin que nada se vea roto. Y un salto de
+ * línea en la nota rompe la tabla entera. Los dos vienen de texto que teclea
+ * una persona.
+ */
+function enCelda(texto: string): string {
+  return texto.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ').trim()
+}
+
+/**
  * Cómo se escribe «9 días hábiles».
  *
  * Entra como parámetro en vez de importarse: este archivo no importa nada, y
@@ -165,12 +178,16 @@ function renglonDeEntrada(
     `|---|---|`,
     `| **Lo que el sistema computa hoy** | ${e.dias} ${unidadEn(e.unidad)} |`,
     `| **Régimen** | \`${e.regimen}\` |`,
-    `| **Cita registrada** | ${e.fundamento?.trim() || '⚠️ **ninguna** — sin esto no hay contra qué cotejar'} |`,
+    `| **Cita registrada** | ${
+      e.fundamento?.trim()
+        ? enCelda(e.fundamento)
+        : '⚠️ **ninguna** — sin esto no hay contra qué cotejar'
+    } |`,
     `| **Clave** | \`${e.clave ?? '—'}\` |`,
   ]
 
   if (e.nota?.trim()) {
-    partes.push(`| **Advertencia que ya trae** | ${e.nota.trim()} |`)
+    partes.push(`| **Advertencia que ya trae** | ${enCelda(e.nota)} |`)
   }
 
   partes.push(
@@ -215,7 +232,6 @@ export function armarDossier({
   const huecos = huecosDeCobertura(vias, entradas)
   const imprecisas = citasImprecisas(entradas)
   const huerfanas = sinFundamento(entradas)
-  const yaVerificadas = entradas.filter((e) => e.verificado_el)
 
   const viasCubiertas = vias.filter((v) =>
     entradas.some((e) => e.regimen === v.regimen),
@@ -233,7 +249,11 @@ export function armarDossier({
     '| | |',
     '|---|---|',
     `| Entradas en el catálogo compartido | ${entradas.length} |`,
-    `| Ya verificadas por alguien | ${yaVerificadas.length} |`,
+    // ⚠️ Aquí NO va un «ya verificadas». El generador lee el catálogo
+    // compartido, y verificar COPIA la entrada al despacho (CLAUDE.md §5.16):
+    // una fila compartida no puede llevar firma nunca. Ese renglón habría dicho
+    // «0» para siempre —incluso con las 16 ya firmadas— y es lo contrario de lo
+    // que este documento viene a informar.
     `| Vías con al menos un plazo disponible | ${viasCubiertas} de ${vias.length} |`,
     `| Citas que no alcanzan para verificar | ${imprecisas.length} |`,
     `| Entradas sin fundamento | ${huerfanas.length} |`,

@@ -9,6 +9,7 @@ import {
   armarExportacion,
   nombreDelArchivo,
   puedeExportar,
+  recolectarPaginas,
   tablasDeclaradasEnElAviso,
   totalDeFilas,
   type FilasPorTabla,
@@ -164,5 +165,57 @@ describe('quién la descarga', () => {
     for (const rol of otros) {
       expect(puedeExportar(rol), rol).toBe(false)
     }
+  })
+})
+
+describe('paginar hasta agotar', () => {
+  /** Una tabla falsa que respeta un tope de filas por página. */
+  function tabla(filas: number, topeDelServidor: number) {
+    const todas = Array.from({ length: filas }, (_, i) => ({ id: `f-${i}` }))
+    const peticiones: [number, number][] = []
+    const pedir = async (desde: number, hasta: number) => {
+      peticiones.push([desde, hasta])
+      const cuantas = Math.min(hasta - desde + 1, topeDelServidor)
+      return todas.slice(desde, desde + cuantas)
+    }
+    return { pedir, peticiones }
+  }
+
+  it('trae todo cuando cabe en una página', async () => {
+    const { pedir } = tabla(300, 1000)
+    expect(await recolectarPaginas(pedir, 1000)).toHaveLength(300)
+  })
+
+  it('trae todo cuando hay varias páginas completas', async () => {
+    const { pedir, peticiones } = tabla(2500, 1000)
+    expect(await recolectarPaginas(pedir, 1000)).toHaveLength(2500)
+    // 1000 + 1000 + 500 + la vacía que confirma el final.
+    expect(peticiones).toHaveLength(4)
+  })
+
+  /**
+   * ⚠️ La prueba que justifica el arreglo. Si el proyecto tiene `Max rows` por
+   * debajo del tamaño de página, cada página vuelve corta SIN ser la última.
+   * Con la condición ingenua —«página corta, ya acabé»— el despacho se
+   * descargaba 500 de 1200 y el archivo decía `conteo: 500` sin un solo error.
+   */
+  it('no se deja engañar por un tope de filas del servidor', async () => {
+    const { pedir } = tabla(1200, 500)
+    const filas = await recolectarPaginas(pedir, 1000)
+    expect(filas).toHaveLength(1200)
+    expect(filas.at(-1)).toEqual({ id: 'f-1199' })
+  })
+
+  it('una tabla vacía no da vueltas de más', async () => {
+    const { pedir, peticiones } = tabla(0, 1000)
+    expect(await recolectarPaginas(pedir, 1000)).toEqual([])
+    expect(peticiones).toHaveLength(1)
+  })
+
+  /** Sin duplicados ni huecos: se avanza por lo que llegó. */
+  it('no repite ni se salta filas entre páginas', async () => {
+    const { pedir } = tabla(1750, 300)
+    const filas = await recolectarPaginas(pedir, 1000)
+    expect(new Set(filas.map((f) => f.id)).size).toBe(1750)
   })
 })

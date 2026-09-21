@@ -5,6 +5,7 @@ import type { Database } from '@/types/db'
 
 import {
   TABLAS_EXPORTADAS,
+  recolectarPaginas,
   type Fila,
   type FilasPorTabla,
   type TablaExportada,
@@ -27,12 +28,16 @@ import {
  */
 
 /**
- * Cuántas filas por página.
+ * Cuántas filas se piden por página.
  *
  * ⚠️ **PostgREST corta en 1000 filas y no avisa.** Sin paginar, el despacho con
  * 1200 actuaciones se descarga 1000 y cree que ese es su despacho. Es el mismo
  * error de fondo que la `0008` sin aplicar: algo que se ve bien y está
  * incompleto.
+ *
+ * ⚠️ Es lo que se PIDE, no lo que llega. El proyecto puede tener un tope de
+ * filas más bajo (`Max rows` en los ajustes de la API), y entonces cada página
+ * devuelve menos de esto sin que sea el final.
  */
 const PAGINA = 1000
 
@@ -42,8 +47,14 @@ const PAGINA = 1000
  * Un `.in()` viaja en la URL, y la URL tiene largo máximo. Con 3000 expedientes
  * de 36 caracteres cada uno son más de 100 KB en una línea: el servidor la
  * rechaza mucho antes.
+ *
+ * ⚠️ **80 y no 200.** Cada uuid entrecomillado gasta ~39 caracteres, así que
+ * 200 ids son casi 8 KB solo de filtro — justo en el límite de línea de
+ * petición que traen por omisión los proxys que van delante de PostgREST. El
+ * despacho al que le reventaría es el más grande, que es el que más necesita
+ * llevarse sus datos. 80 deja margen de sobra y cuesta unas consultas más.
  */
-const LOTE_IDS = 200
+const LOTE_IDS = 80
 
 /** Las columnas que existen de verdad en esa tabla, según el esquema generado. */
 type ColumnaDe<T extends TablaExportada> = keyof Database['public']['Tables'][T]['Row'] &
@@ -145,17 +156,13 @@ async function paginar(
   etiqueta: TablaExportada,
   consulta: (desde: number, hasta: number) => PromiseLike<Respuesta>,
 ): Promise<Fila[]> {
-  const todas: Fila[] = []
-
-  for (let desde = 0; ; desde += PAGINA) {
-    const { data, error } = await consulta(desde, desde + PAGINA - 1)
+  return recolectarPaginas(async (desde, hasta) => {
+    const { data, error } = await consulta(desde, hasta)
     if (error) {
       throw new Error(`No se pudo leer ${etiqueta}: ${error.message}`)
     }
-    const pagina = data ?? []
-    todas.push(...pagina)
-    if (pagina.length < PAGINA) return todas
-  }
+    return data ?? []
+  }, PAGINA)
 }
 
 /** Los ids de una lista de filas, sin nulos. */

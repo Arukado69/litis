@@ -98,10 +98,17 @@ begin
   -- a la palabra.
   select count(*) into v_conteo
     from public.plazos_catalogo
-   where verificado_por is not null
-      or verificado_el is not null
-      or verificacion_notas is not null;
-  perform pruebas.verificar('NINGUNA entrada nace verificada (regla 4)',
+   -- ⚠️ Solo la semilla COMPARTIDA. Sin este filtro la afirmación prohibía
+   -- cualquier fila verificada del catálogo, incluida la copia propia que un
+   -- despacho crea al verificar — que es el final feliz de /panel/catalogo,
+   -- no un fallo. Hoy pasaba solo porque la base desechable no tiene
+   -- despachos; el primer fixture que verifique algo la pondría en rojo por
+   -- hacer lo correcto.
+   where despacho_id is null
+     and (verificado_por is not null
+       or verificado_el is not null
+       or verificacion_notas is not null);
+  perform pruebas.verificar('NINGUNA entrada de la semilla nace verificada (regla 4)',
     v_conteo = 0);
 
   -- Y todas traen fundamento: un plazo sin de dónde sale no se puede verificar.

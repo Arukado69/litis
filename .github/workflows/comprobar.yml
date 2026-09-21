@@ -18,9 +18,21 @@ on:
 
 # Un push nuevo cancela la corrida anterior de la misma rama: revisar el
 # resultado de un commit que ya quedó atrás no le sirve a nadie.
+#
+# ⚠️ **En `main` no se cancela.** Ahí cada commit es historia, no un borrador:
+# con dos empujones seguidos, cancelar el primero deja un commit de main sin
+# veredicto y con una corrida en «cancelada», que se lee igual que no haberla
+# corrido nunca.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# ⚠️ Solo lectura. Estos trabajos no escriben nada en GitHub, y corren
+# `npm ci` y `next build` sobre el contenido de una rama —es decir, ejecutan
+# los scripts de ciclo de vida de las dependencias—. Sin esto heredarían el
+# permiso por omisión del repositorio, que suele ser de escritura.
+permissions:
+  contents: read
 
 jobs:
   aplicacion:

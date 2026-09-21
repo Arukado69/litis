@@ -176,11 +176,16 @@ export function totalDeFilas(exportacion: Exportacion): number {
  *
  * Con la fecha adentro, dos descargas del mismo despacho no se pisan en la
  * carpeta de descargas — y se sabe de cuándo es cada una sin abrirlas.
+ *
+ * ⚠️ **`dia` tiene que venir en hora de México, no recortado de un ISO.**
+ * `new Date().toISOString().slice(0, 10)` a las siete de la tarde de un martes
+ * en `America/Mexico_City` ya escribe el miércoles, y el archivo sale fechado
+ * un día después de cuando se descargó. Es el mismo error de un día contra el
+ * que advierte CLAUDE.md §5.1; quien llama usa `hoyEnMexico()`.
  */
-export function nombreDelArchivo(slug: string, generadaEl: string): string {
-  const dia = generadaEl.slice(0, 10)
+export function nombreDelArchivo(slug: string, dia: string): string {
   const limpio = slug.replace(/[^a-z0-9-]/gi, '').toLowerCase() || 'despacho'
-  return `litis-${limpio}-${dia}.json`
+  return `litis-${limpio}-${dia.slice(0, 10)}.json`
 }
 
 /**
@@ -196,6 +201,38 @@ export function tablasDeclaradasEnElAviso(): readonly string[] {
   return DATOS_QUE_SE_TRATAN.flatMap((grupo) =>
     grupo.donde.split(',').map((t) => t.trim()),
   )
+}
+
+// ── Paginar ─────────────────────────────────────────────────────────────────
+
+/**
+ * Recorre una consulta paginada hasta agotarla.
+ *
+ * Vive aquí, en el módulo puro, y no junto a las consultas: es la pieza de la
+ * exportación donde un error no se ve —devuelve menos filas y nadie lo nota— y
+ * la única forma de fijarlo es una prueba. `exportacion-datos.ts` le pasa el
+ * `pedir` que sabe de Supabase; esto solo sabe contar.
+ *
+ * ⚠️ **El final es una página VACÍA, no una página corta.** Y se avanza por lo
+ * que LLEGÓ, no por lo que se pidió. Si el proyecto tiene un tope de filas por
+ * debajo del tamaño de página —`Max rows` en los ajustes de la API—, la primera
+ * página vuelve corta sin ser la última: con la condición ingenua, el despacho
+ * de 1200 actuaciones se descargaba 500 y el archivo decía `conteo: 500` tan
+ * campante. Exactamente el fallo que la exportación existe para no cometer.
+ */
+export async function recolectarPaginas(
+  pedir: (desde: number, hasta: number) => Promise<readonly Fila[]>,
+  tamanoDePagina: number,
+): Promise<Fila[]> {
+  const todas: Fila[] = []
+  let desde = 0
+
+  for (;;) {
+    const pagina = await pedir(desde, desde + tamanoDePagina - 1)
+    todas.push(...pagina)
+    if (pagina.length === 0) return todas
+    desde += pagina.length
+  }
 }
 
 // ── Quién la descarga ───────────────────────────────────────────────────────

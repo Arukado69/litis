@@ -19,6 +19,10 @@
  * publicarse. Lo primero que hay que verificar son las citas de artículos.
  */
 
+import { AVISO_COMPUTO } from '@/lib/brand'
+import { MONEDA, PLANES } from '@/lib/marketing/planes'
+import { TOPES_POR_PLAN } from '@/lib/suscripcion/limites'
+
 export interface Responsable {
   /** La persona física o moral que responde. */
   razonSocial: string
@@ -107,15 +111,41 @@ export const HUELLA_VIGENTE: Record<string, string> = {
  *
  * ⚠️ **Sin esto, el candado de arriba tendría un hueco por donde cabe lo que
  * más cambia.** Buena parte del texto publicado no está en los archivos de las
- * páginas: sale de aquí —la razón social, el domicilio, el correo ARCO, la
- * jurisdicción y la frase del IVA—. Cambiar la razón social movería el aviso de
- * privacidad sin tocar un solo byte de `page.tsx`, y el hash de archivos no se
- * enteraría.
+ * páginas: sale de constantes. Cambiar la razón social —o el precio— movería lo
+ * que el documento promete sin tocar un solo byte de `page.tsx`, y el hash de
+ * archivos no se enteraría.
+ *
+ * ⚠️ **Y no son solo los datos del responsable.** La primera versión de esta
+ * huella cubría `RESPONSABLE` y el IVA, y dejaba fuera el precio, la moneda,
+ * los topes del plan gratuito y `AVISO_COMPUTO` — que los términos también
+ * imprimen. Subir el precio de 390 a 490 habría cambiado la cláusula 3 con las
+ * dos huellas en verde y la fecha de vigencia intacta: el mismo hueco que esto
+ * vino a tapar, un piso más abajo. `datosPublicados()` los junta todos.
  *
  * Se calcula sobre los VALORES, no sobre este archivo, para que no sea
  * circular: un comentario nuevo aquí no la rompe; un dato distinto sí.
  */
-export const HUELLA_DATOS = '914bc899d1b496d9'
+export const HUELLA_DATOS = 'bd5913d1fefa24be'
+
+/**
+ * Todo lo que los documentos publicados imprimen y no vive en sus archivos.
+ *
+ * Si una cláusula empieza a citar una constante nueva, se agrega aquí — o el
+ * documento podrá cambiar de fondo sin que la fecha de vigencia se entere.
+ */
+export function datosPublicados() {
+  return {
+    responsable: RESPONSABLE,
+    iva: IVA,
+    // Los términos citan el precio y la moneda en la cláusula del plan…
+    precios: PLANES.map((p) => ({ clave: p.clave, precio: p.precio })),
+    moneda: MONEDA,
+    // …los topes del plan gratuito…
+    topesGratuito: TOPES_POR_PLAN.gratuito,
+    // …y el aviso del cómputo, palabra por palabra, el mismo de la pantalla.
+    avisoComputo: AVISO_COMPUTO,
+  }
+}
 
 const ETIQUETA_PENDIENTE: Record<keyof Responsable, string> = {
   razonSocial: 'la razón social o el nombre de quien responde',
