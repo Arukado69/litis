@@ -1,0 +1,75 @@
+# Lo que un contribuyente corre en su máquina, corriendo solo en cada push.
+#
+# ⚠️ `npm run verificar:semilla` NO está aquí, a propósito. Pregunta al proyecto
+# de Supabase y sin llaves sale con estado 2 —que es lo correcto: una
+# verificación que no pudo preguntar no es un "pasa"—, así que en CI solo
+# serviría para pintar rojo todo el tiempo. Ese se corre tras aplicar
+# migraciones y tras cada despliegue, con las variables cargadas.
+name: Comprobar
+
+# ⚠️ `push` solo en la rama principal, y `pull_request` para lo demás. Con
+# `push: ['**']` más `pull_request`, cada empujón a una rama con PR abierto
+# dispara DOS corridas del mismo commit: el doble de minutos y dos resultados
+# que decir. Lo hizo en el primer push de este archivo.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Un push nuevo cancela la corrida anterior de la misma rama: revisar el
+# resultado de un commit que ya quedó atrás no le sirve a nadie.
+#
+# ⚠️ **En `main` no se cancela.** Ahí cada commit es historia, no un borrador:
+# con dos empujones seguidos, cancelar el primero deja un commit de main sin
+# veredicto y con una corrida en «cancelada», que se lee igual que no haberla
+# corrido nunca.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# ⚠️ Solo lectura. Estos trabajos no escriben nada en GitHub, y corren
+# `npm ci` y `next build` sobre el contenido de una rama —es decir, ejecutan
+# los scripts de ciclo de vida de las dependencias—. Sin esto heredarían el
+# permiso por omisión del repositorio, que suele ser de escritura.
+permissions:
+  contents: read
+
+jobs:
+  aplicacion:
+    name: Typecheck, lint, pruebas y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22: `scripts/dossier-catalogo.ts` corre con
+      # --experimental-strip-types, que no existe antes.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: npm run check
+        run: npm run check
+
+      # ⚠️ El build NO es redundante con `check`. La regla 11 del proyecto —un
+      # archivo 'use server' solo exporta funciones async— no la caza el
+      # typecheck ni una prueba: se cae en el build y en ningún otro lado.
+      # Tampoco necesita llaves: la validación de variables de entorno es
+      # perezosa y solo corre al atender una petición.
+      - name: next build
+        run: npx next build
+
+  base:
+    name: Disparadores y semilla contra un Postgres de verdad
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # El runner de Ubuntu ya trae los binarios de PostgreSQL; el script los
+      # encuentra en /usr/lib/postgresql/*/bin si no están en el PATH. No hace
+      # falta levantar el servicio: `correr.sh` crea su propio cluster de usar
+      # y tirar.
+      - name: supabase/pruebas/correr.sh
+        run: bash supabase/pruebas/correr.sh

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Foja } from '@/components/ui/primitivos'
 
 import { FormularioAcceso } from './formulario'
@@ -23,19 +24,19 @@ export default async function PaginaAcceso({
     <Foja className="flex flex-col gap-5">
       <div>
         <h1 className="text-rotulo">Entrar</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           Accede a los expedientes de tu despacho.
-        </p>
+        </Tenue>
       </div>
 
       <FormularioAcceso destino={destino ?? '/panel'} />
 
-      <p className="text-center text-menor text-[var(--color-tinta-suave)]">
+      <Tenue className="text-center">
         ¿Todavía no tienes cuenta?{' '}
         <Link href="/registro" className="font-medium underline">
           Crear despacho
         </Link>
-      </p>
+      </Tenue>
     </Foja>
   )
 }

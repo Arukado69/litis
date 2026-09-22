@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Aviso } from '@/components/ui/primitivos'
 import { exigirPanel } from '@/lib/auth/sesion'
 import { miembrosDelDespacho, obtenerExpediente } from '@/lib/expedientes/datos'
@@ -44,11 +45,11 @@ export default async function PaginaNotificacion({
         <h1 className="mt-2 text-rotulo">
           Registrar notificación
         </h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {regimen
             ? `Régimen: ${REGIMENES[regimen].nombre} · ${REGIMENES[regimen].ordenamiento}`
             : 'La vía de este expediente no está reconocida.'}
-        </p>
+        </Tenue>
       </div>
 
       {!regimen ? (

@@ -218,17 +218,24 @@ export async function abrirExpediente(
       orden: e.orden,
       paralela: e.paralela,
     })),
-    p_etapa_actual: plan.expediente.etapaActual,
-    p_cliente_persona_id: plan.expediente.clientePersonaId,
-    p_entidad: plan.expediente.entidad,
-    p_organo_id: plan.expediente.organoId,
-    p_numero_organo: plan.expediente.numeroOrgano,
-    p_instancia: plan.expediente.instancia,
-    p_cuantia: plan.expediente.cuantia,
-    p_responsable_id: plan.expediente.responsableId,
+    // ⚠️ `?? undefined`, no `null`. Los tipos generados marcan estos parámetros
+    // opcionales porque el SQL les da `default`, y no expresan que acepten
+    // `null`. Con `undefined` la clave se cae del JSON y `abrir_expediente`
+    // aplica su propio default — que para todos estos es `null` (migración
+    // `0007`), así que el resultado es idéntico y no hay que retocar a mano un
+    // archivo generado. El único con default distinto es `p_restringido`
+    // (`false`), y ese nunca llega nulo.
+    p_etapa_actual: plan.expediente.etapaActual ?? undefined,
+    p_cliente_persona_id: plan.expediente.clientePersonaId ?? undefined,
+    p_entidad: plan.expediente.entidad ?? undefined,
+    p_organo_id: plan.expediente.organoId ?? undefined,
+    p_numero_organo: plan.expediente.numeroOrgano ?? undefined,
+    p_instancia: plan.expediente.instancia ?? undefined,
+    p_cuantia: plan.expediente.cuantia ?? undefined,
+    p_responsable_id: plan.expediente.responsableId ?? undefined,
     p_restringido: plan.expediente.restringido,
-    p_fecha_inicio: plan.expediente.fechaInicio,
-    p_notas: plan.expediente.notas,
+    p_fecha_inicio: plan.expediente.fechaInicio ?? undefined,
+    p_notas: plan.expediente.notas ?? undefined,
   })
 
   if (error || !expedienteId) {

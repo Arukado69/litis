@@ -116,6 +116,7 @@ export type AccionDelDespacho =
   | 'dar_acceso_al_cliente'
   | 'recibir_alertas'
   | 'leer_expediente'
+  | 'exportar_despacho'
 
 /** Las únicas dos. Ver el encabezado del archivo. */
 export const ACCIONES_TOPADAS: readonly AccionDelDespacho[] = [
@@ -148,6 +149,10 @@ export const ACCION_ETIQUETA: Record<AccionDelDespacho, string> = {
   dar_acceso_al_cliente: 'Darle acceso al cliente a su portal',
   recibir_alertas: 'Recibir las alertas por correo',
   leer_expediente: 'Leer todo lo ya capturado',
+  // El día que un despacho se va es justo cuando su suscripción está cancelada
+  // o morosa. Un tope que frenara esto convertiría un problema de tarjeta en un
+  // secuestro de los datos.
+  exportar_despacho: 'Descargar todo el despacho en un archivo',
 }
 
 /** Todo lo que sigue funcionando aunque el plan esté al tope o sin pagar. */

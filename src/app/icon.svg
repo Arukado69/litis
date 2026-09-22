@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Litis">
+  <!--
+    La cinta de días, en miniatura. Es el elemento de firma del sistema (ver
+    docs/DISENO.md), así que el icono de la pestaña es el mismo gráfico que la
+    portada y el panel: una casilla por día, llena si es hábil y vacía si no,
+    y el vencimiento más alto y en rojo — el borde del acantilado.
+
+    Cuatro casillas y no veinte: a 16px lo demás es una mancha. Los colores y
+    las proporciones salen de `.cinta-dia` en globals.css; si el sistema cambia,
+    esto se cambia con él.
+
+    El fondo de foja no es adorno: sin él la tinta (#16202a) desaparece contra
+    la barra de pestañas en tema oscuro.
+  -->
+  <rect width="32" height="32" rx="6" fill="#fbfbf9" />
+
+  <!-- hábil -->
+  <rect x="3" y="13" width="5" height="13" rx="1" fill="#16202a" />
+  <!-- inhábil: vacía, solo la regla -->
+  <rect x="10.5" y="13.5" width="4" height="12" rx="0.5" fill="none" stroke="#a9b2a4" />
+  <!-- hábil -->
+  <rect x="17" y="13" width="5" height="13" rx="1" fill="#16202a" />
+  <!-- el vencimiento -->
+  <rect x="24" y="7" width="5" height="19" rx="1" fill="#a32017" />
+</svg>

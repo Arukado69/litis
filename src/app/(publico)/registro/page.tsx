@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+import { Tenue } from '@/components/ui/composicion'
 import { Foja } from '@/components/ui/primitivos'
 
 import { FormularioRegistro } from './formulario'
@@ -12,19 +13,19 @@ export default function PaginaRegistro() {
     <Foja className="flex flex-col gap-5">
       <div>
         <h1 className="text-rotulo">Crear despacho</h1>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           Quedas como titular. Después invitas a tu equipo.
-        </p>
+        </Tenue>
       </div>
 
       <FormularioRegistro />
 
-      <p className="text-center text-menor text-[var(--color-tinta-suave)]">
+      <Tenue className="text-center">
         ¿Ya tienes cuenta?{' '}
         <Link href="/acceso" className="font-medium underline">
           Entrar
         </Link>
-      </p>
+      </Tenue>
     </Foja>
   )
 }

@@ -112,5 +112,6 @@ Los tres caminos fáciles, rechazados a propósito:
 |---|---|
 | `src/app/globals.css` | Tokens, tipografía base, la cinta y el margen |
 | `src/app/fuentes.ts` | Las dos familias |
-| `src/components/ui/primitivos.tsx` | Foja, Boton, Campo, Selector, Area, Casilla, Aviso, Sello, Dato, Rotulo, CintaDias |
+| `src/components/ui/primitivos.tsx` | **Con qué se construye:** Foja, Boton, Campo, Selector, Area, Casilla, Aviso, Sello, Dato, Rotulo, CintaDias |
+| `src/components/ui/composicion.tsx` | **Cómo se compone una pantalla:** Cabecera, Volver, RotuloDeSeccion, Tenue, Vacio, Apartado, Renglon, LineaDeRenglon |
 | `src/lib/plazos/calendario.ts` | `tramoDeDias`, el motor de la cinta |

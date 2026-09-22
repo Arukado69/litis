@@ -18,6 +18,7 @@ import {
   ESTADO_EXPEDIENTE_ETIQUETA,
   RESULTADO_ETIQUETA,
 } from '@/lib/expedientes/edicion'
+import { Tenue } from '@/components/ui/composicion'
 import { hoyEnMexico } from '@/lib/plazos/fecha'
 import type { EstadoExpediente } from '@/types/db'
 
@@ -188,10 +189,10 @@ export function FormularioEdicion({ datos }: { datos: DatosDelEditor }) {
 
       <div className="flex items-center gap-4">
         <BotonEnviar>Guardar cambios</BotonEnviar>
-        <p className="text-nota text-[var(--color-tinta-suave)]">
+        <Tenue tamano="nota">
           Cambiar el responsable, la etapa, el número del órgano o la situación
           queda anotado en la bitácora.
-        </p>
+        </Tenue>
       </div>
     </form>
   )

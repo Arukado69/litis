@@ -166,7 +166,7 @@ export function siguienteHabil(
   return habilEnOSiguiente(sumarDias(fecha, 1), calendario)
 }
 
-export interface DiaContado {
+export type DiaContado = {
   fecha: FechaISO
   /** 1..n — la posición del día dentro del plazo. */
   ordinal: number

@@ -383,7 +383,7 @@ export async function plazosDelExpediente(
   const { data } = await supabase
     .from('plazos')
     .select(
-      'id, etiqueta, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento_ajustada, motivo_ajuste, estado, confiabilidad, atendido_el, responsable_id, perfiles:responsable_id(nombre)',
+      'id, etiqueta, fecha_notificacion, fecha_vencimiento_efectiva, fecha_vencimiento, fecha_vencimiento_ajustada, motivo_ajuste, estado, confiabilidad, atendido_el, responsable_id, perfiles:responsable_id(nombre)',
     )
     .eq('expediente_id', expedienteId)
     .order('fecha_vencimiento_efectiva')
@@ -394,7 +394,7 @@ export async function plazosDelExpediente(
       id: p.id,
       etiqueta: p.etiqueta,
       fechaNotificacion: p.fecha_notificacion,
-      fechaVencimiento: p.fecha_vencimiento_efectiva,
+      fechaVencimiento: p.fecha_vencimiento_efectiva ?? p.fecha_vencimiento,
       motivoAjuste: p.motivo_ajuste,
       ajustada: p.fecha_vencimiento_ajustada !== null,
       estado: p.estado,

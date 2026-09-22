@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 import { CALENDARIOS_SEMILLA } from './calendarios-semilla'
-import { CATALOGO_PLAZOS } from './catalogo'
+import { VIAS } from '@/lib/expedientes/materias'
+
+import { CATALOGO_PLAZOS, REGIMENES_SIN_CATALOGO } from './catalogo'
 
 /**
  * Guardia contra la deriva entre el código y la migración de semilla.
@@ -74,5 +76,39 @@ describe('la migración de semilla no se ha separado del código', () => {
     const inserts = SQL.match(/insert into public\.(calendarios|plazos_catalogo)/g)
     expect(inserts?.length ?? 0).toBeGreaterThan(0)
     expect(SQL).not.toMatch(/despacho_id\s*=\s*'[0-9a-f-]{36}'/)
+  })
+})
+
+describe('qué vías se quedan sin catálogo', () => {
+  /**
+   * ⚠️ El hueco tiene que estar DECLARADO, no descubierto.
+   *
+   * Hoy 9 de las 18 vías que el sistema ofrece no tienen un solo plazo: las 6
+   * de civil/familiar, las 2 laborales y la penal. No es un descuido del
+   * catálogo, es la mitad de la promesa del producto apagada para esos
+   * asuntos — y se llena cuando un abogado aporte los plazos con su
+   * fundamento, no inventándolos.
+   *
+   * Esta prueba falla en los DOS sentidos, a propósito: agregar una vía de un
+   * régimen sin plazos obliga a declararlo, y llenar el catálogo laboral
+   * obliga a venir a quitarlo. Una buena noticia que rompe una prueba es
+   * barata; un hueco que nadie recuerda, no.
+   */
+  it('los regímenes sin un solo plazo son exactamente los declarados', () => {
+    const conEntradas = new Set(CATALOGO_PLAZOS.map((p) => p.regimen))
+    const sinCatalogo = [
+      ...new Set(
+        VIAS.map((v) => v.regimen).filter((r) => !conEntradas.has(r)),
+      ),
+    ].sort()
+
+    expect(sinCatalogo).toEqual([...REGIMENES_SIN_CATALOGO].sort())
+  })
+
+  /** Lo declarado tiene que ser elegible: declarar un régimen muerto no dice nada. */
+  it('todo régimen declarado tiene al menos una vía que lo usa', () => {
+    for (const regimen of REGIMENES_SIN_CATALOGO) {
+      expect(VIAS.some((v) => v.regimen === regimen), regimen).toBe(true)
+    }
   })
 })

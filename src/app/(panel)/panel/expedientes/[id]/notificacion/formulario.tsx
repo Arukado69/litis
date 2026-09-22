@@ -13,6 +13,7 @@ import {
   Foja,
   type Opcion,
 } from '@/components/ui/primitivos'
+import { Tenue } from '@/components/ui/composicion'
 import { AVISO_COMPUTO } from '@/lib/brand'
 import { fechaLargaConDia } from '@/lib/plazos/fecha'
 import { TIPO_NOTIFICACION_ETIQUETA } from '@/lib/plazos/regimenes'
@@ -50,16 +51,16 @@ function Computo({ vista }: { vista: VistaPrevia }) {
   return (
     <Foja className="flex flex-col gap-5 border-[var(--color-sello)]/40">
       <div>
-        <p className="text-menor text-[var(--color-tinta-suave)]">
+        <Tenue>
           Cómputo sugerido de {vista.etiqueta}
-        </p>
+        </Tenue>
         <p className="mt-1 text-rotulo">
           Vence el {fechaLargaConDia(vista.fechaVencimiento)}
         </p>
-        <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+        <Tenue className="mt-1">
           {vista.diasDelPlazo} {vista.unidad} · Calendario:{' '}
           {vista.calendarioNombre}
-        </p>
+        </Tenue>
       </div>
 
       {vista.confiabilidad === 'semilla_no_verificada' ? (
@@ -140,9 +141,9 @@ function Computo({ vista }: { vista: VistaPrevia }) {
         </div>
       ) : null}
 
-      <p className="border-t border-[var(--color-regla)] pt-3 text-nota text-[var(--color-tinta-suave)]">
+      <Tenue tamano="nota" className="border-t border-[var(--color-regla)] pt-3">
         {AVISO_COMPUTO}
-      </p>
+      </Tenue>
     </Foja>
   )
 }
@@ -286,11 +287,11 @@ export function FormularioNotificacion({
         <Foja className="flex flex-col gap-4">
           <div>
             <h2 className="font-medium">Confirmar</h2>
-            <p className="mt-1 text-menor text-[var(--color-tinta-suave)]">
+            <Tenue className="mt-1">
               Si el motor no conoce algo —un acuerdo que habilitó días, una
               suspensión— corrige la fecha aquí. El cambio queda registrado con
               tu nombre.
-            </p>
+            </Tenue>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo
